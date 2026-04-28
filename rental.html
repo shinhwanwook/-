@@ -1086,21 +1086,37 @@ function latestPayment(c){
   return keys.length?c.payments[keys[0]]:null;
 }
 function missedMonths(c){
-  // 2023년 5월 ~ 현재 전달까지 미납 개월 계산
   const now = new Date();
-  const startYear = 2023, startMonth = 5; // 기준 시작월
-  let missed = 0;
-  // 현재 전달부터 거꾸로 2023-05까지 체크
-  let y = now.getFullYear();
-  let m = now.getMonth(); // 전달 (0=1월 기준이므로 getMonth()가 전달)
-  if(m === 0){ m = 12; y -= 1; }
 
-  while(y > startYear || (y === startYear && m >= startMonth)){
+  // 체크 시작월 결정
+  // - 등록일이 2023-05 이전이면 → 2023-05부터
+  // - 등록일이 2023-05 이후이면 → 등록일 해당월부터
+  const BASE_YEAR = 2023, BASE_MONTH = 5;
+  let startY = BASE_YEAR, startM = BASE_MONTH;
+
+  if(c.reg_date){
+    const reg = new Date(c.reg_date);
+    const regY = reg.getFullYear();
+    const regM = reg.getMonth() + 1;
+    // 등록일이 기준일 이후면 등록일 해당월부터
+    if(regY > BASE_YEAR || (regY === BASE_YEAR && regM > BASE_MONTH)){
+      startY = regY;
+      startM = regM;
+    }
+  }
+
+  // 현재 전달까지 체크 (이번달은 아직 납부 기한 중일 수 있으므로 제외)
+  let endY = now.getFullYear();
+  let endM = now.getMonth(); // getMonth()는 0부터라 전달이 됨
+  if(endM === 0){ endM = 12; endY -= 1; }
+
+  let missed = 0;
+  let y = startY, m = startM;
+  while(y < endY || (y === endY && m <= endM)){
     const k = y + '-' + String(m).padStart(2,'0');
     if(!c.payments[k]) missed++;
-    // 이전 달로
-    m--;
-    if(m === 0){ m = 12; y -= 1; }
+    m++;
+    if(m > 12){ m = 1; y++; }
   }
   return missed;
 }
