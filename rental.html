@@ -2738,8 +2738,15 @@ function loadColWidths(){
 
   document.addEventListener('mousemove',function(e){
     if(!dragging||!targetTh) return;
-    window._colDragging = true; // 드래그 중 플래그
-    targetTh.style.width=Math.max(36,startW+(e.clientX-startX))+'px';
+    window._colDragging = true;
+    // requestAnimationFrame으로 렌더링 최적화
+    if(!window._rafPending){
+      window._rafPending = true;
+      requestAnimationFrame(function(){
+        if(targetTh) targetTh.style.width=Math.max(36,startW+(e.clientX-startX))+'px';
+        window._rafPending = false;
+      });
+    }
   });
   document.addEventListener('mouseup',function(){
     if(!dragging) return;
@@ -2753,10 +2760,12 @@ function loadColWidths(){
     targetTh=null;
   });
 
-  // tbody 변경 후에도 리사이저 유지
-  const obs=new MutationObserver(attachResizers);
+  // tbody 변경 후에도 리사이저 유지 (드래그 중 비활성화)
+  const obs=new MutationObserver(function(){
+    if(!window._colDragging) attachResizers();
+  });
   setTimeout(function(){
-    loadColWidths(); // ← 저장된 너비 복원
+    loadColWidths();
     const tb=document.getElementById('tbl-body');
     if(tb) obs.observe(tb,{childList:true});
     attachResizers();
