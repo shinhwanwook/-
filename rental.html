@@ -1093,6 +1093,7 @@ function latestPayment(c){
 }
 function missedMonths(c){
   const now = new Date();
+  const isPostpaid = (c.paytype === 'postpaid');
 
   // 체크 시작월 결정
   const BASE_YEAR = 2023, BASE_MONTH = 5;
@@ -1106,23 +1107,35 @@ function missedMonths(c){
     }
   }
 
-  // 체크 종료월 결정
-  // - 선불: 전달까지 체크
-  // - 후불: 이번달까지 체크 (이번달 납부가 들어올 수 있으므로)
-  const isPostpaid = (c.paytype === 'postpaid');
+  // 체크 종료월: 선불=전달, 후불=전전달 (후불은 1달 여유)
   let endY = now.getFullYear();
-  let endM = now.getMonth(); // 전달 (0-based라 전달)
+  let endM = now.getMonth(); // 0-based라 이게 전달
   if(endM === 0){ endM = 12; endY -= 1; }
-  if(isPostpaid){ // 후불이면 이번달까지 체크
-    endM = now.getMonth() + 1; // 이번달
-    endY = now.getFullYear();
+  if(isPostpaid){
+    // 후불은 전달까지만 체크 (이번달은 다음달에 납부해도 됨)
+    endM--;
+    if(endM === 0){ endM = 12; endY -= 1; }
+  }
+
+  // 납부 여부 확인 함수
+  // 후불이면 해당월 OR 다음달에 납부해도 납부로 인정
+  function isPaid(ky, km){
+    const k = ky + '-' + String(km).padStart(2,'0');
+    if(c.payments[k]) return true;
+    if(isPostpaid){
+      // 다음달 납부도 인정
+      let ny = ky, nm = km + 1;
+      if(nm > 12){ nm = 1; ny++; }
+      const nk = ny + '-' + String(nm).padStart(2,'0');
+      if(c.payments[nk]) return true;
+    }
+    return false;
   }
 
   let missed = 0;
   let y = startY, m = startM;
   while(y < endY || (y === endY && m <= endM)){
-    const k = y + '-' + String(m).padStart(2,'0');
-    if(!c.payments[k]) missed++;
+    if(!isPaid(y, m)) missed++;
     m++;
     if(m > 12){ m = 1; y++; }
   }
