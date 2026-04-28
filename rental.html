@@ -1576,9 +1576,14 @@ function openDetail(no){
   document.getElementById('counter-year').value='2025';
 }
 function renderPayHist(c){
+  // 현재 날짜 기준 최근 24개월
+  const now=new Date();
   const months=[];
-  for(let y=2022;y<=2023;y++) for(let m=1;m<=12;m++) months.push(`${y}-${String(m).padStart(2,'0')}`);
-  const recent=months.slice(-12);
+  for(let i=23;i>=0;i--){
+    const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const recent=months;
   document.getElementById('dm-pmts').innerHTML=recent.map(k=>{
     const v=c.payments[k];
     const lbl=k.slice(5)+'월';
