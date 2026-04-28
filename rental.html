@@ -1469,7 +1469,6 @@ function sortBy(k){
 }
 function changePage(d){page+=d;renderList();window.scrollTo(0,0);}
 function renderList(){
-  applyFilters(); // filtered 업데이트
   updateStats();
   const terminatedCount=CONTRACTS.filter(c=>c.terminated).length;
   const filteredRentSum = filtered.filter(c=>!c.terminated).reduce((s,c)=>s+(c.rent||0),0);
@@ -2666,6 +2665,7 @@ function loadFromApi(callback) {
         // 렌더링을 setTimeout으로 분산 - UI 멈춤 방지
         setTimeout(function(){
           try{
+            applyFilters(); // filtered 먼저 업데이트
             renderList();
             renderPayment();
             renderService();
