@@ -1086,10 +1086,21 @@ function latestPayment(c){
   return keys.length?c.payments[keys[0]]:null;
 }
 function missedMonths(c){
-  let missed=0;
-  for(let m=1;m<=2;m++){
-    const k=`2023-${String(m).padStart(2,'0')}`;
+  // 2023년 5월 ~ 현재 전달까지 미납 개월 계산
+  const now = new Date();
+  const startYear = 2023, startMonth = 5; // 기준 시작월
+  let missed = 0;
+  // 현재 전달부터 거꾸로 2023-05까지 체크
+  let y = now.getFullYear();
+  let m = now.getMonth(); // 전달 (0=1월 기준이므로 getMonth()가 전달)
+  if(m === 0){ m = 12; y -= 1; }
+
+  while(y > startYear || (y === startYear && m >= startMonth)){
+    const k = y + '-' + String(m).padStart(2,'0');
     if(!c.payments[k]) missed++;
+    // 이전 달로
+    m--;
+    if(m === 0){ m = 12; y -= 1; }
   }
   return missed;
 }
