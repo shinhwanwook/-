@@ -1354,7 +1354,9 @@ function renderList(){
   const rentSumPart = isAdmin ? ` &nbsp;|&nbsp; 💰 임대료 합계: <strong style="color:var(--blue)">${filteredRentSum.toLocaleString()}원</strong>` : '';
   const statusInfo = isAdmin ? `검색결과: <strong>${filtered.length}건</strong> / 정상 ${CONTRACTS.filter(c=>!c.terminated).length}건 · 해지 ${terminatedCount}건${rentSumPart}` : '';
   document.getElementById('list-info-text').innerHTML=statusInfo;
-  document.getElementById('tbl-body').innerHTML=filtered.map(c=>{
+  // 페이지네이션 적용
+  const pageData = filtered.slice(page*PAGE_SIZE, (page+1)*PAGE_SIZE);
+  document.getElementById('tbl-body').innerHTML=pageData.map(c=>{
     const ps=payStatus(c);
     const lp=latestPayment(c)||'-';
     const staffNames=(c.staff_ids||[]).map(getStaffName).filter(Boolean).join(', ');
@@ -1406,6 +1408,16 @@ function renderList(){
       </td>
     </tr>`;
   }).join('');
+
+  // 페이지네이션 버튼 활성화
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const pgDiv = document.querySelector('#page-list .pg');
+  if(pgDiv){
+    pgDiv.style.display = filtered.length > PAGE_SIZE ? 'flex' : 'none';
+    document.getElementById('pg-info').textContent = (page+1) + ' / ' + totalPages + ' 페이지  (' + filtered.length + '건)';
+    document.getElementById('pg-prev').disabled = page === 0;
+    document.getElementById('pg-next').disabled = page >= totalPages-1;
+  }
 }
 
 // ══ 계약 상세 ══
