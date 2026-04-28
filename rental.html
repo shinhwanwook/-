@@ -1469,6 +1469,7 @@ function sortBy(k){
 }
 function changePage(d){page+=d;renderList();window.scrollTo(0,0);}
 function renderList(){
+  applyFilters(); // filtered 업데이트
   updateStats();
   const terminatedCount=CONTRACTS.filter(c=>c.terminated).length;
   const filteredRentSum = filtered.filter(c=>!c.terminated).reduce((s,c)=>s+(c.rent||0),0);
