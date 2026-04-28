@@ -369,6 +369,7 @@ body.locked { overflow:hidden; }
           return c;
         });
       }
+      if(typeof setLoadingProgress==='function') setLoadingProgress(60, '입금 내역 완료...');
       console.log('입금 청크 로드 완료');
 
       // 3단계: 세금계산서 issues 청크 로드
@@ -387,7 +388,8 @@ body.locked { overflow:hidden; }
           t.issues = allIssues[String(t.seq)] || {};
           return t;
         });
-        console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
+        if(typeof setLoadingProgress==='function') setLoadingProgress(75, '세금계산서 완료...');
+      console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
       }
       return result;
     }).catch(function(e) {
@@ -537,8 +539,15 @@ body.locked { overflow:hidden; }
   </div>
 
 
-
-
+<div id="loading-screen" style="display:none;position:fixed;inset:0;background:#1e3a5f;z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:#fff">
+  <div style="font-size:48px;margin-bottom:20px">📋</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:12px">임대관리시스템</div>
+  <div id="loading-msg" style="font-size:13px;color:#93c5fd;margin-bottom:24px">데이터 불러오는 중...</div>
+  <div style="width:200px;height:6px;background:rgba(255,255,255,.2);border-radius:3px">
+    <div id="loading-bar" style="width:0%;height:100%;background:#60a5fa;border-radius:3px;transition:width .3s"></div>
+  </div>
+  <div id="loading-pct" style="font-size:12px;color:#93c5fd;margin-top:8px">0%</div>
+</div>
 
 <div id="app-wrapper">
 <nav class="nav">
@@ -2625,33 +2634,56 @@ function loadFromLocal() {
 }
 
 // ── PHP API 불러오기 ──
+function setLoadingProgress(pct, msg) {
+  var bar = document.getElementById('loading-bar');
+  var pctEl = document.getElementById('loading-pct');
+  var msgEl = document.getElementById('loading-msg');
+  if(bar) bar.style.width = pct + '%';
+  if(pctEl) pctEl.textContent = pct + '%';
+  if(msgEl && msg) msgEl.textContent = msg;
+}
+function hideLoadingScreen() {
+  var ls = document.getElementById('loading-screen');
+  var aw = document.getElementById('app-wrapper');
+  if(ls) ls.style.display = 'none';
+  if(aw) aw.style.display = 'block';
+}
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
-    showSaveStatus('⏳ 클라우드에서 불러오는 중...', '#93c5fd');
+    setLoadingProgress(10, '서버 연결 중...');
     window._fbLoad().then(function(data) {
       if (!data) {
+        hideLoadingScreen();
         showSaveStatus('☁ 클라우드 데이터 없음', '#fbbf24');
         if(callback) callback(false);
         return;
       }
       try {
+        setLoadingProgress(80, '데이터 적용 중...');
         applyRestoredData(data);
+        setLoadingProgress(85, '계약 목록 렌더링...');
         renderList();
+        setLoadingProgress(90, '입금 내역 렌더링...');
         renderPayment();
         renderService();
+        setLoadingProgress(95, '통계 렌더링...');
         renderStats();
         renderInvList();
         renderTax();
-        showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
-        if(callback) callback(true);
+        setLoadingProgress(100, '완료!');
+        setTimeout(function(){
+          hideLoadingScreen();
+          showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
+          if(callback) callback(true);
+        }, 300);
       } catch(e) {
         console.error('데이터 적용 오류:', e);
+        hideLoadingScreen();
         showSaveStatus('⚠ 불러오기 오류', '#fbbf24');
         if(callback) callback(false);
       }
     });
   } else {
-    // Firebase 미준비 - 잠시 후 재시도
     setTimeout(function(){ loadFromApi(callback); }, 800);
   }
 }
@@ -4153,7 +4185,9 @@ function switchLoginTab(tab){
 
 function showApp(role){
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-wrapper').style.display  = 'block';
+  // 로딩 화면 먼저 표시
+  var ls = document.getElementById('loading-screen');
+  ls.style.display = 'flex';
   document.body.classList.remove('locked');
 
   // 관리자면 자동으로 관리자 모드 활성화
