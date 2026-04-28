@@ -267,159 +267,7 @@ body.locked { overflow:hidden; }
 }
 </style>
 </style>
-<script>
-(function(){
-  var cfg = {
-    apiKey: "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk",
-    authDomain: "rental-management-8c377.firebaseapp.com",
-    projectId: "rental-management-8c377",
-    storageBucket: "rental-management-8c377.firebasestorage.app",
-    messagingSenderId: "1021274937799",
-    appId: "1:1021274937799:web:022a4ba9496380216d21e2"
-  };
-  firebase.initializeApp(cfg);
-  var db = firebase.firestore();
-  window._db = db; // 디버깅용 전역 노출
-  var mainRef = db.collection('rental').doc('main');
-  var pay1Ref = db.collection('rental').doc('payments1');
-  var pay2Ref = db.collection('rental').doc('payments2');
-  var pay3Ref = db.collection('rental').doc('payments3');
 
-  // 저장: 기본정보 + 입금내역 + 세금계산서 청크 분리 저장
-  window._fbSave = function(data) {
-    var contracts = data.CONTRACTS || [];
-    var payChunks = {};
-    var contractsSlim = contracts.map(function(c, idx) {
-      var no = c.no || (idx+1);
-      var chunkIdx = Math.floor((no-1)/20) + 1;
-      var key = String(chunkIdx).padStart(2,'0');
-      if(!payChunks[key]) payChunks[key] = {};
-      payChunks[key][String(no)] = c.payments || {};
-      var slim = Object.assign({}, c);
-      slim.payments = {};
-      return slim;
-    });
-
-    // 세금계산서 청크 분리
-    var taxClients = data.TAX_CLIENTS || [];
-    var taxChunks = {};
-    var taxSlim = taxClients.map(function(t) {
-      var seq = t.seq;
-      var chunkIdx = Math.floor((seq-1)/30) + 1;
-      var key = String(chunkIdx).padStart(2,'0');
-      if(!taxChunks[key]) taxChunks[key] = {};
-      taxChunks[key][String(seq)] = t.issues || {};
-      var slim = Object.assign({}, t);
-      slim.issues = {};
-      return slim;
-    });
-
-    var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
-    var promises = [mainRef.set(mainData)];
-    Object.keys(payChunks).forEach(function(key) {
-      promises.push(db.collection('rental').doc('pay_' + key).set({payments: payChunks[key]}));
-    });
-    Object.keys(taxChunks).forEach(function(key) {
-      promises.push(db.collection('rental').doc('tax_issues_' + key).set({issues: taxChunks[key]}));
-    });
-    return Promise.all(promises)
-      .then(function(){ return true; })
-      .catch(function(e){ console.error('Firebase 저장 오류:', e); return false; });
-  };
-
-  // 불러오기: 기본정보 + 입금내역 청크 합치기
-  window._fbLoad = function() {
-    // 단계별로 불러오기 - 순서 명확하게
-    var result = {};
-
-    // 1단계: main + tax_main 동시 로드
-    return Promise.all([
-      mainRef.get(),
-      db.collection('rental').doc('tax_main').get()
-    ]).then(function(snaps) {
-      if(!snaps[0].exists) throw new Error('main 없음');
-      result = snaps[0].data();
-      console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
-
-      // tax_main에서 TAX_CLIENTS 로드
-      if(snaps[1].exists) {
-        result.TAX_CLIENTS = snaps[1].data().TAX_CLIENTS || [];
-        console.log('tax_main 로드 완료, TAX_CLIENTS:', result.TAX_CLIENTS.length);
-      } else {
-        console.log('tax_main 없음');
-      }
-
-      // 2단계: 입금 청크 로드
-      var payPromises = [];
-      for(var i = 1; i <= 27; i++) {
-        payPromises.push(db.collection('rental').doc('pay_' + String(i).padStart(2,'0')).get());
-      }
-      return Promise.all(payPromises);
-    }).then(function(paySnaps) {
-      var allPayments = {};
-      paySnaps.forEach(function(snap) {
-        if(snap.exists) Object.assign(allPayments, snap.data().payments || {});
-      });
-      if(result.CONTRACTS) {
-        result.CONTRACTS = result.CONTRACTS.map(function(c) {
-          c.payments = allPayments[String(c.no)] || {};
-          return c;
-        });
-      }
-      if(typeof setLoadingProgress==='function') setLoadingProgress(60, '입금 내역 완료...');
-      console.log('입금 청크 로드 완료');
-
-      // 3단계: 세금계산서 issues 청크 로드
-      var taxPromises = [];
-      for(var i = 1; i <= 9; i++) {
-        taxPromises.push(db.collection('rental').doc('tax_issues_' + String(i).padStart(2,'0')).get());
-      }
-      return Promise.all(taxPromises);
-    }).then(function(taxSnaps) {
-      var allIssues = {};
-      taxSnaps.forEach(function(snap) {
-        if(snap.exists) Object.assign(allIssues, snap.data().issues || {});
-      });
-      if(result.TAX_CLIENTS && result.TAX_CLIENTS.length > 0) {
-        result.TAX_CLIENTS = result.TAX_CLIENTS.map(function(t) {
-          t.issues = allIssues[String(t.seq)] || {};
-          return t;
-        });
-        if(typeof setLoadingProgress==='function') setLoadingProgress(75, '세금계산서 완료...');
-      console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
-      }
-      return result;
-    }).catch(function(e) {
-      console.error('Firebase 불러오기 오류:', e);
-      return null;
-    });
-  };
-
-  // 컬럼 너비 저장/불러오기
-  var colRef    = db.collection('rental').doc('col_widths');
-
-
-  window._fbSaveColWidths = function(widths) {
-    colRef.set({widths: widths}).catch(function(e){
-      console.error('컬럼 너비 저장 오류:', e);
-    });
-  };
-  window._fbLoadColWidths = function() {
-    return colRef.get()
-      .then(function(snap){ return snap.exists ? snap.data().widths : null; })
-      .catch(function(e){ console.error('컬럼 너비 불러오기 오류:', e); return null; });
-  };
-
-
-
-  window._fbReady = true;
-  console.log('✅ Firebase 연결 완료');
-  // 계정 정보 Firebase에서 불러오기
-  if(typeof loadAccountsFromStorage === 'function'){
-    loadAccountsFromStorage();
-  }
-})();
-</script>
 </head>
 <body>
 <!-- Firebase SDK -->
@@ -4263,6 +4111,160 @@ function doLogin(){
     document.getElementById('login-pw').focus();
   }
 }
+</script>
+
+<script>
+(function(){
+  var cfg = {
+    apiKey: "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk",
+    authDomain: "rental-management-8c377.firebaseapp.com",
+    projectId: "rental-management-8c377",
+    storageBucket: "rental-management-8c377.firebasestorage.app",
+    messagingSenderId: "1021274937799",
+    appId: "1:1021274937799:web:022a4ba9496380216d21e2"
+  };
+  firebase.initializeApp(cfg);
+  var db = firebase.firestore();
+  window._db = db; // 디버깅용 전역 노출
+  var mainRef = db.collection('rental').doc('main');
+  var pay1Ref = db.collection('rental').doc('payments1');
+  var pay2Ref = db.collection('rental').doc('payments2');
+  var pay3Ref = db.collection('rental').doc('payments3');
+
+  // 저장: 기본정보 + 입금내역 + 세금계산서 청크 분리 저장
+  window._fbSave = function(data) {
+    var contracts = data.CONTRACTS || [];
+    var payChunks = {};
+    var contractsSlim = contracts.map(function(c, idx) {
+      var no = c.no || (idx+1);
+      var chunkIdx = Math.floor((no-1)/20) + 1;
+      var key = String(chunkIdx).padStart(2,'0');
+      if(!payChunks[key]) payChunks[key] = {};
+      payChunks[key][String(no)] = c.payments || {};
+      var slim = Object.assign({}, c);
+      slim.payments = {};
+      return slim;
+    });
+
+    // 세금계산서 청크 분리
+    var taxClients = data.TAX_CLIENTS || [];
+    var taxChunks = {};
+    var taxSlim = taxClients.map(function(t) {
+      var seq = t.seq;
+      var chunkIdx = Math.floor((seq-1)/30) + 1;
+      var key = String(chunkIdx).padStart(2,'0');
+      if(!taxChunks[key]) taxChunks[key] = {};
+      taxChunks[key][String(seq)] = t.issues || {};
+      var slim = Object.assign({}, t);
+      slim.issues = {};
+      return slim;
+    });
+
+    var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
+    var promises = [mainRef.set(mainData)];
+    Object.keys(payChunks).forEach(function(key) {
+      promises.push(db.collection('rental').doc('pay_' + key).set({payments: payChunks[key]}));
+    });
+    Object.keys(taxChunks).forEach(function(key) {
+      promises.push(db.collection('rental').doc('tax_issues_' + key).set({issues: taxChunks[key]}));
+    });
+    return Promise.all(promises)
+      .then(function(){ return true; })
+      .catch(function(e){ console.error('Firebase 저장 오류:', e); return false; });
+  };
+
+  // 불러오기: 기본정보 + 입금내역 청크 합치기
+  window._fbLoad = function() {
+    // 단계별로 불러오기 - 순서 명확하게
+    var result = {};
+
+    // 1단계: main + tax_main 동시 로드
+    return Promise.all([
+      mainRef.get(),
+      db.collection('rental').doc('tax_main').get()
+    ]).then(function(snaps) {
+      if(!snaps[0].exists) throw new Error('main 없음');
+      result = snaps[0].data();
+      console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
+
+      // tax_main에서 TAX_CLIENTS 로드
+      if(snaps[1].exists) {
+        result.TAX_CLIENTS = snaps[1].data().TAX_CLIENTS || [];
+        console.log('tax_main 로드 완료, TAX_CLIENTS:', result.TAX_CLIENTS.length);
+      } else {
+        console.log('tax_main 없음');
+      }
+
+      // 2단계: 입금 청크 로드
+      var payPromises = [];
+      for(var i = 1; i <= 27; i++) {
+        payPromises.push(db.collection('rental').doc('pay_' + String(i).padStart(2,'0')).get());
+      }
+      return Promise.all(payPromises);
+    }).then(function(paySnaps) {
+      var allPayments = {};
+      paySnaps.forEach(function(snap) {
+        if(snap.exists) Object.assign(allPayments, snap.data().payments || {});
+      });
+      if(result.CONTRACTS) {
+        result.CONTRACTS = result.CONTRACTS.map(function(c) {
+          c.payments = allPayments[String(c.no)] || {};
+          return c;
+        });
+      }
+      if(typeof setLoadingProgress==='function') setLoadingProgress(60, '입금 내역 완료...');
+      console.log('입금 청크 로드 완료');
+
+      // 3단계: 세금계산서 issues 청크 로드
+      var taxPromises = [];
+      for(var i = 1; i <= 9; i++) {
+        taxPromises.push(db.collection('rental').doc('tax_issues_' + String(i).padStart(2,'0')).get());
+      }
+      return Promise.all(taxPromises);
+    }).then(function(taxSnaps) {
+      var allIssues = {};
+      taxSnaps.forEach(function(snap) {
+        if(snap.exists) Object.assign(allIssues, snap.data().issues || {});
+      });
+      if(result.TAX_CLIENTS && result.TAX_CLIENTS.length > 0) {
+        result.TAX_CLIENTS = result.TAX_CLIENTS.map(function(t) {
+          t.issues = allIssues[String(t.seq)] || {};
+          return t;
+        });
+        if(typeof setLoadingProgress==='function') setLoadingProgress(75, '세금계산서 완료...');
+      console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
+      }
+      return result;
+    }).catch(function(e) {
+      console.error('Firebase 불러오기 오류:', e);
+      return null;
+    });
+  };
+
+  // 컬럼 너비 저장/불러오기
+  var colRef    = db.collection('rental').doc('col_widths');
+
+
+  window._fbSaveColWidths = function(widths) {
+    colRef.set({widths: widths}).catch(function(e){
+      console.error('컬럼 너비 저장 오류:', e);
+    });
+  };
+  window._fbLoadColWidths = function() {
+    return colRef.get()
+      .then(function(snap){ return snap.exists ? snap.data().widths : null; })
+      .catch(function(e){ console.error('컬럼 너비 불러오기 오류:', e); return null; });
+  };
+
+
+
+  window._fbReady = true;
+  console.log('✅ Firebase 연결 완료');
+  // 계정 정보 Firebase에서 불러오기
+  if(typeof loadAccountsFromStorage === 'function'){
+    loadAccountsFromStorage();
+  }
+})();
 </script>
 </body>
 </html>
