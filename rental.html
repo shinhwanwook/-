@@ -2619,6 +2619,7 @@ function saveToApi(callback) {
 
 // ── 자동저장 (0.5초 debounce) ──
 function autoSave() {
+  if(window._colDragging) return; // 컬럼 드래그 중엔 저장 안 함
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function(){
     saveToLocal();          // 항상 localStorage에 저장
@@ -2883,6 +2884,7 @@ function _loadColWidthsLocal(){
 
   document.addEventListener('mousemove',function(e){
     if(!dragging||!targetTh) return;
+    window._colDragging = true; // 드래그 중 플래그
     targetTh.style.width=Math.max(36,startW+(e.clientX-startX))+'px';
   });
   document.addEventListener('mouseup',function(){
@@ -2891,6 +2893,7 @@ function _loadColWidthsLocal(){
     document.body.style.cursor='';
     document.body.style.userSelect='';
     targetTh&&targetTh.querySelector('.col-resizer')&&targetTh.querySelector('.col-resizer').classList.remove('dragging');
+    window._colDragging = false;
     saveColWidths();
     targetTh=null;
   });
@@ -4242,11 +4245,16 @@ function showApp(role){
 function doLogin(){
   var inputId = document.getElementById('login-id').value.trim();
   var inputPw = document.getElementById('login-pw').value;
-  var acct    = ACCOUNTS[_loginTab];
 
-  if(inputId === acct.id && inputPw === acct.pw){
+  // 현재 탭의 계정 + 전체 계정에서 아이디/비번 일치 찾기
+  var matchedKey = Object.keys(ACCOUNTS).find(function(k){
+    return ACCOUNTS[k].id === inputId && ACCOUNTS[k].pw === inputPw;
+  });
+
+  if(matchedKey){
+    var acct = ACCOUNTS[matchedKey];
     if(document.getElementById('auto-login-chk').checked){
-      try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(_loginTab+':'+inputId+':'+inputPw)); }catch(e){}
+      try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
     showApp(acct.role);
   } else {
@@ -4256,31 +4264,3 @@ function doLogin(){
   }
 }
 
-// 자동 로그인 확인
-(function(){
-  document.body.classList.add('locked');
-  try{
-    const saved = localStorage.getItem(AUTO_LOGIN_KEY);
-    if(saved){
-      const decoded = atob(saved);
-      const parts   = decoded.split(':');
-      const tab     = parts[0];
-      const id      = parts[1];
-      const pw      = parts.slice(2).join(':');
-      const acct    = ACCOUNTS[tab];
-      if(acct && id === acct.id && pw === acct.pw){
-        _loginTab = tab;
-        showApp(acct.role);
-        return;
-      }
-    }
-  }catch(e){}
-  setTimeout(function(){
-    var el = document.getElementById('login-id');
-    if(el) el.focus();
-  }, 100);
-})();
-</script>
-
-</body>
-</html>
