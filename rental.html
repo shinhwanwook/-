@@ -507,6 +507,12 @@ body.locked { overflow:hidden; }
         <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder="예) example@email.com"></div>
         <div class="form-group"><label class="required">렌탈금 (원)</label><input class="inp" id="f-rent" type="number" placeholder="예) 55000"></div>
         <div class="form-group"><label>납부일</label><input class="inp" id="f-payday" placeholder="예) 매15일"></div>
+        <div class="form-group"><label>납부방식</label>
+          <select class="inp" id="f-paytype">
+            <option value="prepaid">선불</option>
+            <option value="postpaid">후불</option>
+          </select>
+        </div>
         <div class="form-group"><label>기기명</label><input class="inp" id="f-etc" placeholder="예) HP8600"></div>
         <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
         <div class="form-group"><label>보증금 (원)</label><input class="inp" id="f-deposit" type="number" value="0"></div>
@@ -1089,26 +1095,28 @@ function missedMonths(c){
   const now = new Date();
 
   // 체크 시작월 결정
-  // - 등록일이 2023-05 이전이면 → 2023-05부터
-  // - 등록일이 2023-05 이후이면 → 등록일 해당월부터
   const BASE_YEAR = 2023, BASE_MONTH = 5;
   let startY = BASE_YEAR, startM = BASE_MONTH;
-
   if(c.reg_date){
     const reg = new Date(c.reg_date);
     const regY = reg.getFullYear();
     const regM = reg.getMonth() + 1;
-    // 등록일이 기준일 이후면 등록일 해당월부터
     if(regY > BASE_YEAR || (regY === BASE_YEAR && regM > BASE_MONTH)){
-      startY = regY;
-      startM = regM;
+      startY = regY; startM = regM;
     }
   }
 
-  // 현재 전달까지 체크 (이번달은 아직 납부 기한 중일 수 있으므로 제외)
+  // 체크 종료월 결정
+  // - 선불: 전달까지 체크
+  // - 후불: 전전달까지 체크 (이번달 납부분이 다음달에 들어오므로)
+  const isPostpaid = (c.paytype === 'postpaid');
   let endY = now.getFullYear();
-  let endM = now.getMonth(); // getMonth()는 0부터라 전달이 됨
+  let endM = now.getMonth(); // 전달
   if(endM === 0){ endM = 12; endY -= 1; }
+  if(isPostpaid){ // 후불이면 한달 더 빼기
+    endM--;
+    if(endM === 0){ endM = 12; endY -= 1; }
+  }
 
   let missed = 0;
   let y = startY, m = startM;
@@ -1728,6 +1736,7 @@ function editContract(no){
   document.getElementById('f-email').value=c.email||'';
   document.getElementById('f-rent').value=c.rent;
   document.getElementById('f-payday').value=c.payment_day;
+  document.getElementById('f-paytype').value=c.paytype||'prepaid';
   document.getElementById('f-etc').value=c.etc;
   document.getElementById('f-deposit').value=c.deposit;
   document.getElementById('f-regdate').value=c.reg_date;
@@ -1758,6 +1767,7 @@ function saveContract(){
     c.phone=document.getElementById('f-phone').value.trim();
     c.email=document.getElementById('f-email').value.trim();
     c.rent=rent; c.payment_day=document.getElementById('f-payday').value.trim();
+    c.paytype=document.getElementById('f-paytype').value;
     c.etc=document.getElementById('f-etc').value.trim();
     c.qty=parseInt(document.getElementById('f-qty').value)||1;
     c.deposit=parseInt(document.getElementById('f-deposit').value)||0;
@@ -1780,6 +1790,7 @@ function saveContract(){
       phone:document.getElementById('f-phone').value.trim(),
       email:document.getElementById('f-email').value.trim(),
       rent,payment_day:document.getElementById('f-payday').value.trim(),
+      paytype:document.getElementById('f-paytype').value,
       address:document.getElementById('f-address').value.trim(),
       etc:document.getElementById('f-etc').value.trim(),
       qty:parseInt(document.getElementById('f-qty').value)||1,
