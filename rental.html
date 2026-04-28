@@ -460,7 +460,13 @@ body.locked { overflow:hidden; }
         <option value="terminated">해지된 계약</option>
       </select>
     </div>
-    <div class="info-row" id="list-info"></div>
+    <div class="info-row" id="list-info" style="display:flex;align-items:center;justify-content:space-between">
+      <span id="list-info-text"></span>
+      <button id="col-save-btn" onclick="saveColWidths();this.textContent='✅ 저장됨';setTimeout(()=>{this.style.display='none';this.textContent='💾 컬럼너비 저장';},1500)"
+        style="display:none;font-size:11px;padding:3px 10px;background:#1e3a5f;color:#fff;border:none;border-radius:4px;cursor:pointer">
+        💾 컬럼너비 저장
+      </button>
+    </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr id="list-thead-row">
@@ -1347,7 +1353,7 @@ function renderList(){
   const filteredRentSum = filtered.filter(c=>!c.terminated).reduce((s,c)=>s+(c.rent||0),0);
   const rentSumPart = isAdmin ? ` &nbsp;|&nbsp; 💰 임대료 합계: <strong style="color:var(--blue)">${filteredRentSum.toLocaleString()}원</strong>` : '';
   const statusInfo = isAdmin ? `검색결과: <strong>${filtered.length}건</strong> / 정상 ${CONTRACTS.filter(c=>!c.terminated).length}건 · 해지 ${terminatedCount}건${rentSumPart}` : '';
-  document.getElementById('list-info').innerHTML=statusInfo;
+  document.getElementById('list-info-text').innerHTML=statusInfo;
   document.getElementById('tbl-body').innerHTML=filtered.map(c=>{
     const ps=payStatus(c);
     const lp=latestPayment(c)||'-';
@@ -2742,7 +2748,8 @@ function loadColWidths(){
     document.body.style.userSelect='';
     targetTh&&targetTh.querySelector('.col-resizer')&&targetTh.querySelector('.col-resizer').classList.remove('dragging');
     window._colDragging = false;
-    saveColWidths();
+    // 자동저장 제거 - 버튼으로 저장
+    document.getElementById('col-save-btn').style.display = 'inline-block';
     targetTh=null;
   });
 
