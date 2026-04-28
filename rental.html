@@ -626,7 +626,22 @@ body.locked { overflow:hidden; }
       <input class="inp inp-search" type="text" id="svc-srch" placeholder="🔍 거래처명, 내용 검색...">
       <select class="inp" id="svc-type"><option value="">전체 유형</option><option value="방문">방문</option><option value="A/S">A/S</option><option value="기타">기타</option></select>
       <select class="inp" id="svc-staff"><option value="">전체 담당자</option></select>
-      <select class="inp" id="svc-year"><option value="">전체 연도</option><option value="2024">2024년</option><option value="2023">2023년</option><option value="2022">2022년</option></select>
+      <select class="inp" id="svc-year"><option value="">전체 연도</option></select>
+          <script>
+          (function(){
+            var sel = document.querySelector('#flt-svc-year');
+            if(!sel) return;
+            var now = new Date().getFullYear();
+            var allOpt = document.createElement('option');
+            allOpt.value=''; allOpt.textContent='전체';
+            sel.appendChild(allOpt);
+            for(var y=now;y>=2007;y--){
+              var opt=document.createElement('option');
+              opt.value=y; opt.textContent=y+'년';
+              sel.appendChild(opt);
+            }
+          })();
+          </script>
     </div>
     <div class="info-row" id="svc-info"></div>
     <div class="tbl-wrap">
@@ -711,8 +726,18 @@ body.locked { overflow:hidden; }
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <span style="font-size:13px;color:var(--text3)">월별 출력 카운터 (흑백 · 칼라)</span>
           <select class="inp" id="counter-year" style="width:100px;font-size:12px;padding:5px 8px" onchange="renderCounterTab()">
-            <option>2025</option><option>2024</option><option>2023</option><option>2022</option>
           </select>
+          <script>
+          (function(){
+            var sel = document.getElementById('counter-year');
+            var now = new Date().getFullYear();
+            for(var y = now; y >= 2007; y--){
+              var opt = document.createElement('option');
+              opt.value = y; opt.textContent = y+'년';
+              sel.appendChild(opt);
+            }
+          })();
+          </script>
         </div>
         <div id="dm-counter"></div>
       </div>
