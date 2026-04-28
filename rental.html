@@ -2696,36 +2696,11 @@ function saveColWidths(){
   const ths=document.querySelectorAll('#list-thead-row th.resizable');
   const widths=[...ths].map(th=>th.style.width||'');
   try{localStorage.setItem(COL_STORAGE_KEY,JSON.stringify(widths));}catch(e){}
-  // Firebase에도 저장
-  if(window._fbReady && window._fbSaveColWidths){
-    window._fbSaveColWidths(widths);
-  }
+  // 컬럼 너비는 localStorage만 저장 (Firebase 저장 안 함 - 속도 문제)
 }
 
 function loadColWidths(){
-  // Firebase 준비될 때까지 대기 후 불러오기
-  var maxTry = 20; // 최대 2초 대기
-  function tryLoad(n){
-    if(window._fbReady && window._fbLoadColWidths){
-      window._fbLoadColWidths().then(function(widths){
-        if(widths && widths.length){
-          try{localStorage.setItem(COL_STORAGE_KEY,JSON.stringify(widths));}catch(e){}
-          var ths=document.querySelectorAll('#list-thead-row th.resizable');
-          ths.forEach(function(th,i){if(widths[i]) th.style.width=widths[i];});
-          console.log('✅ 컬럼 너비 Firebase에서 불러옴');
-        } else {
-          _loadColWidthsLocal();
-        }
-      });
-    } else if(n > 0){
-      setTimeout(function(){ tryLoad(n-1); }, 100);
-    } else {
-      _loadColWidthsLocal();
-    }
-  }
-  tryLoad(maxTry);
-}
-function _loadColWidthsLocal(){
+  // localStorage에서만 불러오기 (빠름)
   try{
     const saved=localStorage.getItem(COL_STORAGE_KEY);
     if(!saved) return;
@@ -4266,20 +4241,7 @@ function doLogin(){
     });
   };
 
-  // 컬럼 너비 저장/불러오기
-  var colRef    = db.collection('rental').doc('col_widths');
-
-
-  window._fbSaveColWidths = function(widths) {
-    colRef.set({widths: widths}).catch(function(e){
-      console.error('컬럼 너비 저장 오류:', e);
-    });
-  };
-  window._fbLoadColWidths = function() {
-    return colRef.get()
-      .then(function(snap){ return snap.exists ? snap.data().widths : null; })
-      .catch(function(e){ console.error('컬럼 너비 불러오기 오류:', e); return null; });
-  };
+  // 컬럼 너비는 localStorage만 사용
 
 
 
