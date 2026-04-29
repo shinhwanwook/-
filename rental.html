@@ -4254,15 +4254,15 @@ let _loginTab = 'admin'; // 현재 선택된 탭
 
 function switchLoginTab(tab){
   _loginTab = tab;
-  var isAdmin = (tab === 'admin');
+  var isAdminTab = (tab === 'admin'); // 전역 isAdmin과 구분
   // 탭 스타일
-  document.getElementById('tab-admin').style.background = isAdmin ? '#1e3a5f' : '#f3f4f6';
-  document.getElementById('tab-admin').style.color      = isAdmin ? '#fff'    : '#6b7280';
-  document.getElementById('tab-user').style.background  = isAdmin ? '#f3f4f6' : '#1e3a5f';
-  document.getElementById('tab-user').style.color       = isAdmin ? '#6b7280' : '#fff';
+  document.getElementById('tab-admin').style.background = isAdminTab ? '#1e3a5f' : '#f3f4f6';
+  document.getElementById('tab-admin').style.color      = isAdminTab ? '#fff'    : '#6b7280';
+  document.getElementById('tab-user').style.background  = isAdminTab ? '#f3f4f6' : '#1e3a5f';
+  document.getElementById('tab-user').style.color       = isAdminTab ? '#6b7280' : '#fff';
   // 설명
   document.getElementById('login-desc').textContent =
-    isAdmin ? '관리자 계정으로 로그인합니다' : '사용자 계정으로 로그인합니다';
+    isAdminTab ? '관리자 계정으로 로그인합니다' : '사용자 계정으로 로그인합니다';
   // 입력 초기화
   document.getElementById('login-id').value = '';
   document.getElementById('login-pw').value = '';
