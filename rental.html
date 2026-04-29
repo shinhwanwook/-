@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>임대관리 시스템 v3</title>
 <style>
 :root{
@@ -754,10 +754,12 @@ body.locked { overflow:hidden; }
         <div id="dm-counter"></div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-warning btn-sm" onclick="editContract(currentNo)">✏️ 수정</button>
-      <button class="btn btn-sm" id="dm-terminate-btn" style="background:#7c3aed;color:#fff;border:none;display:none" onclick="confirmTerminate(currentNo)">🚫 해지</button>
+    <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center">
       <button class="btn btn-ghost" onclick="closeModal('detail-modal')">닫기</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-warning btn-sm" onclick="editContract(currentNo)">✏️ 수정</button>
+        <button class="btn btn-sm" id="dm-terminate-btn" style="background:#7c3aed;color:#fff;border:none;display:none" onclick="confirmTerminate(currentNo)">🚫 해지</button>
+      </div>
     </div>
   </div>
 </div>
@@ -958,11 +960,26 @@ body.locked { overflow:hidden; }
         <div style="display:grid;gap:10px">
           <div class="form-group" style="margin:0">
             <label>역할</label>
-            <select class="inp" id="acct-role">
+            <select class="inp" id="acct-role" onchange="updatePermUI()">
               <option value="admin">🔒 관리자</option>
               <option value="user">👤 사용자</option>
             </select>
           </div>
+          <!-- 권한 설정 (사용자만 표시) -->
+          <div id="acct-perm-wrap" style="display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin:4px 0">
+            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📋 메뉴별 권한</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-contract-read" checked> 계약목록 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-contract-write"> 계약 등록/수정</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-payment-read" checked> 입금관리 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-payment-write"> 입금 등록/수정</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-service-read" checked> 방문/AS 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-service-write"> 방문/AS 등록</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-read" checked> 세금계산서 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-write"> 세금계산서 등록</label>
+            </div>
+          </div>
+
           <div class="form-group" style="margin:0">
             <label class="required">아이디</label>
             <input class="inp" id="acct-id" placeholder="아이디 입력">
@@ -1865,6 +1882,8 @@ function openAcctAdd(){
   document.getElementById('acct-edit-key').value = '';
   document.getElementById('acct-form-msg').style.display = 'none';
   document.getElementById('acct-id').disabled = false;
+  setPermToForm({});
+  updatePermUI();
   document.getElementById('account-form-wrap').style.display = 'block';
   document.getElementById('acct-id').focus();
 }
@@ -1880,10 +1899,50 @@ function openAcctEdit(key){
   document.getElementById('acct-edit-key').value = key;
   document.getElementById('acct-form-msg').style.display = 'none';
   document.getElementById('acct-id').disabled = false;
+  setPermToForm(a.permissions || {});
+  updatePermUI();
   document.getElementById('account-form-wrap').style.display = 'block';
   document.getElementById('acct-pw').focus();
 }
 
+function updatePermUI(){
+  var role = document.getElementById('acct-role').value;
+  var wrap = document.getElementById('acct-perm-wrap');
+  if(wrap) wrap.style.display = role === 'user' ? 'block' : 'none';
+}
+function getPermFromForm(){
+  return {
+    contractRead:  document.getElementById('perm-contract-read').checked,
+    contractWrite: document.getElementById('perm-contract-write').checked,
+    paymentRead:   document.getElementById('perm-payment-read').checked,
+    paymentWrite:  document.getElementById('perm-payment-write').checked,
+    serviceRead:   document.getElementById('perm-service-read').checked,
+    serviceWrite:  document.getElementById('perm-service-write').checked,
+    taxRead:       document.getElementById('perm-tax-read').checked,
+    taxWrite:      document.getElementById('perm-tax-write').checked
+  };
+}
+function setPermToForm(perm){
+  var p = perm || {};
+  document.getElementById('perm-contract-read').checked  = p.contractRead  !== false;
+  document.getElementById('perm-contract-write').checked = !!p.contractWrite;
+  document.getElementById('perm-payment-read').checked   = p.paymentRead   !== false;
+  document.getElementById('perm-payment-write').checked  = !!p.paymentWrite;
+  document.getElementById('perm-service-read').checked   = p.serviceRead   !== false;
+  document.getElementById('perm-service-write').checked  = !!p.serviceWrite;
+  document.getElementById('perm-tax-read').checked       = p.taxRead       !== false;
+  document.getElementById('perm-tax-write').checked      = !!p.taxWrite;
+}
+var _currentUserId = '';
+function hasPerm(key){
+  if(isAdmin) return true;
+  var acctKey = Object.keys(ACCOUNTS).find(function(k){
+    return ACCOUNTS[k].id === _currentUserId;
+  });
+  if(!acctKey) return false;
+  var perm = ACCOUNTS[acctKey].permissions || {};
+  return perm[key] !== false;
+}
 function closeAcctForm(){
   document.getElementById('account-form-wrap').style.display = 'none';
   document.getElementById('acct-form-msg').style.display = 'none';
@@ -1917,13 +1976,17 @@ function saveAccount(){
     a.role = role;
     a.label = role === 'admin' ? '관리자' : '사용자';
     if(pw) a.pw = pw;
+    if(role === 'user') a.permissions = getPermFromForm();
+    else delete a.permissions;
     saveAccountsToStorage();
     showAcctMsg('✅ 계정이 수정되었습니다.', true);
   } else {
     // 추가 - key는 아이디 기반
     const newKey = id.toLowerCase().replace(/\s+/g,'_');
     if(ACCOUNTS[newKey]){ showAcctMsg('이미 존재하는 아이디입니다.', false); return; }
-    ACCOUNTS[newKey] = { id, pw, role, label: role==='admin'?'관리자':'사용자' };
+    var newAcct = { id:id, pw:pw, role:role, label:role==='admin'?'관리자':'사용자' };
+    if(role === 'user') newAcct.permissions = getPermFromForm();
+    ACCOUNTS[newKey] = newAcct;
     saveAccountsToStorage();
     showAcctMsg('✅ 계정이 추가되었습니다.', true);
   }
@@ -2765,19 +2828,35 @@ function saveColWidths(){
   const ths=document.querySelectorAll('#list-thead-row th.resizable');
   const widths=[...ths].map(th=>th.style.width||'');
   try{localStorage.setItem(COL_STORAGE_KEY,JSON.stringify(widths));}catch(e){}
-  // 컬럼 너비는 localStorage만 저장 (Firebase 저장 안 함 - 속도 문제)
+  // 💾 버튼 클릭시만 Firebase 저장 (드래그중 자동저장 아님)
+  if(window._fbReady && window._db){
+    window._db.collection('rental').doc('col_widths').set({widths:widths})
+      .catch(function(e){ console.error('컬럼너비 저장오류:', e); });
+  }
 }
-
 function loadColWidths(){
-  // localStorage에서만 불러오기 (빠름)
-  try{
-    const saved=localStorage.getItem(COL_STORAGE_KEY);
-    if(!saved) return;
-    const widths=JSON.parse(saved);
+  // Firebase 우선, 없으면 localStorage
+  function applyWidths(widths){
+    if(!widths||!widths.length) return;
     const ths=document.querySelectorAll('#list-thead-row th.resizable');
     ths.forEach((th,i)=>{if(widths[i]) th.style.width=widths[i];});
-  }catch(e){}
+  }
+  if(window._fbReady && window._db){
+    window._db.collection('rental').doc('col_widths').get()
+      .then(function(snap){
+        if(snap.exists && snap.data().widths) applyWidths(snap.data().widths);
+        else{
+          try{ const s=localStorage.getItem(COL_STORAGE_KEY); if(s) applyWidths(JSON.parse(s)); }catch(e){}
+        }
+      }).catch(function(){
+        try{ const s=localStorage.getItem(COL_STORAGE_KEY); if(s) applyWidths(JSON.parse(s)); }catch(e){}
+      });
+  } else {
+    try{ const s=localStorage.getItem(COL_STORAGE_KEY); if(s) applyWidths(JSON.parse(s)); }catch(e){}
+  }
 }
+
+
 (function(){
   let dragging=false,startX=0,startW=0,targetTh=null;
 
@@ -4180,6 +4259,7 @@ function doLogin(){
 
   if(matchedKey){
     var acct = ACCOUNTS[matchedKey];
+    _currentUserId = acct.id;
     if(document.getElementById('auto-login-chk').checked){
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
