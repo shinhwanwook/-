@@ -988,6 +988,7 @@ body.locked { overflow:hidden; }
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-service-write"> 방문/AS 등록</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-read" checked> 세금계산서 조회</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-write"> 세금계산서 등록</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-stats-read"> 임대통계 조회</label>
             </div>
           </div>
 
@@ -1930,7 +1931,8 @@ function getPermFromForm(){
     serviceRead:   document.getElementById('perm-service-read').checked,
     serviceWrite:  document.getElementById('perm-service-write').checked,
     taxRead:       document.getElementById('perm-tax-read').checked,
-    taxWrite:      document.getElementById('perm-tax-write').checked
+    taxWrite:      document.getElementById('perm-tax-write').checked,
+    statsRead:     document.getElementById('perm-stats-read').checked
   };
 }
 function setPermToForm(perm){
@@ -1943,6 +1945,7 @@ function setPermToForm(perm){
   document.getElementById('perm-service-write').checked  = !!p.serviceWrite;
   document.getElementById('perm-tax-read').checked       = p.taxRead       !== false;
   document.getElementById('perm-tax-write').checked      = !!p.taxWrite;
+  document.getElementById('perm-stats-read').checked     = !!p.statsRead;
 }
 var _currentUserId = '';
 function hasPerm(key){
@@ -2721,6 +2724,10 @@ function applyPermissions(){
   // 신규 등록 탭 숨김
   var registerTab = document.getElementById('nav-tab-register');
   if(registerTab) registerTab.style.display = perm.contractWrite ? '' : 'none';
+
+  // 임대통계 탭 숨김 (권한 없으면)
+  var statsTab = document.getElementById('nav-tab-stats');
+  if(statsTab) statsTab.style.display = perm.statsRead ? 'flex' : 'none';
 
   // 입금관리 탭 안내문구/추가사용료 버튼 숨김
   var payHint = document.getElementById('pay-hint');
