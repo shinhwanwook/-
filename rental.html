@@ -2600,7 +2600,6 @@ function collectData() {
       nextTaxSeq:  String(nextTaxSeq),
       nextDocId:   String(nextDocId),
     },
-    isAdmin: isAdmin
   };
 }
 
@@ -2797,7 +2796,7 @@ function applyRestoredData(data) {
   if(cfg.nextStaffId) nextStaffId = parseInt(cfg.nextStaffId)||nextStaffId;
   if(cfg.nextTaxSeq)  nextTaxSeq  = parseInt(cfg.nextTaxSeq)||nextTaxSeq;
   if(cfg.nextDocId)   nextDocId   = parseInt(cfg.nextDocId)||nextDocId;
-  if(data.isAdmin !== undefined) isAdmin = data.isAdmin;
+  // isAdmin은 로그인 시 결정 (저장/복원 안 함)
 }
 
 // ── JSON 백업 다운로드 ──
