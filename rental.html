@@ -1852,7 +1852,7 @@ function saveContract(){
 }
 // ══ 관리자 권한 ══
 let ADMIN_PW = '1234'; // 초기 비밀번호 (변경 가능)
-let isAdmin = false;
+window.isAdmin = false; // 전역 공유
 
 
 // ══ 계정 관리 함수들 ══
@@ -1946,7 +1946,7 @@ function setPermToForm(perm){
 }
 var _currentUserId = '';
 function hasPerm(key){
-  if(isAdmin) return true;
+  if(window.isAdmin) return true;
   var acctKey = Object.keys(ACCOUNTS).find(function(k){
     return ACCOUNTS[k].id === _currentUserId;
   });
@@ -2040,7 +2040,7 @@ function openAdminLogin(){
 function tryAdminLogin(){
   const pw=document.getElementById('admin-pw').value;
   if(pw===ADMIN_PW){
-    isAdmin=true;
+    window.isAdmin=true;
     closeModal('admin-modal');
     document.getElementById('nav-admin-label').style.display='inline';
     document.getElementById('nav-admin-btn').textContent='⚙️ 관리자';
@@ -2061,7 +2061,7 @@ function confirmLogout(){
   });
 }
 function adminLogout(){
-  isAdmin=false;
+  window.isAdmin=false;
   closeModal('admin-setting-modal');
   document.getElementById('nav-admin-label').style.display='none';
   document.getElementById('nav-tab-stats').style.display='none';
@@ -2694,7 +2694,7 @@ function hideLoadingScreen() {
 }
 
 function applyPermissions(){
-  if(isAdmin) return; // 관리자는 모든 권한
+  if(window.isAdmin) return; // 관리자는 모든 권한
   // 현재 사용자 권한 가져오기
   var acctKey = Object.keys(ACCOUNTS).find(function(k){
     return ACCOUNTS[k].id === _currentUserId;
@@ -4279,7 +4279,7 @@ function showApp(role){
 
   // 관리자면 자동으로 관리자 모드 활성화
   if(role === 'admin'){
-    isAdmin = true;
+    window.isAdmin = true;
     var navLabel = document.getElementById('nav-admin-label');
     var navBtn   = document.getElementById('nav-admin-btn');
     var tabStats = document.getElementById('nav-tab-stats');
@@ -4295,7 +4295,7 @@ function showApp(role){
     if(typeof updateStats === 'function') updateStats();
   } else {
     // 사용자는 관리자 모드 비활성
-    isAdmin = false;
+    window.isAdmin = false;
     var navLabel = document.getElementById('nav-admin-label');
     var navBtn   = document.getElementById('nav-admin-btn');
     if(navLabel) navLabel.style.display = 'none';
@@ -4329,7 +4329,7 @@ function doLogin(){
   if(matchedKey){
     var acct = ACCOUNTS[matchedKey];
     _currentUserId = acct.id;
-    isAdmin = false; // 반드시 초기화 후 showApp에서 설정
+    window.isAdmin = false; // 반드시 초기화
     if(document.getElementById('auto-login-chk').checked){
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
@@ -4497,7 +4497,7 @@ function doLogin(){
           var acct = ACCOUNTS[matchedKey];
           _currentUserId = acct.id;
           _loginTab = tab;
-          isAdmin = false; // 반드시 초기화 후 showApp에서 설정
+          window.isAdmin = false; // 반드시 초기화
           if(typeof showApp === 'function') showApp(acct.role);
           return;
         }
