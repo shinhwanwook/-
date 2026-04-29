@@ -427,6 +427,7 @@ body.locked { overflow:hidden; }
     </label>
     <span id="nav-admin-label" style="display:none;color:#bbdefb;font-size:12px;font-weight:600">🔓 관리자 모드</span>
     <button id="nav-admin-btn" onclick="openAdminLogin()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600">🔒 관리자</button>
+    <button onclick="confirmLogout()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">🚪 로그아웃</button>
   </div>
 </nav>
 
@@ -2053,6 +2054,11 @@ function tryAdminLogin(){
     document.getElementById('admin-pw').value='';
     document.getElementById('admin-pw').focus();
   }
+}
+function confirmLogout(){
+  showConfirm('로그아웃 하시겠습니까?', function(){
+    adminLogout();
+  });
 }
 function adminLogout(){
   isAdmin=false;
@@ -4323,6 +4329,7 @@ function doLogin(){
   if(matchedKey){
     var acct = ACCOUNTS[matchedKey];
     _currentUserId = acct.id;
+    isAdmin = false; // 반드시 초기화 후 showApp에서 설정
     if(document.getElementById('auto-login-chk').checked){
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
@@ -4490,6 +4497,7 @@ function doLogin(){
           var acct = ACCOUNTS[matchedKey];
           _currentUserId = acct.id;
           _loginTab = tab;
+          isAdmin = false; // 반드시 초기화 후 showApp에서 설정
           if(typeof showApp === 'function') showApp(acct.role);
           return;
         }
