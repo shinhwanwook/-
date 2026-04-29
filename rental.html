@@ -454,7 +454,7 @@ body.locked { overflow:hidden; }
       <button class="btn btn-primary" onclick="showPage('register')">＋ 신규 등록</button>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="srch" placeholder="🔍 거래처명, 담당자, 주소, 기기 검색...">
+      <input class="inp inp-search" type="text" id="srch" placeholder="🔍 거래처명, 전화번호(하이픈 없이도 가능), 주소, 기기 검색...">
       <select class="inp" id="flt-cms"><option value="">전체 유형</option><option value="CMS">CMS</option><option value="현금">현금</option><option value="카드">카드</option></select>
       <select class="inp" id="flt-staff" style="min-width:110px"><option value="">A/S담당 전체</option></select>
       <select class="inp" id="flt-paid">
@@ -1374,9 +1374,11 @@ function applyFilters(){
     // 해지 상태 필터
     if(fs==='active' && c.terminated) return false;
     if(fs==='terminated' && !c.terminated) return false;
-    // 텍스트 검색 (담당자 제외 — 주소·기기·거래처명만)
+    // 텍스트 검색
     const txt=(c.name+c.manager+c.address+c.etc+c.phone+(c.payment_day||'')).toLowerCase();
-    if(q&&!txt.includes(q)) return false;
+    const phoneClean=(c.phone||'').replace(/[- ]/g,'');
+    const qClean=q.replace(/[- ]/g,'');
+    if(q&&!txt.includes(q)&&!(qClean&&phoneClean.includes(qClean))) return false;
     if(cm&&c.cms!==cm) return false;
     // A/S담당 필터 — staff_ids 에 해당 담당자 ID 포함 여부
     if(fst){
