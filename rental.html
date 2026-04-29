@@ -3030,16 +3030,20 @@ function renderStats(){
     </td>
   </tr>`).join('') || '<tr><td colspan="4" class="empty">데이터 없음</td></tr>';
 
-  // 지역별 (주소에서 시/구 추출)
+  // 지역별 (주소에서 시 단위 추출)
   const regMap={};
   base.forEach(c=>{
     const addr=(c.address||'').trim();
     let region='기타';
-    const m=addr.match(/^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/);
-    if(m) region=m[1];
-    else if(addr.includes('인천')) region='인천';
-    else if(addr.includes('서울')) region='서울';
-    else if(addr.includes('경기')) region='경기';
+    // 시 단위로 추출 (인천시, 부천시, 서울시 등)
+    const m=addr.match(/^(\S+시|\S+군)/);
+    if(m){
+      region=m[1];
+    } else {
+      // 시 이름이 앞에 없는 경우
+      const m2=addr.match(/(인천|서울|부천|시흥|김포|고양|안산|화성|안양|군포|의왕|파주|부산|대구|광주|대전|울산)/);
+      if(m2) region=m2[1]+'시';
+    }
     if(!regMap[region]) regMap[region]={count:0,rent:0};
     regMap[region].count++; regMap[region].rent+=c.rent;
   });
