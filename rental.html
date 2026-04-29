@@ -2734,6 +2734,9 @@ function applyPermissions(){
   var payExtraBtn = document.getElementById('pay-extra-btn');
   if(payHint) payHint.style.display = perm.paymentWrite ? '' : 'none';
   if(payExtraBtn) payExtraBtn.style.display = perm.paymentWrite ? '' : 'none';
+
+  // 권한 적용 후 목록 다시 렌더링
+  if(typeof applyFilters === 'function') applyFilters();
 }
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
