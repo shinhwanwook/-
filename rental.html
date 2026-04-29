@@ -600,8 +600,8 @@ body.locked { overflow:hidden; }
     <div class="card-header">
       <span class="card-title">입금 관리</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-size:12px;color:var(--text3)">셀 클릭 → 입금 등록/수정</span>
-        <button class="btn btn-success btn-sm" onclick="openExtraPayAdd()">＋ 추가사용료 등록</button>
+        <span id="pay-hint" style="font-size:12px;color:var(--text3)">셀 클릭 → 입금 등록/수정</span>
+        <button id="pay-extra-btn" class="btn btn-success btn-sm" onclick="openExtraPayAdd()">＋ 추가사용료 등록</button>
       </div>
     </div>
     <div class="controls">
@@ -2280,8 +2280,9 @@ function renderPayment(){
       const cls=isDone?'pmt-done':v?'pmt-special':'pmt-miss';
       const memoVal=(c.payments[k+'_memo']||'').replace(/'/g,'&#39;');
       const label=isDone?parseInt(v.slice(5,7))+'/'+parseInt(v.slice(8)):v?'⚠️':'❌';
-      return `<td style="text-align:center;padding:4px 2px;cursor:pointer;position:relative"
-        onclick="openPayEditFor(${c.no},'${k}')"
+      const payWriteOk = isAdmin || hasPerm('paymentWrite');
+      return `<td style="text-align:center;padding:4px 2px;${payWriteOk?'cursor:pointer':'cursor:default'};position:relative"
+        onclick="${payWriteOk?`openPayEditFor(${c.no},'${k}')`:''}"
         onmouseenter="showPayTip(this,'${k}','${v||''}','${memoVal}')"
         onmouseleave="hidePayTip()">
         <span class="badge ${cls}" style="border-radius:4px;font-size:11px">${label}</span>
@@ -2700,6 +2701,12 @@ function applyPermissions(){
   // 신규 등록 탭 숨김
   var registerTab = document.getElementById('nav-tab-register');
   if(registerTab) registerTab.style.display = perm.contractWrite ? '' : 'none';
+
+  // 입금관리 탭 안내문구/추가사용료 버튼 숨김
+  var payHint = document.getElementById('pay-hint');
+  var payExtraBtn = document.getElementById('pay-extra-btn');
+  if(payHint) payHint.style.display = perm.paymentWrite ? '' : 'none';
+  if(payExtraBtn) payExtraBtn.style.display = perm.paymentWrite ? '' : 'none';
 }
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
