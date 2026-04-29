@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>임대관리 시스템 v3</title>
 <style>
 :root{
@@ -227,6 +227,16 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .stats{grid-template-columns:repeat(2,1fr)}
   .form-grid,.form-grid.cols3{grid-template-columns:1fr}
   .nav-tab{padding:0 10px;font-size:12px}
+  .page{padding:10px}
+  .tbl-wrap{max-height:calc(100vh - 220px)}
+}
+@media(max-width:480px){
+  .stats{grid-template-columns:repeat(1,1fr)}
+  .nav{padding:0 10px}
+  .nav-tab{padding:0 8px;font-size:11px}
+  .page{padding:8px}
+  body{overflow-x:hidden}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 
 <style>
@@ -2658,6 +2668,38 @@ function hideLoadingScreen() {
   var aw = document.getElementById('app-wrapper');
   if(ls) ls.style.display = 'none';
   if(aw) { aw.style.display = 'block'; aw.style.removeProperty('display'); aw.style.display = 'block'; }
+  // 권한 적용
+  applyPermissions();
+}
+
+function applyPermissions(){
+  if(isAdmin) return; // 관리자는 모든 권한
+  // 현재 사용자 권한 가져오기
+  var acctKey = Object.keys(ACCOUNTS).find(function(k){
+    return ACCOUNTS[k].id === _currentUserId;
+  });
+  var perm = (acctKey && ACCOUNTS[acctKey].permissions) || {};
+
+  // 각 버튼 숨김/표시
+  // 입금 등록/수정
+  var payWriteBtns = document.querySelectorAll('[onclick*="openPayEdit"],[onclick*="savePayment"],[onclick*="deletePayment"]');
+  payWriteBtns.forEach(function(b){ b.style.display = perm.paymentWrite ? '' : 'none'; });
+
+  // 계약 등록/수정
+  var contractWriteBtns = document.querySelectorAll('[onclick*="editContract"],[onclick*="saveContract"],[onclick*="openDetail"],[onclick*="confirmTerminate"]');
+  contractWriteBtns.forEach(function(b){ b.style.display = perm.contractWrite ? '' : 'none'; });
+
+  // 방문/AS 등록
+  var svcWriteBtns = document.querySelectorAll('[onclick*="openServiceAdd"],[onclick*="saveService"]');
+  svcWriteBtns.forEach(function(b){ b.style.display = perm.serviceWrite ? '' : 'none'; });
+
+  // 세금계산서 등록
+  var taxWriteBtns = document.querySelectorAll('[onclick*="openTaxAdd"],[onclick*="saveTaxIssue"],[onclick*="openTaxClientAdd"],[onclick*="openTaxClientMgr"]');
+  taxWriteBtns.forEach(function(b){ b.style.display = perm.taxWrite ? '' : 'none'; });
+
+  // 신규 등록 탭 숨김
+  var registerTab = document.getElementById('nav-tab-register');
+  if(registerTab) registerTab.style.display = perm.contractWrite ? '' : 'none';
 }
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
