@@ -2062,7 +2062,8 @@ function confirmLogout(){
 }
 function adminLogout(){
   window.isAdmin=false;
-  closeModal('admin-setting-modal');
+  // 모든 모달 닫기
+  document.querySelectorAll('.modal-bg').forEach(function(m){ m.classList.remove('open'); });
   document.getElementById('nav-admin-label').style.display='none';
   document.getElementById('nav-tab-stats').style.display='none';
   document.getElementById('nav-tab-inventory').style.display='none';
