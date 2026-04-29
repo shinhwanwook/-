@@ -793,7 +793,7 @@ body.locked { overflow:hidden; }
     <div class="modal-foot">
       <button class="btn btn-danger btn-sm" id="pm-del-btn" onclick="deletePayment()">삭제</button>
       <button class="btn btn-ghost" onclick="closeModal('pay-modal')">취소</button>
-      <button class="btn btn-primary" onclick="savePayment()">저장</button>
+      <button class="btn btn-primary" id="pm-save-btn" onclick="savePayment()">저장</button>
     </div>
   </div>
 </div>
@@ -2143,9 +2143,18 @@ function openPayEdit(){
   const now=new Date();
   document.getElementById('pm-year').value=now.getFullYear();
   document.getElementById('pm-month').value=now.getMonth()+1;
+  var canWrite2 = isAdmin || hasPerm('paymentWrite');
+  var saveBtn2 = document.getElementById('pm-save-btn');
+  var delBtn2  = document.getElementById('pm-del-btn');
+  if(saveBtn2) saveBtn2.style.display = canWrite2 ? '' : 'none';
+  if(delBtn2)  delBtn2.style.display  = canWrite2 ? '' : 'none';
   openModal('pay-modal');
 }
 function openPayEditFor(no,key){
+  // 권한 체크
+  if(!isAdmin && !hasPerm('paymentWrite')){
+    // 읽기 전용 - 팝업은 열되 저장/삭제 숨김
+  }
   payEditNo=no;payEditKey=key;
   const c=CONTRACTS.find(x=>x.no===no);
   const val=c.payments[key];
@@ -2157,6 +2166,11 @@ function openPayEditFor(no,key){
   document.getElementById('pm-date').value=val&&/^\d{4}/.test(val)?val:today();
   document.getElementById('pm-memo').value=memo||(val&&!/^\d{4}/.test(val)?val:'');
   document.getElementById('pm-del-btn').style.display=val?'':'none';
+  // 권한 체크 - 저장/삭제 버튼 숨김
+  var canWrite = isAdmin || hasPerm('paymentWrite');
+  var saveBtn = document.getElementById('pm-save-btn');
+  if(saveBtn) saveBtn.style.display = canWrite ? '' : 'none';
+  if(!canWrite) document.getElementById('pm-del-btn').style.display = 'none';
   openModal('pay-modal');
 }
 function savePayment(){
