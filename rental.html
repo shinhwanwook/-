@@ -1136,27 +1136,21 @@ function missedMonths(c){
     }
   }
 
-  // 체크 종료월: 선불=전달, 후불=전전달
+  // 체크 종료월: 매월 1일 기준 → 이번달 포함해서 체크
+  // (약정일 무시 - 1일이 지나면 무조건 해당월 미납 여부 체크)
   let endY = now.getFullYear();
-  let endM = now.getMonth(); // 0-based라 이게 전달
-  if(endM === 0){ endM = 12; endY -= 1; }
+  let endM = now.getMonth() + 1; // 이번달까지 체크 (1일 기준)
+
+  // 후불이면 전달까지만 체크
   if(isPostpaid){
-    endM--;
+    endM = now.getMonth(); // 전달
     if(endM === 0){ endM = 12; endY -= 1; }
   }
 
-  // 납부 여부 확인 함수
-  // - 후불: 해당월 OR 다음달 납부 인정
-  // - 선불: 해당월 OR 다음달 납부 인정 (매월 1일 기준 - 등록일과 무관하게 다음달까지 납부 허용)
+  // 납부 여부 확인 - 해당월 입금만 인정 (약정일 무시)
   function isPaid(ky, km){
     const k = ky + '-' + String(km).padStart(2,'0');
-    if(c.payments[k]) return true;
-    // 다음달 납부도 인정 (1일 기준 - 선불/후불 공통)
-    let ny = ky, nm = km + 1;
-    if(nm > 12){ nm = 1; ny++; }
-    const nk = ny + '-' + String(nm).padStart(2,'0');
-    if(c.payments[nk]) return true;
-    return false;
+    return !!c.payments[k];
   }
 
   let missed = 0;
