@@ -503,6 +503,25 @@ body.locked { overflow:hidden; }
   </div>
 </div>
 
+<!-- ══ MODAL: 세금계산서 메모 ══ -->
+<div class="modal-bg" id="tax-memo-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3 id="tax-memo-title">📝 메모</h3>
+      <button class="modal-close" onclick="closeModal('tax-memo-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:8px;font-size:13px;color:var(--text3)" id="tax-memo-name"></div>
+      <textarea id="tax-memo-text" class="inp" style="width:100%;height:160px;resize:vertical;font-size:13px;line-height:1.6"
+        placeholder="메모를 입력하세요..."></textarea>
+    </div>
+    <div class="modal-foot" style="display:flex;justify-content:space-between">
+      <button class="btn btn-ghost" onclick="closeModal('tax-memo-modal')">닫기</button>
+      <button class="btn btn-primary" onclick="saveTaxMemo()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PAGE: 신규 등록 ══ -->
 <div class="page" id="page-register">
   <div class="card" style="max-width:780px;margin:0 auto">
@@ -3712,6 +3731,26 @@ var _taxEditKey = null; // "seq-YYYY-MM"
 
 // ── 요약 통계 ──
 // issues 값에서 날짜 문자열 추출 (문자열 또는 {date:...} 객체 모두 처리)
+var _taxMemoSeq = null;
+function openTaxMemo(seq){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(seq); });
+  if(!t) return;
+  _taxMemoSeq = seq;
+  document.getElementById('tax-memo-title').textContent = '📝 메모 — ' + t.name;
+  document.getElementById('tax-memo-name').textContent = t.manager ? '담당자: ' + t.manager : '';
+  document.getElementById('tax-memo-text').value = t.memo || '';
+  openModal('tax-memo-modal');
+  setTimeout(function(){ document.getElementById('tax-memo-text').focus(); }, 200);
+}
+function saveTaxMemo(){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_taxMemoSeq); });
+  if(!t) return;
+  t.memo = document.getElementById('tax-memo-text').value;
+  closeModal('tax-memo-modal');
+  autoSave();
+  renderTax();
+}
+
 function getTaxDate(v) {
   if(!v) return '';
   if(typeof v === 'string' && /^\d{4}/.test(v)) return v.slice(0,10);
@@ -3826,7 +3865,8 @@ function renderTax() {
         '<div style="'+cellStyle+'">'+cellContent+'</div></td>';
     }).join('');
     return '<tr>'+
-      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis">'+esc(t.name)+'</td>'+
+      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="openTaxMemo('+t.seq+')">'+
+        esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'-')+'</td>'+
       '<td style="font-size:12px;white-space:nowrap">'+t.rent.toLocaleString()+'원</td>'+
