@@ -3747,8 +3747,12 @@ function saveTaxMemo(){
   if(!t) return;
   t.memo = document.getElementById('tax-memo-text').value;
   closeModal('tax-memo-modal');
-  autoSave();
   renderTax();
+  // 즉시 Firebase 저장 (debounce 없이)
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok ? '✅ 메모 저장됨' : '⚠ 저장 실패', ok ? '#86efac' : '#fbbf24');
+  });
 }
 
 function getTaxDate(v) {
