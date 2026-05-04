@@ -2761,6 +2761,8 @@ function loadFromApi(callback) {
               hideLoadingScreen();
               showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
               if(callback) callback(true);
+              // 자동 백업 체크
+              checkAutoBackup();
             }, 400);
           }catch(e2){
             console.error('렌더링 오류:', e2);
@@ -2805,6 +2807,20 @@ function applyRestoredData(data) {
 }
 
 // ── JSON 백업 다운로드 ──
+function checkAutoBackup(){
+  try{
+    var today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    var lastBackup = localStorage.getItem('rental_last_backup');
+    if(lastBackup === today) return; // 오늘 이미 백업함
+    // 오늘 첫 접속 → 자동 백업
+    setTimeout(function(){
+      backupData();
+      localStorage.setItem('rental_last_backup', today);
+      showSaveStatus('💾 자동 백업 완료', '#86efac');
+    }, 2000); // 2초 후 실행 (화면 로딩 완료 후)
+  }catch(e){}
+}
+
 function backupData() {
   try {
     const json  = JSON.stringify(collectData(), null, 2);
