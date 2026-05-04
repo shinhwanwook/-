@@ -2968,7 +2968,7 @@ function loadColWidths(){
 (function(){
   let dragging=false,startX=0,startW=0,targetTh=null;
 
-  function attachResizers(){
+  window.attachResizers = function attachResizers(){
     document.querySelectorAll('#list-thead-row th.resizable').forEach(th=>{
       if(th.querySelector('.col-resizer')) return;
       if(!th.style.width) th.style.width=th.offsetWidth+'px';
