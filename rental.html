@@ -459,7 +459,7 @@ body.locked { overflow:hidden; }
     </div>
     <div class="controls">
       <input class="inp inp-search" type="text" id="srch" placeholder="🔍 거래처명, 전화번호(하이픈 없이도 가능), 주소, 기기 검색...">
-      <select class="inp" id="flt-cms"><option value="">전체 유형</option><option value="CMS">CMS</option><option value="현금">현금</option><option value="카드">카드</option></select>
+      <select class="inp" id="flt-cms"><option value="">전체 유형</option><option value="CMS">CMS</option><option value="입금">입금</option><option value="카드">카드</option></select>
       <select class="inp" id="flt-staff" style="min-width:110px"><option value="">A/S담당 전체</option></select>
       <select class="inp" id="flt-paid">
         <option value="">납부상태 전체</option><option value="paid">납부 완료</option>
@@ -535,7 +535,7 @@ body.locked { overflow:hidden; }
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group"><label class="required">거래처명</label><input class="inp" id="f-name" placeholder="예) 헤브론축구선교회"></div>
-        <div class="form-group"><label class="required">유형</label><select class="inp" id="f-cms"><option value="CMS">CMS 자동이체</option><option value="현금">현금</option><option value="카드">카드</option></select></div>
+        <div class="form-group"><label class="required">유형</label><select class="inp" id="f-cms"><option value="CMS">CMS 자동이체</option><option value="입금">입금</option><option value="카드">카드</option></select></div>
         <div class="form-group"><label>담당자</label><input class="inp" id="f-manager" placeholder="예) 홍길동 / 김철수"></div>
         <div class="form-group"><label>전화번호</label><input class="inp" id="f-phone" placeholder="예) 010-0000-0000"></div>
         <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder="예) example@email.com"></div>
@@ -1486,6 +1486,7 @@ function renderList(){
       : (isAdmin?`<button class="btn btn-xs" style="background:#7c3aed;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:600" onclick="confirmTerminate(${c.no})">해지</button>`:'');
     const rentColor = c.tax==='유' ? 'color:#dc2626;font-weight:700' : 'font-weight:600';
     const cmsBadgeCls = c.cms==='CMS'?'b-cms':c.cms==='카드'?'b-purple':'b-cash';
+    const cmsLabel = c.cms==='현금'?'입금':c.cms;
     const rentMemo = c.rent_memo||'';
     const rentMemoIcon = rentMemo ? `<span style="margin-left:4px;font-size:10px;background:#fef9c3;color:#854d0e;padding:1px 5px;border-radius:3px;font-weight:600;cursor:pointer" title="${esc(rentMemo)}">메모</span>` : '';
     return `<tr onclick="openDetail(${c.no})" class="${rowClass}" style="${rowStyle}">
