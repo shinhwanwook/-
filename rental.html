@@ -154,8 +154,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .pmt-miss{background:var(--red-bg);color:var(--red)}
 .pmt-special{background:var(--orange-bg);color:var(--orange)}
 /* 입금 유형별 색상 */
-.pmt-cms{background:#dbeafe;color:#1d4ed8}
-.pmt-card{background:#d1fae5;color:#065f46}
+.pmt-cms{background:#d1fae5;color:#065f46}
+.pmt-card{background:#dbeafe;color:#1d4ed8}
 .pmt-cash{background:#fef9c3;color:#854d0e}
 .pmt-mo{font-weight:700;font-size:9px}
 
@@ -814,8 +814,8 @@ body.locked { overflow:hidden; }
         <div class="form-group"><label>입금유형</label>
           <select class="inp" id="pm-type">
             <option value="">선택안함</option>
-            <option value="cms">🔵 CMS</option>
-            <option value="card">🟢 카드</option>
+            <option value="cms">🟢 CMS</option>
+            <option value="card">🔵 카드</option>
             <option value="cash">🟡 현금</option>
           </select>
         </div>
@@ -1584,7 +1584,7 @@ function renderPayHist(c){
     const payType=c.payments[k+'_type']||'';
     const typeClass=isDone?(payType==='cms'?'pmt-cms':payType==='card'?'pmt-card':payType==='cash'?'pmt-cash':'pmt-done'):(v?'pmt-special':'pmt-miss');
     const cls=typeClass;
-    const icon=isDone?(payType==='cms'?'🔵':payType==='card'?'🟢':payType==='cash'?'🟡':'✅'):v?'⚠️':'❌';
+    const icon=isDone?(payType==='cms'?'🟢':payType==='card'?'🔵':payType==='cash'?'🟡':'✅'):v?'⚠️':'❌';
     const memoVal=(c.payments[k+'_memo']||'').replace(/'/g,'&#39;');
     return `<div class="pmt ${cls}" style="cursor:pointer"
       onclick="openPayEditFor(${c.no},'${k}')"
