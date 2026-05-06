@@ -153,6 +153,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .pmt-done{background:var(--green-bg);color:var(--green)}
 .pmt-miss{background:var(--red-bg);color:var(--red)}
 .pmt-special{background:var(--orange-bg);color:var(--orange)}
+/* 입금 유형별 색상 */
+.pmt-cms{background:#dbeafe;color:#1d4ed8}
+.pmt-card{background:#d1fae5;color:#065f46}
+.pmt-cash{background:#fef9c3;color:#854d0e}
 .pmt-mo{font-weight:700;font-size:9px}
 
 /* LOG */
@@ -807,7 +811,15 @@ body.locked { overflow:hidden; }
           <option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
         </select></div>
         <div class="form-group"><label class="required">납부일</label><input class="inp" id="pm-date" type="date"></div>
-        <div class="form-group form-full"><label>메모</label><input class="inp" id="pm-memo" placeholder="예) 카드납부, 선납 등"></div>
+        <div class="form-group"><label>입금유형</label>
+          <select class="inp" id="pm-type">
+            <option value="">선택안함</option>
+            <option value="cms">🔵 CMS</option>
+            <option value="card">🟢 카드</option>
+            <option value="cash">🟡 현금</option>
+          </select>
+        </div>
+        <div class="form-group form-full"><label>메모</label><input class="inp" id="pm-memo" placeholder="예) 선납 등"></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -1569,8 +1581,10 @@ function renderPayHist(c){
     const v=c.payments[k];
     const lbl=k.slice(5)+'월';
     const isDone=v&&/^\d{4}/.test(v);
-    const cls=isDone?'pmt-done':v?'pmt-special':'pmt-miss';
-    const icon=isDone?'✅':v?'⚠️':'❌';
+    const payType=c.payments[k+'_type']||'';
+    const typeClass=isDone?(payType==='cms'?'pmt-cms':payType==='card'?'pmt-card':payType==='cash'?'pmt-cash':'pmt-done'):(v?'pmt-special':'pmt-miss');
+    const cls=typeClass;
+    const icon=isDone?(payType==='cms'?'🔵':payType==='card'?'🟢':payType==='cash'?'🟡':'✅'):v?'⚠️':'❌';
     const memoVal=(c.payments[k+'_memo']||'').replace(/'/g,'&#39;');
     return `<div class="pmt ${cls}" style="cursor:pointer"
       onclick="openPayEditFor(${c.no},'${k}')"
@@ -2161,6 +2175,7 @@ function openPayEdit(){
   payEditNo=currentNo;payEditKey=null;
   document.getElementById('pm-title').textContent='입금 등록';
   document.getElementById('pm-date').value=today();
+  document.getElementById('pm-type').value='';
   document.getElementById('pm-memo').value='';
   document.getElementById('pm-del-btn').style.display='none';
   const now=new Date();
@@ -2188,6 +2203,9 @@ function openPayEditFor(no,key){
   document.getElementById('pm-month').value=parseInt(m);
   document.getElementById('pm-date').value=val&&/^\d{4}/.test(val)?val:today();
   document.getElementById('pm-memo').value=memo||(val&&!/^\d{4}/.test(val)?val:'');
+  // 유형 복원
+  var savedType = (c.payments[key+'_type'])||'';
+  document.getElementById('pm-type').value=savedType;
   document.getElementById('pm-del-btn').style.display=val?'':'none';
   // 권한 체크 - 저장/삭제 버튼 숨김
   var canWrite = isAdmin || hasPerm('paymentWrite');
@@ -2202,8 +2220,12 @@ function savePayment(){
   const key=`${y}-${m}`;
   const dt=document.getElementById('pm-date').value;
   const memo=document.getElementById('pm-memo').value.trim();
+  const payType=document.getElementById('pm-type').value;
   const c=CONTRACTS.find(x=>x.no===payEditNo);
   c.payments[key]=dt||memo||'납부';
+  // 유형 저장 (key_type으로)
+  if(payType) c.payments[key+'_type']=payType;
+  else delete c.payments[key+'_type'];
   if(memo) c.payments[key+'_memo']=memo;
   else delete c.payments[key+'_memo'];
   closeModal('pay-modal');
@@ -2314,7 +2336,8 @@ function renderPayment(){
     const cells=keys.map(k=>{
       const v=c.payments[k];
       const isDone=v&&/^\d{4}/.test(v);
-      const cls=isDone?'pmt-done':v?'pmt-special':'pmt-miss';
+      const payType2=c.payments[k+'_type']||'';
+      const cls=isDone?(payType2==='cms'?'pmt-cms':payType2==='card'?'pmt-card':payType2==='cash'?'pmt-cash':'pmt-done'):(v?'pmt-special':'pmt-miss');
       const memoVal=(c.payments[k+'_memo']||'').replace(/'/g,'&#39;');
       const label=isDone?parseInt(v.slice(5,7))+'/'+parseInt(v.slice(8)):v?'⚠️':'❌';
       const payWriteOk = isAdmin || hasPerm('paymentWrite');
@@ -4478,6 +4501,21 @@ function doLogin(){
     Object.keys(taxChunks).forEach(function(key) {
       promises.push(db.collection('rental').doc('tax_issues_' + key).set({issues: taxChunks[key]}));
     });
+    // DOC_FILES 별도 저장 (base64 데이터 포함으로 크기 큼)
+    var docData = data.DOC_FILES || [];
+    // 파일 데이터를 10개씩 청크로 분리
+    var docChunks = [];
+    for(var i=0; i<docData.length; i+=10){
+      docChunks.push(docData.slice(i, i+10));
+    }
+    // 기존 doc 청크 삭제 후 새로 저장
+    for(var i=0; i<20; i++){
+      promises.push(
+        db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0'))
+          .set(i < docChunks.length ? {docs: docChunks[i]} : {docs: []})
+      );
+    }
+
     return Promise.all(promises)
       .then(function(){ return true; })
       .catch(function(e){ console.error('Firebase 저장 오류:', e); return false; });
@@ -4544,7 +4582,21 @@ function doLogin(){
         if(typeof setLoadingProgress==='function') setLoadingProgress(75, '세금계산서 완료...');
       console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
       }
-      return result;
+      // DOC_FILES 불러오기
+      var docPromises = [];
+      for(var i=0; i<20; i++){
+        docPromises.push(db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0')).get());
+      }
+      return Promise.all(docPromises).then(function(docSnaps){
+        var allDocs = [];
+        docSnaps.forEach(function(snap){
+          if(snap.exists && snap.data().docs && snap.data().docs.length){
+            allDocs = allDocs.concat(snap.data().docs);
+          }
+        });
+        if(allDocs.length) result.DOC_FILES = allDocs;
+        return result;
+      });
     }).catch(function(e) {
       console.error('Firebase 불러오기 오류:', e);
       return null;
