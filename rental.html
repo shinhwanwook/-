@@ -2506,7 +2506,25 @@ function saveDocFiles(){
   });
   pendingDocFiles=[];
   closeModal('doc-modal');
-  renderDocs();alert('업로드 완료되었습니다.');
+  renderDocs();
+  // 즉시 Firebase 저장 (DOC_FILES 청크 저장)
+  if(window._fbReady && window._db){
+    var docChunks2 = [];
+    for(var i=0; i<DOC_FILES.length; i+=10){
+      docChunks2.push(DOC_FILES.slice(i, i+10));
+    }
+    var docPromises2 = [];
+    for(var i=0; i<20; i++){
+      docPromises2.push(
+        window._db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0'))
+          .set(i < docChunks2.length ? {docs: docChunks2[i]} : {docs: []})
+      );
+    }
+    Promise.all(docPromises2)
+      .then(function(){ showSaveStatus('✅ 서류 저장됨', '#86efac'); })
+      .catch(function(e){ console.error('서류 저장 오류:', e); showSaveStatus('⚠ 서류 저장 실패', '#fbbf24'); });
+  }
+  alert('업로드 완료되었습니다.');
 }
 function renderDocs(){
   const q=document.getElementById('doc-srch').value.toLowerCase();
@@ -4494,6 +4512,7 @@ function doLogin(){
     });
 
     var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
+    delete mainData.DOC_FILES; // DOC_FILES는 별도 청크로 저장
     var promises = [mainRef.set(mainData)];
     Object.keys(payChunks).forEach(function(key) {
       promises.push(db.collection('rental').doc('pay_' + key).set({payments: payChunks[key]}));
