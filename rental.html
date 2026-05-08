@@ -3689,6 +3689,9 @@ function hidePayTip(){
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
         <input class="inp inp-search" type="text" id="tc-srch" placeholder="🔍 거래처명, 담당자 검색..."
                oninput="renderTaxClientList()" style="flex:1">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text)">
+          <input type="checkbox" id="tc-show-terminated" onchange="renderTaxClientList()"> 해지 포함
+        </label>
         <button class="btn btn-primary btn-sm" onclick="openTaxClientAdd()">＋ 거래처 추가</button>
       </div>
 
