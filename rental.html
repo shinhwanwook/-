@@ -4103,9 +4103,27 @@ function _openTaxEditModal(seq, ym, t, v){
   document.getElementById('tax-f-year').value  = ym.slice(0,4);
   document.getElementById('tax-f-month').value = ym.slice(5,7);
   document.getElementById('tax-f-date').value  = (v && /^\d{4}/.test(v)) ? v.slice(0,10) : ym+'-05';
-  document.getElementById('tax-f-amount').value = '0';
-  if(document.getElementById('tax-vat-excl')) document.getElementById('tax-vat-excl').checked = true;
-  if(document.getElementById('tax-amount-preview')) document.getElementById('tax-amount-preview').style.display = 'none';
+  // 공급가액 자동 설정 - 거래처 렌탈금 기준
+  var autoAmt = 0;
+  if(v && typeof v === 'object' && v.amount){ 
+    autoAmt = v.amount; // 기존 저장된 금액
+  } else if(t && t.rent){
+    // VAT 포함 여부에 따라 공급가액 계산
+    var vatIncl = t.vatIncluded !== false;
+    autoAmt = vatIncl ? Math.round(t.rent / 1.1) : t.rent;
+  }
+  document.getElementById('tax-f-amount').value = autoAmt || '0';
+  // VAT 포함 여부도 자동 설정
+  if(document.getElementById('tax-vat-excl')){
+    var isVatExcl = t && t.vatIncluded === false;
+    document.getElementById('tax-vat-excl').checked = isVatExcl;
+    // 반대 라디오버튼
+    var vatInclEl = document.getElementById('tax-vat-incl');
+    if(vatInclEl) vatInclEl.checked = !isVatExcl;
+  }
+  // 미리보기 자동 표시
+  if(autoAmt > 0) calcTaxAmount();
+  if(document.getElementById('tax-amount-preview') && autoAmt > 0) document.getElementById('tax-amount-preview').style.display = 'block';
   document.getElementById('tax-f-memo').value  = (v && !/^\d{4}/.test(v)) ? v : '';
   openModal('tax-modal');
 }
