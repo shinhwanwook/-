@@ -2714,11 +2714,13 @@ function saveToApi(callback) {
 // ── 자동저장 (0.5초 debounce) ──
 function autoSave() {
   if(window._colDragging) return; // 컬럼 드래그 중엔 저장 안 함
+  if(window._isLoading) return;   // 데이터 로딩 중엔 저장 안 함
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function(){
+    if(window._isLoading) return; // 재확인
     saveToLocal();          // 항상 localStorage에 저장
     if(isApiEnabled()) saveToApi(null); // API도 저장
-  }, 500);
+  }, 2000); // 2초 디바운스 - 동시 저장 충돌 방지
 }
 
 // ── localStorage 복원 ──
@@ -2795,6 +2797,7 @@ function applyPermissions(){
 }
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
+    window._isLoading = true; // 로딩 중 플래그
     setLoadingProgress(10, '서버 연결 중...');
     window._fbLoad().then(function(data) {
       if (!data) {
@@ -2819,6 +2822,7 @@ function loadFromApi(callback) {
             renderTax();
             setLoadingProgress(100, '완료!');
             setTimeout(function(){
+              window._isLoading = false; // 로딩 완료
               hideLoadingScreen();
               showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
               if(callback) callback(true);
@@ -3867,6 +3871,7 @@ function renderTax() {
 
   // 필터
   var list = TAX_CLIENTS.filter(function(t) {
+    if(t.terminated) return false; // 해지된 거래처 제외
     var txt = (t.name+t.manager).toLowerCase();
     if(q && txt.indexOf(q)<0) return false;
     if(st==='done') {
@@ -4279,16 +4284,20 @@ function saveTaxClient() {
 function renderTaxClientList() {
   var q = (document.getElementById('tc-srch') ?
            document.getElementById('tc-srch').value.toLowerCase() : '');
+  var showTerminated = document.getElementById('tc-show-terminated') ?
+    document.getElementById('tc-show-terminated').checked : false;
   var list = TAX_CLIENTS.filter(function(t) {
+    // 해지 필터
+    if(!showTerminated && t.terminated) return false;
     if(!q) return true;
     return (t.name+t.manager+t.phone+t.email).toLowerCase().indexOf(q) >= 0;
   });
 
   document.getElementById('tax-client-list').innerHTML = list.length ?
     list.map(function(t) {
-      return '<tr>'+
+      return '<tr style="'+(t.terminated?'opacity:.5;background:#f9fafb':'')+'">' +
         '<td style="color:#aaa;text-align:center">'+t.seq+'</td>'+
-        '<td style="font-weight:600">'+esc(t.name)+'</td>'+
+        '<td style="font-weight:600">'+esc(t.name)+(t.terminated?'<span style="margin-left:6px;font-size:10px;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px">해지</span>':'')+'</td>'+
         '<td style="font-size:12px">'+esc(t.manager||'-')+'</td>'+
         '<td style="font-size:12px">'+esc(t.phone||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--blue)">'+esc(t.email||'-')+'</td>'+
@@ -4298,7 +4307,10 @@ function renderTaxClientList() {
         '<td>'+
           '<div class="tbl-action">'+
             '<button class="btn btn-xs btn-ghost" onclick="openTaxClientEdit('+t.seq+')">수정</button>'+
-            '<button class="btn btn-xs btn-danger" onclick="deleteTaxClient('+t.seq+')">삭제</button>'+
+            (t.terminated ?
+              '<button class="btn btn-xs btn-success" onclick="restoreTaxClient('+t.seq+')">복원</button>' :
+              '<button class="btn btn-xs btn-warning" onclick="terminateTaxClient('+t.seq+')">해지</button>'
+            )+
           '</div>'+
         '</td>'+
       '</tr>';
@@ -4308,14 +4320,36 @@ function renderTaxClientList() {
   var countEl = document.getElementById('tc-count');
   if(countEl) countEl.textContent = '조회: '+list.length+'곳 / 전체 '+TAX_CLIENTS.length+'곳';
 }
-function deleteTaxClient(seq) {
-  showConfirm('이 거래처를 세금계산서 목록에서 삭제하시겠습니까?\n(발행이력도 함께 삭제됩니다)', function() {
-    TAX_CLIENTS = TAX_CLIENTS.filter(function(t){return t.seq!==seq;});
+function terminateTaxClient(seq) {
+  showConfirm('이 거래처를 해지 처리하시겠습니까?\n(발행이력은 유지됩니다)', function() {
+    var t = TAX_CLIENTS.find(function(x){return x.seq===seq;});
+    if(!t) return;
+    t.terminated = true;
+    t.terminatedAt = new Date().toISOString().slice(0,10);
     closeModal('confirm-modal');
     renderTaxClientList();
     renderTax();
-    alert('삭제되었습니다.');
-  });
+    // 즉시 Firebase 저장
+    saveToLocal();
+    if(typeof saveToApi === 'function') saveToApi(null);
+    showSaveStatus('✅ 해지 처리됨', '#86efac');
+  }, '해지', false);
+}
+
+function restoreTaxClient(seq) {
+  showConfirm('이 거래처를 복원하시겠습니까?', function() {
+    var t = TAX_CLIENTS.find(function(x){return x.seq===seq;});
+    if(!t) return;
+    delete t.terminated;
+    delete t.terminatedAt;
+    closeModal('confirm-modal');
+    renderTaxClientList();
+    renderTax();
+    // 즉시 Firebase 저장
+    saveToLocal();
+    if(typeof saveToApi === 'function') saveToApi(null);
+    showSaveStatus('✅ 복원 완료', '#86efac');
+  }, '복원', true);
 }
 </script>
 
@@ -4485,6 +4519,10 @@ function doLogin(){
 
   // 저장: 기본정보 + 입금내역 + 세금계산서 청크 분리 저장
   window._fbSave = function(data) {
+    // 저장 시간 기록 (충돌 감지용)
+    data.savedAt = new Date().toISOString();
+    data.savedBy = _currentUserId || 'unknown';
+
     var contracts = data.CONTRACTS || [];
     var payChunks = {};
     var contractsSlim = contracts.map(function(c, idx) {
@@ -4629,6 +4667,25 @@ function doLogin(){
 
   window._fbReady = true;
   console.log('✅ Firebase 연결 완료');
+
+  // 실시간 변경 감지 - 다른 PC에서 저장하면 알림
+  var lastSavedAt = null;
+  setInterval(function(){
+    if(!window._fbReady || window._isLoading) return;
+    db.collection('rental').doc('main').get().then(function(snap){
+      if(!snap.exists) return;
+      var serverSavedAt = snap.data().savedAt;
+      var serverSavedBy = snap.data().savedBy;
+      if(lastSavedAt && serverSavedAt && serverSavedAt !== lastSavedAt){
+        if(serverSavedBy && serverSavedBy !== (_currentUserId||'unknown')){
+          // 다른 사용자가 저장한 경우
+          showSaveStatus('⚠ 다른 PC에서 변경됨 - 새로고침 권장', '#fbbf24');
+          console.log('다른 PC 저장 감지:', serverSavedBy, serverSavedAt);
+        }
+      }
+      lastSavedAt = serverSavedAt;
+    }).catch(function(){});
+  }, 30000); // 30초마다 체크
   // 계정 정보 Firebase에서 불러오기 후 자동로그인 처리
   if(typeof loadAccountsFromStorage === 'function'){
     loadAccountsFromStorage();
