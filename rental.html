@@ -4018,7 +4018,7 @@ function openTaxAddMonth(seq, ym) {
   if(ym) {
     document.getElementById('tax-f-year').value = ym.slice(0,4);
     document.getElementById('tax-f-month').value = ym.slice(5,7);
-    document.getElementById('tax-f-date').value = ym+'-05';
+    document.getElementById('tax-f-date').value = today();
   }
 }
 
@@ -4102,7 +4102,7 @@ function _openTaxEditModal(seq, ym, t, v){
   }).join('');
   document.getElementById('tax-f-year').value  = ym.slice(0,4);
   document.getElementById('tax-f-month').value = ym.slice(5,7);
-  document.getElementById('tax-f-date').value  = (v && /^\d{4}/.test(v)) ? v.slice(0,10) : ym+'-05';
+  document.getElementById('tax-f-date').value  = (v && /^\d{4}/.test(v)) ? v.slice(0,10) : today();
   // 공급가액 자동 설정 - 거래처 렌탈금 기준
   var autoAmt = 0;
   if(v && typeof v === 'object' && v.amount){ 
