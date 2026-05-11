@@ -4237,8 +4237,43 @@ function saveTaxIssue() {
   t.issues[ym] = fullMemo.trim() ? date+' ('+fullMemo.trim()+')' : date;
   closeModal('tax-modal');
   renderTax();
-  autoSave();
-  alert('저장되었습니다.');
+  // 즉시 Firebase 저장 (tax_main 직접 업데이트)
+  saveToLocal();
+  window._isLoading = false;
+  if(window._fbReady && window._db){
+    showSaveStatus('⏳ 세금계산서 저장 중...', '#93c5fd');
+    var taxSlim = TAX_CLIENTS.map(function(t2){
+      var s = Object.assign({}, t2);
+      s.issues = {};
+      return s;
+    });
+    // issues 청크도 업데이트
+    var taxChunks = {};
+    TAX_CLIENTS.forEach(function(t2){
+      var chunkIdx = Math.floor((t2.seq-1)/30) + 1;
+      var key = String(chunkIdx).padStart(2,'0');
+      if(!taxChunks[key]) taxChunks[key] = {};
+      taxChunks[key][String(t2.seq)] = t2.issues || {};
+    });
+    var promises = [
+      window._db.collection('rental').doc('tax_main').update({TAX_CLIENTS: taxSlim})
+    ];
+    Object.keys(taxChunks).forEach(function(key){
+      promises.push(
+        window._db.collection('rental').doc('tax_issues_'+key).set({issues: taxChunks[key]})
+      );
+    });
+    Promise.all(promises)
+      .then(function(){
+        showSaveStatus('✅ 세금계산서 저장 완료', '#86efac');
+      })
+      .catch(function(e){
+        console.error('세금계산서 저장 오류:', e);
+        // 실패시 전체 저장으로 재시도
+        setTimeout(function(){ saveToApi(null); }, 1000);
+        showSaveStatus('⚠ 재저장 중...', '#fbbf24');
+      });
+  }
 }
 
 function deleteTaxIssue() {
