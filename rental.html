@@ -155,7 +155,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .pmt-special{background:var(--orange-bg);color:var(--orange)}
 /* 입금 유형별 색상 */
 .pmt-cms{background:#d1fae5;color:#065f46}
-.pmt-card{background:#dbeafe;color:#1d4ed8}
+.pmt-card{background:#bfdbfe;color:#1e40af}
 .pmt-cash{background:#fef9c3;color:#854d0e}
 .pmt-mo{font-weight:700;font-size:9px}
 
@@ -551,6 +551,16 @@ body.locked { overflow:hidden; }
         <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
         <div class="form-group"><label>보증금 (원)</label><input class="inp" id="f-deposit" type="number" value="0"></div>
         <div class="form-group"><label>등록일</label><input class="inp" id="f-regdate" type="date"></div>
+        <div class="form-group"><label>약정기간</label>
+          <select class="inp" id="f-contract-period">
+            <option value="">선택</option>
+            <option value="12">12개월</option>
+            <option value="24">24개월</option>
+            <option value="36">36개월</option>
+            <option value="48">48개월</option>
+            <option value="60">60개월</option>
+          </select>
+        </div>
         <div class="form-group"><label>세금계산서</label><select class="inp" id="f-tax"><option value="무">무</option><option value="유">유</option></select></div>
         <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder="예) 인천시 부평구 부평동 123"></div>
 
@@ -565,6 +575,14 @@ body.locked { overflow:hidden; }
             <div class="form-group" style="margin:0">
               <label>약정매수 — 컬러 (매)</label>
               <input class="inp" id="f-quota-color" type="number" min="0" value="0" placeholder="예) 500">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>시작매수 — 흑백 (매)</label>
+              <input class="inp" id="f-start-bw" type="number" min="0" value="0" placeholder="예) 12345">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>시작매수 — 컬러 (매)</label>
+              <input class="inp" id="f-start-color" type="number" min="0" value="0" placeholder="예) 1234">
             </div>
             <div class="form-group" style="margin:0">
               <label>약정 초과 — 흑백 추가단가 (원/매)</label>
@@ -1148,8 +1166,15 @@ const PAGE_SIZE=20, SVC_PAGE=15;
 
 // ══ 유틸 ══
 function latestPayment(c){
-  const keys=Object.keys(c.payments||{}).sort().reverse();
-  return keys.length?c.payments[keys[0]]:null;
+  // _type, _memo 등 보조키 제외하고 날짜값만 있는 키만 필터
+  const keys=Object.keys(c.payments||{})
+    .filter(k=>!k.endsWith('_type')&&!k.endsWith('_memo')&&!k.endsWith('_memo2'))
+    .sort().reverse();
+  if(!keys.length) return null;
+  const val = c.payments[keys[0]];
+  // 날짜 형식(YYYY-MM-DD)이면 그대로, 아니면 해당 키(월) 반환
+  if(val && /^\d{4}-\d{2}-\d{2}/.test(val)) return val.slice(0,10);
+  return val;
 }
 function missedMonths(c){
   const now = new Date();
@@ -1460,7 +1485,10 @@ function renderList(){
   const pageData = filtered.slice(page*PAGE_SIZE, (page+1)*PAGE_SIZE);
   document.getElementById('tbl-body').innerHTML=pageData.map(c=>{
     const ps=payStatus(c);
-    const lp=latestPayment(c)||'-';
+    const _lpRaw=latestPayment(c)||'-';
+    // 최근납부일 날짜 형식 변환 (YYYY-MM-DD → YYYY.MM.DD)
+    const lp=_lpRaw!=='-'&&/^\d{4}-\d{2}-\d{2}/.test(_lpRaw)?
+      _lpRaw.slice(0,10).replace(/-/g,'.'):_lpRaw;
     const staffNames=(c.staff_ids||[]).map(getStaffName).filter(Boolean).join(', ');
     const recentSvc=SERVICES.filter(s=>s.no===c.no).sort((a,b)=>b.date.localeCompare(a.date))[0];
     const lv=recentSvc?recentSvc.date:null;
@@ -1816,6 +1844,9 @@ function editContract(no){
   document.getElementById('f-qty').value=c.qty||1;
   document.getElementById('f-quota-bw').value=c.quota_bw||0;
   document.getElementById('f-quota-color').value=c.quota_color||0;
+  document.getElementById('f-contract-period').value=c.contract_period||'';
+  document.getElementById('f-start-bw').value=c.start_bw||0;
+  document.getElementById('f-start-color').value=c.start_color||0;
   document.getElementById('f-extra-bw').value=c.extra_bw||0;
   document.getElementById('f-extra-color').value=c.extra_color||0;
   formStaffIds=[...(c.staff_ids||[])];
@@ -1849,6 +1880,9 @@ function saveContract(){
     c.quota_color=parseInt(document.getElementById('f-quota-color').value)||0;
     c.extra_bw=parseInt(document.getElementById('f-extra-bw').value)||0;
     c.extra_color=parseInt(document.getElementById('f-extra-color').value)||0;
+    c.contract_period=document.getElementById('f-contract-period').value||'';
+    c.start_bw=parseInt(document.getElementById('f-start-bw').value)||0;
+    c.start_color=parseInt(document.getElementById('f-start-color').value)||0;
     c.staff_ids=[...formStaffIds];
     if(pendingFiles.length) c.files=[...(c.files||[]),...pendingFiles.map(f=>({id:Date.now()+Math.random(),...f}))];
     alert('수정되었습니다.');
@@ -1871,6 +1905,9 @@ function saveContract(){
       quota_color:parseInt(document.getElementById('f-quota-color').value)||0,
       extra_bw:parseInt(document.getElementById('f-extra-bw').value)||0,
       extra_color:parseInt(document.getElementById('f-extra-color').value)||0,
+      contract_period:document.getElementById('f-contract-period').value||'',
+      start_bw:parseInt(document.getElementById('f-start-bw').value)||0,
+      start_color:parseInt(document.getElementById('f-start-color').value)||0,
       staff_ids:[...formStaffIds],
       files:pendingFiles.map(f=>({id:Date.now()+Math.random(),...f})),
       payments:{}
