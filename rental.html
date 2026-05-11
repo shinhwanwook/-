@@ -1914,7 +1914,22 @@ function saveContract(){
     });
     alert('등록되었습니다.');
   }
-  editingNo=null; pendingFiles=[]; applyFilters(); showPage('list'); autoSave();
+  editingNo=null; pendingFiles=[]; applyFilters(); showPage('list');
+  // 즉시 Firebase 저장
+  window._isLoading = false; // 저장 차단 해제
+  saveToLocal();
+  saveToApi(function(ok){
+    if(ok){
+      showSaveStatus('✅ 계약 저장 완료', '#86efac');
+    } else {
+      // 저장 실패 시 재시도
+      setTimeout(function(){
+        saveToApi(function(ok2){
+          showSaveStatus(ok2?'✅ 계약 저장 완료':'⚠ 저장 실패 - 새로고침 후 다시 시도', ok2?'#86efac':'#ef4444');
+        });
+      }, 2000);
+    }
+  });
 }
 // ══ 관리자 권한 ══
 let ADMIN_PW = '1234'; // 초기 비밀번호 (변경 가능)
@@ -2268,7 +2283,15 @@ function savePayment(){
   else delete c.payments[key+'_memo'];
   closeModal('pay-modal');
   if(document.getElementById('detail-modal').classList.contains('open')) renderPayHist(c);
-  renderPayment(); autoSave(); alert('저장되었습니다.');
+  renderPayment();
+  window._isLoading = false;
+  saveToLocal();
+  saveToApi(function(ok){
+    if(!ok){
+      setTimeout(function(){ saveToApi(null); }, 2000);
+    }
+    showSaveStatus(ok?'✅ 입금 저장됨':'⚠ 재저장 중...', ok?'#86efac':'#fbbf24');
+  });
 }
 function deletePayment(){
   const y=document.getElementById('pm-year').value;
@@ -4545,6 +4568,7 @@ function doLogin(){
     var acct = ACCOUNTS[matchedKey];
     _currentUserId = acct.id;
     window.isAdmin = false; // 반드시 초기화
+    window._isLoading = true; // 데이터 로딩 전 저장 차단
     if(document.getElementById('auto-login-chk').checked){
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
@@ -4610,6 +4634,9 @@ function doLogin(){
 
     var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
     delete mainData.DOC_FILES; // DOC_FILES는 별도 청크로 저장
+    // 저장 시간 기록
+    mainData.savedAt = new Date().toISOString();
+    mainData.savedBy = (typeof _currentUserId !== 'undefined' ? _currentUserId : 'unknown');
     var promises = [mainRef.set(mainData)];
     Object.keys(payChunks).forEach(function(key) {
       promises.push(db.collection('rental').doc('pay_' + key).set({payments: payChunks[key]}));
