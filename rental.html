@@ -3696,7 +3696,7 @@ function hidePayTip(){
           <input class="inp" id="tax-f-date" type="date">
         </div>
         <div class="form-group">
-          <label>공급가액 (원)</label>
+          <label id="tax-amt-label">금액 입력 (VAT포함: 합계금액 / VAT미포함: 공급가액)</label>
           <input class="inp" id="tax-f-amount" type="number" min="0" value="0" placeholder="금액 입력" oninput="calcTaxAmount()">
           <div style="display:flex;gap:12px;margin-top:8px;align-items:center">
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:500">
@@ -4172,7 +4172,15 @@ function _openTaxEditModal(seq, ym, t, v){
     var vatIncl = !(t.vat_type === 'excl' || t.vatIncluded === false);
     autoAmt = vatIncl ? Math.round(t.rent / 1.1) : t.rent;
   }
-  document.getElementById('tax-f-amount').value = autoAmt || '0';
+  // VAT포함이면 렌탈금(합계) 그대로 입력, VAT미포함이면 공급가 입력
+  var vatIncl2 = !(t && (t.vat_type === 'excl' || t.vatIncluded === false));
+  var displayAmt = 0;
+  if(v && typeof v === 'object' && v.amount){
+    displayAmt = v.amount; // 기존 저장된 금액
+  } else if(t && t.rent){
+    displayAmt = t.rent; // 렌탈금 그대로 (VAT포함/미포함 모두)
+  }
+  document.getElementById('tax-f-amount').value = displayAmt || '0';
   // VAT 포함 여부 자동 설정 (vat_type 필드 기준)
   if(document.getElementById('tax-vat-excl')){
     // vat_type: 'excl'=미포함, 'incl'=포함 (기본값: 포함)
@@ -4197,10 +4205,12 @@ function calcTaxAmount(){
   preview.style.display = 'block';
   var supply, vat, total;
   if(isIncl){
+    // VAT포함: 입력금액 = 합계(렌탈금)
+    total  = amt;
     supply = Math.round(amt / 1.1);
     vat    = amt - supply;
-    total  = amt;
   } else {
+    // VAT미포함: 입력금액 = 공급가
     supply = amt;
     vat    = Math.round(amt * 0.1);
     total  = amt + vat;
@@ -4221,12 +4231,21 @@ function saveTaxIssue() {
 
   if(!date) {alert('발행일을 입력하세요.'); return;}
 
-  // 금액 정보 메모에 포함
+  // 금액 계산 (VAT포함: amt=합계, VAT미포함: amt=공급가)
   var amtInfo = '';
+  var supply = 0, vat = 0, total = 0;
   if(amt > 0){
-    var supply = isIncl ? Math.round(amt/1.1) : amt;
-    var vat    = isIncl ? amt - supply : Math.round(amt*0.1);
-    var total  = isIncl ? amt : amt + vat;
+    if(isIncl){
+      // VAT포함: 입력금액이 합계(렌탈금)
+      total  = amt;
+      supply = Math.round(amt / 1.1);
+      vat    = amt - supply;
+    } else {
+      // VAT미포함: 입력금액이 공급가
+      supply = amt;
+      vat    = Math.round(amt * 0.1);
+      total  = amt + vat;
+    }
     amtInfo = ' [공급가:'+supply.toLocaleString()+'원 / VAT:'+vat.toLocaleString()+'원 / 합계:'+total.toLocaleString()+'원]';
   }
 
@@ -4236,7 +4255,9 @@ function saveTaxIssue() {
   // 객체 형식으로 저장 (Firebase 기존 형식과 동일)
   t.issues[ym] = {
     date: date,
-    amount: amt||0,
+    amount: total||amt||0,  // 합계 저장
+    supply: supply||0,
+    vat: vat||0,
     memo: memo||''
   };
   closeModal('tax-modal');
