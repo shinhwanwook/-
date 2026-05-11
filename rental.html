@@ -4169,15 +4169,15 @@ function _openTaxEditModal(seq, ym, t, v){
     autoAmt = v.amount; // 기존 저장된 금액
   } else if(t && t.rent){
     // VAT 포함 여부에 따라 공급가액 계산
-    var vatIncl = t.vatIncluded !== false;
+    var vatIncl = !(t.vat_type === 'excl' || t.vatIncluded === false);
     autoAmt = vatIncl ? Math.round(t.rent / 1.1) : t.rent;
   }
   document.getElementById('tax-f-amount').value = autoAmt || '0';
-  // VAT 포함 여부도 자동 설정
+  // VAT 포함 여부 자동 설정 (vat_type 필드 기준)
   if(document.getElementById('tax-vat-excl')){
-    var isVatExcl = t && t.vatIncluded === false;
+    // vat_type: 'excl'=미포함, 'incl'=포함 (기본값: 포함)
+    var isVatExcl = t && (t.vat_type === 'excl' || t.vatIncluded === false);
     document.getElementById('tax-vat-excl').checked = isVatExcl;
-    // 반대 라디오버튼
     var vatInclEl = document.getElementById('tax-vat-incl');
     if(vatInclEl) vatInclEl.checked = !isVatExcl;
   }
