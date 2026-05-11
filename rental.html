@@ -4400,7 +4400,25 @@ function saveTaxClient() {
   closeTaxClientForm();
   renderTaxClientList();
   renderTax();
-  autoSave();
+  saveToLocal();
+  // tax_main 직접 업데이트 (거래처 정보만)
+  if(window._fbReady && window._db){
+    showSaveStatus('⏳ 저장 중...', '#93c5fd');
+    var taxSlim = TAX_CLIENTS.map(function(t2){
+      var s = Object.assign({}, t2);
+      s.issues = {}; // issues는 별도 청크
+      return s;
+    });
+    window._db.collection('rental').doc('tax_main')
+      .update({TAX_CLIENTS: taxSlim})
+      .then(function(){
+        showSaveStatus('✅ 거래처 저장 완료', '#86efac');
+      })
+      .catch(function(e){
+        console.error('거래처 저장 오류:', e);
+        showSaveStatus('⚠ 저장 실패', '#ef4444');
+      });
+  }
 }
 
 function renderTaxClientList() {
