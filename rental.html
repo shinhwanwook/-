@@ -647,7 +647,7 @@ body.locked { overflow:hidden; }
       </div>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="pay-srch" placeholder="🔍 거래처명 검색...">
+      <input class="inp inp-search" type="text" id="pay-srch" placeholder="🔍 거래처명, 담당자, 전화번호 검색...">
       <label style="font-size:12px;color:var(--text3);white-space:nowrap">시작</label>
       <input class="inp" type="month" id="pay-from" style="width:130px">
       <label style="font-size:12px;color:var(--text3);white-space:nowrap">~</label>
@@ -657,7 +657,7 @@ body.locked { overflow:hidden; }
     <div class="tbl-wrap">
       <table id="pay-table">
         <thead><tr id="pay-thead-row">
-          <th>NO</th><th>거래처</th><th>렌탈금</th>
+          <th>NO</th><th>거래처</th><th>담당자</th><th>렌탈금</th>
           <th>추가사용료</th>
         </tr></thead>
         <tbody id="pay-body"></tbody>
@@ -2386,7 +2386,10 @@ function renderPayment(){
   theadRow.innerHTML=`<th>NO</th><th>거래처</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
 
   let list=CONTRACTS.filter(c=>{
-    if(q&&!c.name.toLowerCase().includes(q)) return false;
+    if(q){
+      const txt=(c.name+(c.manager||'')+(c.phone||'')).toLowerCase();
+      if(!txt.includes(q)) return false;
+    }
     if(onlyMiss){const hasMiss=keys.some(k=>!c.payments[k]);if(!hasMiss) return false;}
     return !c.terminated;
   });
@@ -2412,6 +2415,7 @@ function renderPayment(){
     return `<tr>
       <td style="color:#aaa">${c.no}</td>
       <td style="font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</td>
+      <td style="font-size:12px;color:var(--text3);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis">${esc(c.manager||'-')}</td>
       <td style="font-weight:600;white-space:nowrap;${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</td>
       ${cells}
       <td style="text-align:center;cursor:pointer" onclick="openExtraPayAdd(${c.no})">
