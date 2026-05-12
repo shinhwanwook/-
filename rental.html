@@ -2383,7 +2383,7 @@ function renderPayment(){
     prevY=y;
     return `<th style="white-space:nowrap;min-width:46px">${label}</th>`;
   }).join('');
-  theadRow.innerHTML=`<th>NO</th><th>거래처</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
+  theadRow.innerHTML=`<th>NO</th><th>거래처</th><th>담당자</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
 
   let list=CONTRACTS.filter(c=>{
     if(q){
