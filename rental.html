@@ -657,7 +657,10 @@ body.locked { overflow:hidden; }
     <div class="tbl-wrap">
       <table id="pay-table">
         <thead><tr id="pay-thead-row">
-          <th>NO</th><th>거래처</th><th>담당자</th><th>렌탈금</th>
+          <th>NO</th>
+          <th class="pay-resizable" style="min-width:60px;position:relative;user-select:none">거래처</th>
+          <th class="pay-resizable" style="min-width:50px;position:relative;user-select:none">담당자</th>
+          <th>렌탈금</th>
           <th>추가사용료</th>
         </tr></thead>
         <tbody id="pay-body"></tbody>
@@ -2383,7 +2386,8 @@ function renderPayment(){
     prevY=y;
     return `<th style="white-space:nowrap;min-width:46px">${label}</th>`;
   }).join('');
-  theadRow.innerHTML=`<th>NO</th><th>거래처</th><th>담당자</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
+  theadRow.innerHTML=`<th>NO</th><th class="pay-resizable" style="min-width:60px;position:relative;user-select:none" id="pay-th-name">거래처</th><th class="pay-resizable" style="min-width:50px;position:relative;user-select:none" id="pay-th-mgr">담당자</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
+  attachPayResizers();
 
   let list=CONTRACTS.filter(c=>{
     if(q){
@@ -3119,6 +3123,48 @@ function loadColWidths(){
     document.getElementById('col-save-btn').style.display = 'inline-block';
     targetTh=null;
   });
+
+  // 입금관리 컬럼 리사이저
+  window.attachPayResizers = function(){
+    document.querySelectorAll('#pay-thead-row th.pay-resizable').forEach(function(th){
+      if(th.querySelector('.pay-col-resizer')) return;
+      var resizer = document.createElement('div');
+      resizer.className = 'pay-col-resizer';
+      resizer.style.cssText = 'position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;z-index:1;';
+      th.appendChild(resizer);
+      var startX, startW;
+      resizer.addEventListener('mousedown', function(e){
+        startX = e.clientX;
+        startW = th.offsetWidth;
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+        function onMove(e){
+          var w = Math.max(40, startW + (e.clientX - startX));
+          th.style.width = w + 'px';
+        }
+        function onUp(){
+          document.body.style.cursor = '';
+          // localStorage에 저장
+          var ths = document.querySelectorAll('#pay-thead-row th.pay-resizable');
+          var ws = [...ths].map(function(t){ return t.style.width||''; });
+          try{ localStorage.setItem('rental_pay_col_widths', JSON.stringify(ws)); }catch(e){}
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+    // 저장된 너비 복원
+    try{
+      var saved = localStorage.getItem('rental_pay_col_widths');
+      if(saved){
+        var ws = JSON.parse(saved);
+        var ths = document.querySelectorAll('#pay-thead-row th.pay-resizable');
+        ths.forEach(function(th, i){ if(ws[i]) th.style.width = ws[i]; });
+      }
+    }catch(e){}
+  };
 
   // tbody 변경 후에도 리사이저 유지 (드래그 중 비활성화)
   const obs=new MutationObserver(function(){
