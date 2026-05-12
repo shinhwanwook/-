@@ -812,6 +812,7 @@ body.locked { overflow:hidden; }
     <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center">
       <button class="btn btn-ghost" onclick="closeModal('detail-modal')">닫기</button>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" style="background:#059669;color:#fff;border:none" onclick="printContract(currentNo)">🖨️ 계약서 출력</button>
         <button class="btn btn-warning btn-sm" onclick="editContract(currentNo)">✏️ 수정</button>
         <button class="btn btn-sm" id="dm-terminate-btn" style="background:#7c3aed;color:#fff;border:none;display:none" onclick="confirmTerminate(currentNo)">🚫 해지</button>
       </div>
@@ -2196,6 +2197,30 @@ function changeAdminPw(){
 }
 
 // ══ 해지 / 복원 ══
+function printContract(no){
+  var c = CONTRACTS.find(function(x){ return x.no===no; });
+  if(!c) return;
+  var params = new URLSearchParams({
+    name:    c.name||'',
+    addr:    c.address||'',
+    phone:   c.phone||'',
+    manager: c.manager||'',
+    model:   c.etc||'',
+    type:    '복합기',
+    qty:     c.qty||1,
+    rent:    c.rent||0,
+    bw:      c.quota_bw||0,
+    color:   c.quota_color||0,
+    ebw:     c.extra_bw||0,
+    ecolor:  c.extra_color||0,
+    sbw:     c.start_bw||0,
+    scolor:  c.start_color||0,
+    period:  c.contract_period ? c.contract_period+'개월' : '',
+    date:    c.reg_date||''
+  });
+  window.open('contract_print.html?'+params.toString(), '_blank');
+}
+
 function confirmTerminate(no){
   const c=CONTRACTS.find(x=>x.no===no);
   showConfirm(

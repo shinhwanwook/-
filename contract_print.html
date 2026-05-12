@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>장비 임대/유지보수 계약서</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.5pt; background: #f0f0f0; }
+
+.print-controls {
+  background: #1e3a5f; color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.print-controls h2 { font-size: 14px; }
+.btn-print {
+  background: #ff6b00; color: #fff; border: none;
+  padding: 7px 18px; border-radius: 6px; font-size: 13px;
+  cursor: pointer; font-weight: 700;
+}
+.btn-print:hover { background: #e55a00; }
+
+.page {
+  width: 210mm; min-height: 297mm;
+  background: #fff;
+  margin: 16px auto;
+  padding: 10mm 12mm;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+
+.title {
+  text-align: center;
+  font-size: 17pt; font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  border-bottom: 3px double #000;
+  padding-bottom: 6px;
+}
+
+.party-table {
+  width: 100%; border-collapse: collapse;
+  margin-bottom: 6px; font-size: 9.5pt;
+}
+.party-table td {
+  border: 1px solid #333;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+.party-table .label {
+  background: #e8e8e8; font-weight: 700;
+  text-align: center; width: 55px; font-size: 9pt;
+}
+.party-table .sublabel {
+  background: #f4f4f4; font-weight: 600;
+  text-align: center; width: 80px; font-size: 8.5pt;
+}
+.party-table input[type=text], .party-table input[type=date] {
+  border: none; outline: none; width: 100%;
+  font-size: 9.5pt; font-family: inherit; background: transparent;
+}
+.party-table input:focus { background: #fffde7; }
+.sign-inline {
+  display: flex; align-items: center; gap: 4px;
+}
+.sign-inline input { flex: 1; }
+.sign-inline .in-mark {
+  font-weight: 700; font-size: 10pt; white-space: nowrap;
+  margin-left: 4px;
+}
+
+.contract-table {
+  width: 100%; border-collapse: collapse;
+  margin-bottom: 6px; font-size: 8.5pt;
+}
+.contract-table th, .contract-table td {
+  border: 1px solid #333;
+  padding: 3px 3px;
+  text-align: center; vertical-align: middle;
+}
+.contract-table th {
+  background: #e8e8e8; font-weight: 700; font-size: 8pt;
+}
+.contract-table input[type=text], .contract-table input[type=number], .contract-table input[type=date] {
+  border: none; outline: none; width: 100%;
+  text-align: center; font-size: 8.5pt;
+  font-family: inherit; background: transparent;
+}
+.contract-table input:focus { background: #fffde7; }
+
+.bank-info {
+  border: 1px solid #333; padding: 4px 8px;
+  font-size: 9pt; margin-bottom: 6px; background: #f9f9f9;
+}
+
+.special-terms {
+  border: 1px solid #333; padding: 4px 8px;
+  margin-bottom: 6px;
+}
+.special-terms .st-title { font-weight: 700; margin-bottom: 3px; font-size: 9.5pt; }
+.special-terms textarea {
+  width: 100%; border: none; outline: none;
+  font-size: 8.5pt; font-family: inherit;
+  resize: none; background: transparent; min-height: 28px;
+}
+
+.terms {
+  font-size: 7.8pt; line-height: 1.45;
+  border: 1px solid #ccc; padding: 6px 8px;
+  margin-bottom: 8px; background: #fafafa;
+  columns: 2; column-gap: 10px;
+}
+.terms .term-title {
+  font-weight: 700; margin-top: 4px; margin-bottom: 1px;
+  break-inside: avoid;
+}
+.terms p { margin-bottom: 1px; break-inside: avoid; }
+.terms .sub { padding-left: 12px; }
+
+.sign-section {
+  margin-top: 6px;
+  text-align: center;
+}
+.sign-section .sign-date-row {
+  font-size: 10pt; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.sign-section input[type=date] {
+  border: none; border-bottom: 1px solid #999;
+  outline: none; font-size: 10pt; font-family: inherit;
+  padding: 1px 4px; background: transparent;
+}
+.sign-area {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sign-box {
+  border: 1px solid #333; padding: 6px 8px;
+}
+.sign-box .sign-title {
+  font-weight: 700; text-align: center; font-size: 10pt;
+  margin-bottom: 6px; border-bottom: 1px solid #ccc; padding-bottom: 3px;
+}
+.sign-row {
+  display: flex; align-items: center; margin-bottom: 4px; font-size: 9pt;
+}
+.sign-row .sign-label { width: 65px; font-weight: 600; flex-shrink: 0; }
+.sign-row input {
+  flex: 1; border: none; border-bottom: 1px solid #ccc;
+  outline: none; font-size: 9pt; font-family: inherit;
+  padding: 1px 3px; background: transparent;
+}
+.sign-row input:focus { background: #fffde7; }
+.sign-row .in-mark { font-weight: 700; margin-left: 4px; font-size: 10pt; }
+
+@media print {
+  .print-controls { display: none; }
+  body { background: #fff; }
+  .page { box-shadow: none; margin: 0; padding: 8mm 10mm; width: 100%; }
+  input, textarea { border-color: transparent !important; background: transparent !important; }
+}
+@media (max-width: 768px) {
+  .page { width: 100%; margin: 0; padding: 5mm; box-shadow: none; }
+  .terms { columns: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="print-controls">
+  <h2>📄 장비 임대/유지보수 계약서</h2>
+  <button class="btn-print" onclick="window.print()">🖨️ 출력하기</button>
+</div>
+
+<div class="page">
+
+  <div class="title">장비 임대/유지보수 계약서</div>
+
+  <!-- 임대인 -->
+  <table class="party-table">
+    <tr>
+      <td class="label" rowspan="3">임&nbsp;대&nbsp;인</td>
+      <td class="sublabel">등 록 번 호</td>
+      <td>122 - 07 - 72711</td>
+      <td class="sublabel">상 &nbsp; 호 &nbsp; 명</td>
+      <td>
+        <div class="sign-inline">
+          <span>잉크스테이션 &nbsp;&nbsp; 성명 : 신 환 욱</span>
+          <span class="in-mark">(인)</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="sublabel">소 &nbsp; 재 &nbsp; 지</td>
+      <td colspan="3">인천시 부평구 장제로222번길 25</td>
+    </tr>
+    <tr>
+      <td class="sublabel">고 객 상 담 실</td>
+      <td colspan="3">080-506-4959 &nbsp;/&nbsp; 010-4785-7190</td>
+    </tr>
+  </table>
+
+  <!-- 임차인 -->
+  <table class="party-table">
+    <tr>
+      <td class="label" rowspan="4">임&nbsp;차&nbsp;인</td>
+      <td class="sublabel">사업자번호</td>
+      <td><input type="text" id="c-bizno" placeholder="000-00-00000"></td>
+      <td class="sublabel">업체명/성함</td>
+      <td>
+        <div class="sign-inline">
+          <input type="text" id="c-name" placeholder="업체명 또는 성함">
+          <span class="in-mark">(인)</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="sublabel">주 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 소</td>
+      <td colspan="3"><input type="text" id="c-addr" placeholder="주소 입력"></td>
+    </tr>
+    <tr>
+      <td class="sublabel">전 화 번 호</td>
+      <td><input type="text" id="c-phone" placeholder="000-0000-0000"></td>
+      <td class="sublabel">임 대 장 소</td>
+      <td><input type="text" id="c-location" placeholder="설치 장소"></td>
+    </tr>
+    <tr>
+      <td class="sublabel">휴 &nbsp; 대 &nbsp; 폰</td>
+      <td><input type="text" id="c-mobile" placeholder="010-0000-0000"></td>
+      <td class="sublabel">담 당 자</td>
+      <td><input type="text" id="c-manager" placeholder="담당자명"></td>
+    </tr>
+  </table>
+
+  <!-- 계약사항 -->
+  <table class="contract-table">
+    <thead>
+      <tr>
+        <th rowspan="2">설치기종</th>
+        <th rowspan="2">모델명</th>
+        <th rowspan="2">수량</th>
+        <th rowspan="2">렌탈금액(월)</th>
+        <th colspan="2">약정매수(월)</th>
+        <th colspan="2">시작매수</th>
+        <th rowspan="2">약정기간</th>
+      </tr>
+      <tr>
+        <th>흑백</th><th>컬러</th>
+        <th>흑백</th><th>컬러</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" id="r1-type" placeholder="복합기"></td>
+        <td><input type="text" id="r1-model" placeholder="HP8210"></td>
+        <td><input type="text" id="r1-qty" placeholder="1"></td>
+        <td><input type="text" id="r1-rent" placeholder="00,000원"></td>
+        <td><input type="text" id="r1-bw" placeholder="1000"></td>
+        <td><input type="text" id="r1-color" placeholder="500"></td>
+        <td><input type="text" id="r1-sbw" placeholder="0"></td>
+        <td><input type="text" id="r1-scolor" placeholder="0"></td>
+        <td><input type="text" id="r1-period" placeholder="24개월"></td>
+      </tr>
+      <tr>
+        <td><input type="text" id="r2-type"></td>
+        <td><input type="text" id="r2-model"></td>
+        <td><input type="text" id="r2-qty"></td>
+        <td><input type="text" id="r2-rent"></td>
+        <td><input type="text" id="r2-bw"></td>
+        <td><input type="text" id="r2-color"></td>
+        <td><input type="text" id="r2-sbw"></td>
+        <td><input type="text" id="r2-scolor"></td>
+        <td><input type="text" id="r2-period"></td>
+      </tr>
+      <tr>
+        <td><input type="text" id="r3-type"></td>
+        <td><input type="text" id="r3-model"></td>
+        <td><input type="text" id="r3-qty"></td>
+        <td><input type="text" id="r3-rent"></td>
+        <td><input type="text" id="r3-bw"></td>
+        <td><input type="text" id="r3-color"></td>
+        <td><input type="text" id="r3-sbw"></td>
+        <td><input type="text" id="r3-scolor"></td>
+        <td><input type="text" id="r3-period"></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="3">합 &nbsp; 계</th>
+        <td><input type="text" id="r-total" placeholder="합계금액"></td>
+        <td colspan="2" style="text-align:left;padding:2px 4px;font-size:8pt">
+          출력량초과시 흑백: <input type="text" id="r-extra-bw" style="width:50px;text-align:center"> 원
+        </td>
+        <td colspan="3" style="text-align:left;padding:2px 4px;font-size:8pt">
+          컬러: <input type="text" id="r-extra-color" style="width:50px;text-align:center"> 원
+        </td>
+      </tr>
+      <tr>
+        <th colspan="2">설 치 일 자</th>
+        <td colspan="7">
+          <input type="date" id="r-install-date" style="font-size:9pt">
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- 입금계좌 -->
+  <div class="bank-info">
+    <strong>입금계좌 :</strong>
+    국민은행 207-21-0821-755 &nbsp;/&nbsp; 농협 130044-56-121102 &nbsp;(예금주 : 신환욱)
+  </div>
+
+  <!-- 특약사항 -->
+  <div class="special-terms">
+    <div class="st-title">【 특 약 사 항 】</div>
+    <textarea id="special" rows="2" placeholder="특약사항을 입력하세요..."></textarea>
+  </div>
+
+  <!-- 약관 -->
+  <div class="terms">
+    <div class="term-title">【제1조】임대차 계약의 정의</div>
+    <p>프린터 장비 임대차 계약이란 "임차인"이 "임대인"으로부터 임대한 프린터 장비가 정상적으로 사용될 수 있도록 "임대인"은 임대된 장비에 필요한 일체의 소모품, 유지보수를 "임차인"에게 제공하고 "임차인"은 이에 대하여 소정의 임대료를 "임대인"에게 지불하는 것으로 한다.</p>
+    <div class="term-title">【제2조】계약의 성립시점</div>
+    <p>"임대인"의 렌탈 계약 내용에 이상이 없음이 확인되어 "임대인"이 "임차인"에게 상품을 인도·설치한 날로부터 렌탈 계약의 효력이 발생합니다.</p>
+    <div class="term-title">【제3조】렌탈(임대차) 유효기간</div>
+    <p class="sub">1. 본 렌탈 계약의 총 계약 기간과 "임차인"의 사용 기간은 위의 계약서상에 명시된 기간으로 합니다.</p>
+    <p class="sub">2. 렌탈 기간의 기산일은 "임대인"이 "임차인"에게 상품 인도한 날로부터 하며 종료는 해약 요청 시 장비반납이 완료되었을 때까지로 한다.</p>
+    <p class="sub">3. 계약기간 만료일 1개월 이전에 해지 통보가 없을 때에는 본 계약과 동일한 조건으로 계약기간은 자동 연장된다.</p>
+    <p class="sub">4. 렌탈계약 기간 중 새 프린터 장비로 교체가 이루어질 시 새 장비를 교체 받은 날로부터 본계약과 동일한 조건으로 연장한다.</p>
+    <div class="term-title">【제4조】렌탈 보증금 및 위약금</div>
+    <p class="sub">1. "임차인"은 "임대인"에게 렌탈 보증금을 현금으로 지급한다. (보증금에 대한 이자는 계산하지 아니한다.)</p>
+    <p class="sub">2. 계약기간 만료 또는 해지 시에는 "임대인"은 "임차인"에게 보증금 전액을 환불한다.</p>
+    <p class="sub">3. 계약기간 이내의 해지 시는 "임차인"은 "임대인"에게 보증금 반환 청구를 할 수 없고, 임대인의 귀책사유가 없이 본 계약을 준수하지 않고 일방 해지할 경우에는 잔여 렌탈 기간 × 월 기본 렌탈 요금의 40%를 위약금으로 즉시 지급하여야 한다.</p>
+    <div class="term-title">【제5조】렌탈 요금 청구 기준</div>
+    <p class="sub">1. 임차료의 기본요금 지불은 CMS 자동이체를 기본으로 한다.</p>
+    <p class="sub">2. 모든 지불은 임대인이 별도 통보하지 않는 한 임대인이 지정한 금융기관에 납부한다.</p>
+    <p class="sub">3. 렌탈 요금 지급 의무는 매월 단위로 발생하는 것으로 하며 "임대인"은 매 1개월분 렌탈 요금을 일괄하여 "임차인"이 요청한 납기 일자에 청구한다. 단, 전월 미납 금액이 있을 경우 미납금액을 포함하여 당월에 청구할 수 있다.</p>
+    <p class="sub">4. 렌탈 요금에 대한 일할 계산은 30일 기준으로 산출하며 최초 렌탈 요금은 설치 일자에 따라 일할 계산하여 청구한다.</p>
+    <div class="term-title">【제6조】상품의 사용 보관 및 유지</div>
+    <p class="sub">1. "임대인"은 계약기간 중 "임차인"이 상품을 사용하기 위하여 필요한 상태를 유지(잉크보충, A/S)시켜야 한다.</p>
+    <p class="sub">2. 렌탈 계약 기간 중 "임차인"은 "임대인"의 승인 없이 상품을 타인에게 양도, 전대, 개조하여서는 안 되며 설치 장소에서 다른 장소로 이전 시에는 "임대인"에게 사전 통보하여야 한다.</p>
+    <p class="sub">3. "임차인"은 상품을 사용 중 외부적인 영향(파손, 충격 등)으로 사용이 불가할 때는 "임대인"에게 소정의 비용을 배상한다.</p>
+    <div class="term-title">【제7조】해지</div>
+    <p class="sub">1. "임대인" 또는 "임차인"이 본 계약을 해지하고자 할 때에는 해지 예정일 1개월 전에 문서로서 상대방에 통지하여야 한다.</p>
+    <p class="sub">2. "임대인"은 아래 사항 발생 시 통고 없이 계약 해지 및 임대장비를 임의회수할 수 있다. 1) 본 계약 각 조항을 이행하지 아니한 때. 2) 월 렌탈 요금을 1개월 이상 연체하였을 때. 3) 압류, 가압류, 가처분 등의 경매, 회사부도처리 절차 개시, 해산, 파산 등. 4) 당좌거래 정지처분이 있을 때. 5) 기타 "임차인"의 공신력이 현저히 상실된 때.</p>
+    <div class="term-title">【제8조】기타</div>
+    <p class="sub">1. 위 각 조항에 명시되지 아니한 사항에 관하여는 관계법령 및 일반 상거래에 의한다.</p>
+  </div>
+
+  <!-- 서명 -->
+  <div class="sign-section">
+    <div class="sign-date-row">
+      위 계약내용을 확인하고 계약 당사자 쌍방이 기명날인 합니다. &nbsp;&nbsp;
+      <input type="date" id="sign-date">
+    </div>
+    <div class="sign-area">
+      <div class="sign-box">
+        <div class="sign-title">임 &nbsp; 대 &nbsp; 인</div>
+        <div class="sign-row"><span class="sign-label">상 &nbsp; 호 &nbsp; 명</span><input type="text" value="잉크스테이션" readonly><span class="in-mark">(인)</span></div>
+        <div class="sign-row"><span class="sign-label">대 &nbsp; 표 &nbsp; 자</span><input type="text" value="신 환 욱" readonly></div>
+        <div class="sign-row"><span class="sign-label">주 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 소</span><input type="text" value="인천시 부평구 장제로222번길 25" readonly></div>
+        <div class="sign-row"><span class="sign-label">전 화 번 호</span><input type="text" value="080-506-4959" readonly></div>
+      </div>
+      <div class="sign-box">
+        <div class="sign-title">임 &nbsp; 차 &nbsp; 인</div>
+        <div class="sign-row"><span class="sign-label">업 &nbsp; 체 &nbsp; 명</span><input type="text" id="s-name" placeholder="업체명"><span class="in-mark">(인)</span></div>
+        <div class="sign-row"><span class="sign-label">대 &nbsp; 표 &nbsp; 자</span><input type="text" id="s-rep" placeholder="대표자명"></div>
+        <div class="sign-row"><span class="sign-label">주 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 소</span><input type="text" id="s-addr" placeholder="주소"></div>
+        <div class="sign-row"><span class="sign-label">전 화 번 호</span><input type="text" id="s-phone" placeholder="전화번호"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.getElementById('sign-date').value = new Date().toISOString().slice(0,10);
+document.getElementById('r-install-date').value = new Date().toISOString().slice(0,10);
+
+function loadFromParams(){
+  const p = new URLSearchParams(window.location.search);
+  if(p.get('name'))    { document.getElementById('c-name').value = p.get('name'); document.getElementById('s-name').value = p.get('name'); }
+  if(p.get('addr'))    { document.getElementById('c-addr').value = p.get('addr'); document.getElementById('s-addr').value = p.get('addr'); }
+  if(p.get('phone'))   { document.getElementById('c-phone').value = p.get('phone'); document.getElementById('s-phone').value = p.get('phone'); }
+  if(p.get('mobile'))  document.getElementById('c-mobile').value  = p.get('mobile');
+  if(p.get('manager')) { document.getElementById('c-manager').value = p.get('manager'); document.getElementById('s-rep').value = p.get('manager'); }
+  if(p.get('bizno'))   document.getElementById('c-bizno').value   = p.get('bizno');
+  if(p.get('model'))   document.getElementById('r1-model').value  = p.get('model');
+  if(p.get('type'))    document.getElementById('r1-type').value   = p.get('type');
+  if(p.get('qty'))     document.getElementById('r1-qty').value    = p.get('qty');
+  if(p.get('rent')){
+    var rent = parseInt(p.get('rent'));
+    document.getElementById('r1-rent').value = rent.toLocaleString()+'원';
+    document.getElementById('r-total').value = rent.toLocaleString()+'원';
+  }
+  if(p.get('bw'))      document.getElementById('r1-bw').value     = p.get('bw');
+  if(p.get('color'))   document.getElementById('r1-color').value  = p.get('color');
+  if(p.get('ebw'))     document.getElementById('r-extra-bw').value  = p.get('ebw');
+  if(p.get('ecolor'))  document.getElementById('r-extra-color').value = p.get('ecolor');
+  if(p.get('sbw'))     document.getElementById('r1-sbw').value    = p.get('sbw');
+  if(p.get('scolor'))  document.getElementById('r1-scolor').value = p.get('scolor');
+  if(p.get('period'))  document.getElementById('r1-period').value = p.get('period');
+  if(p.get('date'))    document.getElementById('r-install-date').value = p.get('date');
+}
+loadFromParams();
+</script>
+</body>
+</html>
