@@ -1579,7 +1579,7 @@ function openDetail(no){
     ['기기',c.etc.toUpperCase()],['수량',(c.qty||1)+'대'],
     ['보증금',c.deposit?c.deposit.toLocaleString()+'원':'없음'],['세금계산서',c.tax==='유'?'<span class="badge" style="background:#fee2e2;color:#dc2626;font-weight:700">유 ✓</span>':'<span class="badge b-gray">무</span>'],
     ['등록일',c.reg_date],
-    ['계약서',c.gdrive?`<a href="${esc(c.gdrive)}" target="_blank" style="color:var(--blue);font-weight:600">📎 계약서 열기</a>`:'−'],
+    ['계약서',c.gdrive?`<a href="${c.gdrive}" target="_blank" style="color:var(--blue);font-weight:600;text-decoration:underline">📎 계약서 열기</a>`:'−'],
     ['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
     ['약정매수 (흑백/컬러)',`흑백 <strong>${(c.quota_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.quota_color||0).toLocaleString()}</strong>매`,'full'],
     ['초과 추가단가',`흑백 <strong>${(c.extra_bw||0).toLocaleString()}</strong>원/매 &nbsp;/&nbsp; 컬러 <strong>${(c.extra_color||0).toLocaleString()}</strong>원/매`,'full'],
@@ -2240,6 +2240,11 @@ function printContract(no){
 
 function openGdriveLink(){
   var url = document.getElementById('f-gdrive').value.trim();
+  // 입력값 없으면 현재 편집 중인 계약의 gdrive 값 확인
+  if(!url && editingNo){
+    var c = CONTRACTS.find(function(x){ return x.no===editingNo; });
+    if(c && c.gdrive) url = c.gdrive;
+  }
   if(!url){ alert('구글 드라이브 링크를 입력해주세요.'); return; }
   window.open(url, '_blank');
 }
@@ -4832,6 +4837,8 @@ function doLogin(){
       payChunks[key][String(no)] = c.payments || {};
       var slim = Object.assign({}, c);
       slim.payments = {};
+      // gdrive 필드 명시적 포함
+      if(c.gdrive) slim.gdrive = c.gdrive;
       return slim;
     });
 
