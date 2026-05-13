@@ -146,27 +146,24 @@ html, body {
 .terms .sub { padding-left: 10px; }
 
 @media (max-width: 768px) {
-  .print-controls {
-    padding: 8px 12px;
-    position: relative;
-  }
+  .print-controls { padding: 8px 12px; }
   .print-controls h2 { font-size: 12px; }
   html, body {
     overflow-x: hidden !important;
     width: 100% !important;
+    margin: 0; padding: 0;
+  }
+  .page-wrapper {
+    width: 100vw;
+    overflow: hidden;
   }
   .page {
     width: 210mm !important;
     transform-origin: top left;
-    transform: scale(var(--mobile-scale, 0.42));
+    transform: scale(var(--mobile-scale, 0.45));
     margin: 0 !important;
-    padding: 15mm 12mm 10mm 12mm !important;
+    padding: 10mm 12mm !important;
     box-shadow: none !important;
-  }
-  .page-wrapper {
-    overflow: hidden;
-    width: 100vw;
-    height: calc(210mm * var(--mobile-scale, 0.42) * 1.5);
   }
 }
 @page {
@@ -407,22 +404,26 @@ html, body {
 <script>
 document.getElementById('r-install-date').value = new Date().toISOString().slice(0,10);
 
-// 모바일에서 계약서 전체가 한 화면에 보이도록 스케일 자동 계산
+// 모바일에서 전체 계약서 축소
 function adjustMobileScale(){
   if(window.innerWidth <= 768){
-    var pageWidthPx = 210 * 3.7795; // 210mm → px (96dpi)
-    var scale = window.innerWidth / pageWidthPx;
-    document.documentElement.style.setProperty('--mobile-scale', scale.toFixed(3));
-    var wrapper = document.querySelector('.page-wrapper');
-    if(wrapper){
-      var page = document.querySelector('.page');
-      var pageH = page ? page.scrollHeight : 1100;
-      wrapper.style.height = (pageH * scale) + 'px';
-    }
+    var pageWidthPx = 210 * 3.7795; // 210mm to px
+    var scale = (window.innerWidth - 4) / pageWidthPx;
+    document.documentElement.style.setProperty('--mobile-scale', scale.toFixed(4));
+    // wrapper 높이 = 페이지 실제 높이 × 스케일
+    setTimeout(function(){
+      var page = document.getElementById('contract-page');
+      var wrapper = document.querySelector('.page-wrapper');
+      if(page && wrapper){
+        wrapper.style.height = (page.offsetHeight * scale) + 'px';
+      }
+    }, 100);
   }
 }
 adjustMobileScale();
 window.addEventListener('resize', adjustMobileScale);
+// 이미지 로드 후 재계산
+window.addEventListener('load', adjustMobileScale);
 
 function doPrint(){
   // 모바일/PC 모두 프린터 연결
