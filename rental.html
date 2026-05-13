@@ -2808,7 +2808,7 @@ function collectData() {
     INVENTORY:   INVENTORY,
     STAFF_LIST:  STAFF_LIST,
     TAX_CLIENTS: TAX_CLIENTS,
-    DOC_FILES:   DOC_FILES,
+    // DOC_FILES는 별도 청크로 저장 (main 용량 초과 방지)
     CONFIG: {
       ADMIN_PW:    ADMIN_PW,
       nextNo:      String(nextNo),
