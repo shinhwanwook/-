@@ -145,7 +145,7 @@ html, body {
 .terms p { margin-bottom: 1px; break-inside: avoid; }
 .terms .sub { padding-left: 10px; }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .print-controls { padding: 8px 12px; }
   .print-controls h2 { font-size: 12px; }
   html, body {
@@ -155,18 +155,27 @@ html, body {
     padding: 0 !important;
   }
   .page-wrapper {
-    width: 100vw !important;
-    overflow: hidden !important;
-    position: relative !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
   }
   .page {
     width: 210mm !important;
-    transform-origin: top left !important;
-    transform: scale(var(--mobile-scale, 0.43)) !important;
+    zoom: 0.43 !important;
+    -moz-transform: scale(0.43) !important;
+    -moz-transform-origin: top left !important;
     margin: 0 !important;
     padding: 10mm 12mm !important;
     box-shadow: none !important;
-    position: relative !important;
+  }
+}
+@media (min-width: 481px) and (max-width: 768px) {
+  .page-wrapper { overflow-x: hidden !important; }
+  .page {
+    width: 210mm !important;
+    zoom: 0.55 !important;
+    margin: 0 !important;
+    padding: 10mm 12mm !important;
+    box-shadow: none !important;
   }
 }
 @page {
@@ -408,26 +417,25 @@ html, body {
 <script>
 document.getElementById('r-install-date').value = new Date().toISOString().slice(0,10);
 
-// 모바일에서 전체 계약서 축소
-function adjustMobileScale(){
+// 모바일 zoom 자동 설정
+function adjustMobileZoom(){
+  var page = document.getElementById('contract-page');
+  if(!page) return;
   if(window.innerWidth <= 768){
-    var pageWidthPx = 210 * 3.7795; // 210mm to px
-    var scale = (window.innerWidth - 4) / pageWidthPx;
-    document.documentElement.style.setProperty('--mobile-scale', scale.toFixed(4));
-    // wrapper 높이 = 페이지 실제 높이 × 스케일
-    setTimeout(function(){
-      var page = document.getElementById('contract-page');
-      var wrapper = document.querySelector('.page-wrapper');
-      if(page && wrapper){
-        wrapper.style.height = (page.offsetHeight * scale) + 'px';
-      }
-    }, 100);
+    var pageWidthPx = 210 * 3.7795;
+    var zoom = (window.innerWidth - 4) / pageWidthPx;
+    page.style.zoom = zoom.toFixed(4);
+    page.style.width = '210mm';
+    page.style.margin = '0';
+    page.style.boxShadow = 'none';
+    page.style.padding = '10mm 12mm';
+  } else {
+    page.style.zoom = '';
   }
 }
-adjustMobileScale();
-window.addEventListener('resize', adjustMobileScale);
-// 이미지 로드 후 재계산
-window.addEventListener('load', adjustMobileScale);
+adjustMobileZoom();
+window.addEventListener('resize', adjustMobileZoom);
+window.addEventListener('load', adjustMobileZoom);
 
 function doPrint(){
   // 모바일/PC 모두 프린터 연결
