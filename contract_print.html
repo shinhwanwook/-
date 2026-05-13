@@ -151,34 +151,38 @@ html, body {
   html, body {
     overflow-x: hidden !important;
     width: 100% !important;
-    margin: 0; padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .page-wrapper {
-    width: 100vw;
-    overflow: hidden;
+    width: 100vw !important;
+    overflow: hidden !important;
+    position: relative !important;
   }
   .page {
     width: 210mm !important;
-    transform-origin: top left;
-    transform: scale(var(--mobile-scale, 0.45));
+    transform-origin: top left !important;
+    transform: scale(var(--mobile-scale, 0.43)) !important;
     margin: 0 !important;
     padding: 10mm 12mm !important;
     box-shadow: none !important;
+    position: relative !important;
   }
 }
 @page {
-  size: A4;
   margin: 15mm 12mm 10mm 12mm;
 }
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-controls { display: none !important; }
   html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  .page-wrapper { display: block !important; width: 100% !important; height: auto !important; }
   .page {
     box-shadow: none !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    transform: none !important;
   }
   .title {
     font-size: 24pt !important;
