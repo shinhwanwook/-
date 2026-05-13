@@ -2394,14 +2394,26 @@ function saveExtraPay(){
   }
   closeModal('extra-modal');
   if(document.getElementById('detail-modal').classList.contains('open')) renderDetailExtras(currentNo);
-  renderPayment();alert('저장되었습니다.');
+  renderPayment();
+  // 즉시 Firebase 저장
+  window._isLoading = false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 추가사용료 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+    if(!ok) setTimeout(function(){ saveToApi(null); }, 2000);
+  });
 }
 function confirmDeleteExtra(id){
   showConfirm('이 추가사용료를 삭제하시겠습니까?',()=>{
     EXTRA_PAYS=EXTRA_PAYS.filter(e=>e.id!==id);
     closeModal('confirm-modal');
     if(document.getElementById('detail-modal').classList.contains('open')) renderDetailExtras(currentNo);
-    renderPayment();alert('삭제되었습니다.');
+    renderPayment();
+    window._isLoading = false;
+    saveToLocal();
+    saveToApi(function(ok){
+      showSaveStatus(ok?'✅ 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+    });
   });
 }
 
