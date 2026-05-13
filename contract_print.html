@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
 <title>장비 임대/유지보수 계약서</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -66,7 +66,7 @@ html, body {
 }
 .party-table .sublabel {
   background: #f4f4f4; font-weight: 600;
-  text-align: center; width: 85px; font-size: 8.5pt;
+  text-align: center; width: 100px; font-size: 8.5pt;
 }
 .party-table input[type=text] {
   border: none; outline: none; width: 100%;
@@ -146,35 +146,28 @@ html, body {
 .terms .sub { padding-left: 10px; }
 
 @media (max-width: 768px) {
-  .print-controls { padding: 8px 12px; }
+  .print-controls {
+    padding: 8px 12px;
+    position: relative;
+  }
   .print-controls h2 { font-size: 12px; }
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
   .page {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 210mm !important;
+    transform-origin: top left;
+    transform: scale(var(--mobile-scale, 0.42));
     margin: 0 !important;
-    padding: 3mm 2mm !important;
+    padding: 15mm 12mm 10mm 12mm !important;
     box-shadow: none !important;
-    overflow: hidden !important;
   }
-  .party-table, .contract-table {
-    font-size: 7pt;
-    width: 100% !important;
-    table-layout: fixed !important;
-  }
-  .party-table td, .contract-table th, .contract-table td {
+  .page-wrapper {
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 7pt;
+    width: 100vw;
+    height: calc(210mm * var(--mobile-scale, 0.42) * 1.5);
   }
-  .terms { columns: 1; font-size: 7pt; }
-  .bank-info, .special-terms {
-    width: 100% !important;
-    overflow: hidden !important;
-    font-size: 8pt;
-  }
-  body { overflow-x: hidden !important; }
-  .title { font-size: 13pt; letter-spacing: 2px; }
 }
 @page {
   size: A4;
@@ -214,7 +207,7 @@ html, body {
   <button class="btn-print" onclick="doPrint()">🖨️ 출력하기</button>
 </div>
 
-<div class="page">
+<div class="page-wrapper"><div class="page" id="contract-page">
 
   <div class="title" style="font-size:24pt !important;font-weight:900 !important;letter-spacing:8px !important;text-align:center;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:8px">장비 임대/유지보수 계약서</div>
 
@@ -224,8 +217,8 @@ html, body {
       <col style="width:95px"> <!-- 임대인 -->
       <col style="width:85px"> <!-- 라벨 -->
       <col style="width:140px"><!-- 값1 -->
-      <col style="width:85px"> <!-- 라벨2 -->
-      <col style="width:270px"><!-- 값2(상호명/성명) -->
+      <col style="width:100px"><!-- 라벨2(상호명) -->
+      <col style="width:255px"><!-- 값2(상호명/성명) -->
     </colgroup>
     <tr style="height:50px">
       <td class="label" rowspan="2">임&nbsp;대&nbsp;인</td>
@@ -252,8 +245,8 @@ html, body {
       <col style="width:95px"> <!-- 임차인 -->
       <col style="width:85px"> <!-- 라벨 -->
       <col style="width:140px"><!-- 값1 -->
-      <col style="width:85px"> <!-- 라벨2 -->
-      <col style="width:270px"><!-- 값2(업체명/담당자) -->
+      <col style="width:100px"><!-- 라벨2(업체명/담당자) -->
+      <col style="width:255px"><!-- 값2(업체명/담당자) -->
     </colgroup>
     <tr>
       <td class="label" rowspan="3">임&nbsp;차&nbsp;인</td>
@@ -409,10 +402,27 @@ html, body {
     <p class="sub">1. 위 각 조항에 명시되지 아니한 사항은 관계법령 및 일반 상거래에 의한다.</p>
   </div>
 
-</div>
+</div></div>
 
 <script>
 document.getElementById('r-install-date').value = new Date().toISOString().slice(0,10);
+
+// 모바일에서 계약서 전체가 한 화면에 보이도록 스케일 자동 계산
+function adjustMobileScale(){
+  if(window.innerWidth <= 768){
+    var pageWidthPx = 210 * 3.7795; // 210mm → px (96dpi)
+    var scale = window.innerWidth / pageWidthPx;
+    document.documentElement.style.setProperty('--mobile-scale', scale.toFixed(3));
+    var wrapper = document.querySelector('.page-wrapper');
+    if(wrapper){
+      var page = document.querySelector('.page');
+      var pageH = page ? page.scrollHeight : 1100;
+      wrapper.style.height = (pageH * scale) + 'px';
+    }
+  }
+}
+adjustMobileScale();
+window.addEventListener('resize', adjustMobileScale);
 
 function doPrint(){
   // 모바일/PC 모두 프린터 연결
