@@ -349,7 +349,7 @@ body.locked { overflow:hidden; }
           </div>
           <div class="form-group form-full">
             <label class="required">품목명</label>
-            <input class="inp" id="inv-f-item" placeholder="예) HP토너 CF217A, HP8600 본체">
+            <input class="inp" id="inv-f-item" placeholder="">
           </div>
           <div class="form-group">
             <label class="required" id="inv-f-qty-lbl">수량</label>
@@ -534,20 +534,20 @@ body.locked { overflow:hidden; }
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="required">거래처명</label><input class="inp" id="f-name" placeholder="예) 헤브론축구선교회"></div>
+        <div class="form-group"><label class="required">거래처명</label><input class="inp" id="f-name" placeholder=""></div>
         <div class="form-group"><label class="required">유형</label><select class="inp" id="f-cms"><option value="CMS">CMS 자동이체</option><option value="입금">입금</option><option value="카드">카드</option></select></div>
-        <div class="form-group"><label>담당자</label><input class="inp" id="f-manager" placeholder="예) 홍길동 / 김철수"></div>
-        <div class="form-group"><label>전화번호</label><input class="inp" id="f-phone" placeholder="예) 010-0000-0000"></div>
-        <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder="예) example@email.com"></div>
-        <div class="form-group"><label class="required">렌탈금 (원)</label><input class="inp" id="f-rent" type="number" placeholder="예) 55000"></div>
-        <div class="form-group"><label>납부일</label><input class="inp" id="f-payday" placeholder="예) 매15일"></div>
+        <div class="form-group"><label>담당자</label><input class="inp" id="f-manager" placeholder=""></div>
+        <div class="form-group"><label>전화번호</label><input class="inp" id="f-phone" placeholder=""></div>
+        <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder=""></div>
+        <div class="form-group"><label class="required">렌탈금 (원)</label><input class="inp" id="f-rent" type="number" placeholder=""></div>
+        <div class="form-group"><label>납부일</label><input class="inp" id="f-payday" placeholder=""></div>
         <div class="form-group"><label>납부방식</label>
           <select class="inp" id="f-paytype">
             <option value="prepaid">선불</option>
             <option value="postpaid">후불</option>
           </select>
         </div>
-        <div class="form-group"><label>기기명</label><input class="inp" id="f-etc" placeholder="예) HP8600"></div>
+        <div class="form-group"><label>기기명</label><input class="inp" id="f-etc" placeholder=""></div>
         <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
         <div class="form-group"><label>보증금 (원)</label><input class="inp" id="f-deposit" type="number" value="0"></div>
         <div class="form-group"><label>등록일</label><input class="inp" id="f-regdate" type="date"></div>
@@ -562,7 +562,7 @@ body.locked { overflow:hidden; }
           </select>
         </div>
         <div class="form-group"><label>세금계산서</label><select class="inp" id="f-tax"><option value="무">무</option><option value="유">유</option></select></div>
-        <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder="예) 인천시 부평구 부평동 123"></div>
+        <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder=""></div>
 
         <!-- 약정매수 / 추가장당 단가 -->
         <div class="form-group form-full" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px">
@@ -570,31 +570,31 @@ body.locked { overflow:hidden; }
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group" style="margin:0">
               <label>약정매수 — 흑백 (매)</label>
-              <input class="inp" id="f-quota-bw" type="number" min="0" value="0" placeholder="예) 1000">
+              <input class="inp" id="f-quota-bw" type="number" min="0" value="0" placeholder="">
             </div>
             <div class="form-group" style="margin:0">
               <label>약정매수 — 컬러 (매)</label>
-              <input class="inp" id="f-quota-color" type="number" min="0" value="0" placeholder="예) 500">
+              <input class="inp" id="f-quota-color" type="number" min="0" value="0" placeholder="">
             </div>
             <div class="form-group" style="margin:0">
               <label>시작매수 — 흑백 (매)</label>
-              <input class="inp" id="f-start-bw" type="number" min="0" value="0" placeholder="예) 12345">
+              <input class="inp" id="f-start-bw" type="number" min="0" value="0" placeholder="">
             </div>
             <div class="form-group" style="margin:0">
               <label>시작매수 — 컬러 (매)</label>
-              <input class="inp" id="f-start-color" type="number" min="0" value="0" placeholder="예) 1234">
+              <input class="inp" id="f-start-color" type="number" min="0" value="0" placeholder="">
             </div>
             <div class="form-group" style="margin:0">
               <label>약정 초과 — 흑백 추가단가 (원/매)</label>
               <div style="display:flex;align-items:center;gap:6px">
-                <input class="inp" id="f-extra-bw" type="number" min="0" value="0" placeholder="예) 15" style="flex:1">
+                <input class="inp" id="f-extra-bw" type="number" min="0" value="0" placeholder="" style="flex:1">
                 <span style="font-size:12px;color:#6b7280;white-space:nowrap">원 / 매</span>
               </div>
             </div>
             <div class="form-group" style="margin:0">
               <label>약정 초과 — 컬러 추가단가 (원/매)</label>
               <div style="display:flex;align-items:center;gap:6px">
-                <input class="inp" id="f-extra-color" type="number" min="0" value="0" placeholder="예) 80" style="flex:1">
+                <input class="inp" id="f-extra-color" type="number" min="0" value="0" placeholder="" style="flex:1">
                 <span style="font-size:12px;color:#6b7280;white-space:nowrap">원 / 매</span>
               </div>
             </div>
@@ -842,7 +842,7 @@ body.locked { overflow:hidden; }
             <option value="cash">🟡 입금</option>
           </select>
         </div>
-        <div class="form-group form-full"><label>메모</label><input class="inp" id="pm-memo" placeholder="예) 선납 등"></div>
+        <div class="form-group form-full"><label>메모</label><input class="inp" id="pm-memo" placeholder=""></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -861,8 +861,8 @@ body.locked { overflow:hidden; }
       <div class="form-grid">
         <div class="form-group"><label class="required">거래처</label><select class="inp" id="em-no"></select></div>
         <div class="form-group"><label class="required">날짜</label><input class="inp" id="em-date" type="date"></div>
-        <div class="form-group"><label class="required">항목명</label><input class="inp" id="em-item" placeholder="예) 토너 교체, 출장비 등"></div>
-        <div class="form-group"><label class="required">금액 (원)</label><input class="inp" id="em-amount" type="number" placeholder="예) 30000"></div>
+        <div class="form-group"><label class="required">항목명</label><input class="inp" id="em-item" placeholder=""></div>
+        <div class="form-group"><label class="required">금액 (원)</label><input class="inp" id="em-amount" type="number" placeholder=""></div>
         <div class="form-group form-full"><label>메모</label><input class="inp" id="em-memo" placeholder="추가 설명..."></div>
       </div>
     </div>
@@ -945,7 +945,7 @@ body.locked { overflow:hidden; }
     <div class="modal-body">
       <div class="form-group">
         <label>메모 내용</label>
-        <textarea class="inp" id="rm-memo" rows="4" placeholder="렌탈금 관련 메모를 입력하세요...&#10;예) 부가세 포함, 할인 적용, 계약 특이사항 등"></textarea>
+        <textarea class="inp" id="rm-memo" rows="4" placeholder=""></textarea>
       </div>
     </div>
     <div class="modal-foot">
