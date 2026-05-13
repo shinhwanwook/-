@@ -72,7 +72,8 @@ body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.
   gap: 4px; white-space: nowrap;
 }
 .stamp-wrap img {
-  width: 32px; height: 32px; object-fit: contain; opacity: 0.85;
+  width: 52px; height: 52px; object-fit: contain; opacity: 0.85;
+  margin-left: 4px;
 }
 
 .contract-table {
@@ -127,15 +128,33 @@ body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.
 .terms p { margin-bottom: 1px; break-inside: avoid; }
 .terms .sub { padding-left: 10px; }
 
-@media print {
-  .print-controls { display: none; }
-  body { background: #fff; }
-  .page { box-shadow: none; margin: 0; padding: 8mm 10mm; width: 100%; }
-  input, textarea { border-color: transparent !important; background: transparent !important; }
-}
 @media (max-width: 768px) {
-  .page { width: 100%; margin: 0; padding: 5mm; box-shadow: none; }
-  .terms { columns: 1; }
+  .print-controls { padding: 8px 12px; }
+  .print-controls h2 { font-size: 12px; }
+  .page {
+    width: 100%; margin: 0;
+    padding: 3mm 3mm;
+    box-shadow: none;
+    overflow-x: auto;
+  }
+  .party-table, .contract-table {
+    font-size: 7pt;
+    min-width: 320px;
+  }
+  .terms { columns: 1; font-size: 7pt; }
+  body { overflow-x: hidden; }
+}
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .print-controls { display: none !important; }
+  body { background: #fff !important; margin: 0; padding: 0; }
+  .page { box-shadow: none !important; margin: 0 !important; padding: 8mm 10mm !important; width: 100% !important; }
+  input, textarea {
+    border-color: transparent !important;
+    background: transparent !important;
+    -webkit-appearance: none;
+  }
+  .stamp-wrap img { opacity: 0.9 !important; }
 }
 </style>
 </head>
@@ -143,7 +162,7 @@ body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.
 
 <div class="print-controls">
   <h2>📄 장비 임대/유지보수 계약서</h2>
-  <button class="btn-print" onclick="window.print()">🖨️ 출력하기</button>
+  <button class="btn-print" onclick="doPrint()">🖨️ 출력하기</button>
 </div>
 
 <div class="page">
@@ -345,6 +364,13 @@ body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.
 
 <script>
 document.getElementById('r-install-date').value = new Date().toISOString().slice(0,10);
+
+function doPrint(){
+  // 모바일/PC 모두 프린터 연결
+  setTimeout(function(){
+    window.print();
+  }, 300);
+}
 
 function loadFromParams(){
   const p = new URLSearchParams(window.location.search);
