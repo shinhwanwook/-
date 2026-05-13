@@ -1593,6 +1593,10 @@ function openDetail(no){
       termBtn.onclick=()=>confirmTerminate(currentNo);
     }
   }
+  // 삭제 버튼 - 관리자만 표시
+  var delBtn = document.getElementById('dm-delete-btn');
+  if(delBtn) delBtn.style.display = window.isAdmin ? '' : 'none';
+
   renderPayHist(c);
   renderDetailExtras(no);
   renderDetailFiles();
