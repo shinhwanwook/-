@@ -53,11 +53,12 @@ html, body {
 }
 .party-table td {
   border: 1px solid #333;
-  padding: 3px 5px;
+  padding: 4px 5px;
   vertical-align: middle;
   text-align: center;
   overflow: hidden;
   white-space: nowrap;
+  height: 24px;
 }
 .party-table .label {
   background: #e8e8e8; font-weight: 700;
@@ -80,9 +81,9 @@ html, body {
   position: relative;
 }
 .stamp-wrap img {
-  width: 50px; height: 50px; object-fit: contain; opacity: 0.85;
+  width: 46px; height: 46px; object-fit: contain; opacity: 0.85;
   position: absolute;
-  right: 0; top: 50%; transform: translateY(-50%);
+  right: 2px; top: 50%; transform: translateY(-50%);
   z-index: 0;
   pointer-events: none;
 }
@@ -218,7 +219,7 @@ html, body {
       <col style="width:85px"> <!-- 라벨2 -->
       <col style="width:270px"><!-- 값2(상호명/성명) -->
     </colgroup>
-    <tr>
+    <tr style="height:50px">
       <td class="label" rowspan="2">임&nbsp;대&nbsp;인</td>
       <td class="sublabel">등 록 번 호</td>
       <td>122 - 07 - 72711</td>
