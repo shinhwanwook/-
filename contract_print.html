@@ -167,11 +167,20 @@ html, body {
   body { overflow-x: hidden !important; }
   .title { font-size: 13pt; letter-spacing: 2px; }
 }
+@page {
+  size: A4;
+  margin: 15mm 12mm 10mm 12mm;
+}
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-controls { display: none !important; }
-  body { background: #fff !important; margin: 0; padding: 0; }
-  .page { box-shadow: none !important; margin: 0 !important; padding: 15mm 12mm 10mm 12mm !important; width: 100% !important; }
+  html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  .page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
   input, textarea {
     border-color: transparent !important;
     background: transparent !important;
