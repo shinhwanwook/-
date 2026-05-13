@@ -27,13 +27,13 @@ body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 10.
   max-width: 100%;
   background: #fff;
   margin: 16px auto;
-  padding: 10mm 12mm;
+  padding: 15mm 10mm 10mm 10mm;
   box-shadow: 0 4px 20px rgba(0,0,0,.15);
-  overflow-x: auto;
 }
 html, body {
   overflow-x: hidden;
   max-width: 100%;
+  margin: 0; padding: 0;
 }
 
 .title {
@@ -138,23 +138,38 @@ html, body {
   .print-controls { padding: 8px 12px; }
   .print-controls h2 { font-size: 12px; }
   .page {
-    width: 100%; margin: 0;
-    padding: 3mm 3mm;
-    box-shadow: none;
-    overflow-x: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 3mm 2mm !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
   }
   .party-table, .contract-table {
     font-size: 7pt;
-    min-width: 320px;
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  .party-table td, .contract-table th, .contract-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 7pt;
   }
   .terms { columns: 1; font-size: 7pt; }
-  body { overflow-x: hidden; }
+  .bank-info, .special-terms {
+    width: 100% !important;
+    overflow: hidden !important;
+    font-size: 8pt;
+  }
+  body { overflow-x: hidden !important; }
+  .title { font-size: 13pt; letter-spacing: 2px; }
 }
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-controls { display: none !important; }
   body { background: #fff !important; margin: 0; padding: 0; }
-  .page { box-shadow: none !important; margin: 0 !important; padding: 8mm 10mm !important; width: 100% !important; }
+  .page { box-shadow: none !important; margin: 0 !important; padding: 15mm 10mm 10mm 10mm !important; width: 100% !important; }
   input, textarea {
     border-color: transparent !important;
     background: transparent !important;
@@ -199,7 +214,7 @@ html, body {
     <tr>
       <td class="sublabel">소 &nbsp; 재 &nbsp; 지</td>
       <td colspan="2">인천시 부평구 장제로222번길 25</td>
-      <td>☎ 080-506-4959 &nbsp;/&nbsp; 010-4785-7190</td>
+      <td><input type="text" id="lessor-tel" value="080-506-4959 / 010-4785-7190" style="text-align:center;font-size:9pt;width:100%"></td>
     </tr>
   </table>
 
