@@ -551,6 +551,13 @@ body.locked { overflow:hidden; }
         <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
         <div class="form-group"><label>보증금 (원)</label><input class="inp" id="f-deposit" type="number" value="0"></div>
         <div class="form-group"><label>등록일</label><input class="inp" id="f-regdate" type="date"></div>
+        <div class="form-group form-full">
+          <label>📎 계약서 (구글 드라이브 링크)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="inp" id="f-gdrive" type="url" placeholder="https://drive.google.com/..." style="flex:1">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="openGdriveLink()" title="링크 열기">🔗 열기</button>
+          </div>
+        </div>
         <div class="form-group"><label>약정기간</label>
           <select class="inp" id="f-contract-period">
             <option value="">선택</option>
@@ -1571,7 +1578,9 @@ function openDetail(no){
     ['렌탈금',`<strong style="${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</strong>`],['납부일',c.payment_day||'-'],
     ['기기',c.etc.toUpperCase()],['수량',(c.qty||1)+'대'],
     ['보증금',c.deposit?c.deposit.toLocaleString()+'원':'없음'],['세금계산서',c.tax==='유'?'<span class="badge" style="background:#fee2e2;color:#dc2626;font-weight:700">유 ✓</span>':'<span class="badge b-gray">무</span>'],
-    ['등록일',c.reg_date],['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
+    ['등록일',c.reg_date],
+    ['계약서',c.gdrive?`<a href="${esc(c.gdrive)}" target="_blank" style="color:var(--blue);font-weight:600">📎 계약서 열기</a>`:'−'],
+    ['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
     ['약정매수 (흑백/컬러)',`흑백 <strong>${(c.quota_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.quota_color||0).toLocaleString()}</strong>매`,'full'],
     ['초과 추가단가',`흑백 <strong>${(c.extra_bw||0).toLocaleString()}</strong>원/매 &nbsp;/&nbsp; 컬러 <strong>${(c.extra_color||0).toLocaleString()}</strong>원/매`,'full'],
     ['A/S 담당자',staffNames||'-','full'],
@@ -1856,6 +1865,7 @@ function editContract(no){
   document.getElementById('f-contract-period').value=c.contract_period||'';
   document.getElementById('f-start-bw').value=c.start_bw||0;
   document.getElementById('f-start-color').value=c.start_color||0;
+  document.getElementById('f-gdrive').value=c.gdrive||'';
   document.getElementById('f-extra-bw').value=c.extra_bw||0;
   document.getElementById('f-extra-color').value=c.extra_color||0;
   formStaffIds=[...(c.staff_ids||[])];
@@ -1892,6 +1902,7 @@ function saveContract(){
     c.contract_period=document.getElementById('f-contract-period').value||'';
     c.start_bw=parseInt(document.getElementById('f-start-bw').value)||0;
     c.start_color=parseInt(document.getElementById('f-start-color').value)||0;
+    c.gdrive=document.getElementById('f-gdrive').value.trim();
     c.staff_ids=[...formStaffIds];
     if(pendingFiles.length) c.files=[...(c.files||[]),...pendingFiles.map(f=>({id:Date.now()+Math.random(),...f}))];
     alert('수정되었습니다.');
@@ -1917,6 +1928,7 @@ function saveContract(){
       contract_period:document.getElementById('f-contract-period').value||'',
       start_bw:parseInt(document.getElementById('f-start-bw').value)||0,
       start_color:parseInt(document.getElementById('f-start-color').value)||0,
+      gdrive:document.getElementById('f-gdrive').value.trim(),
       staff_ids:[...formStaffIds],
       files:pendingFiles.map(f=>({id:Date.now()+Math.random(),...f})),
       payments:{}
@@ -2226,6 +2238,12 @@ function printContract(no){
   window.open('contract_print.html?'+params.toString(), '_blank');
 }
 
+function openGdriveLink(){
+  var url = document.getElementById('f-gdrive').value.trim();
+  if(!url){ alert('구글 드라이브 링크를 입력해주세요.'); return; }
+  window.open(url, '_blank');
+}
+
 function confirmDeleteContract(no){
   var c = CONTRACTS.find(function(x){ return x.no===no; });
   if(!c) return;
@@ -2259,14 +2277,25 @@ function terminateContract(no){
   const c=CONTRACTS.find(x=>x.no===no);
   c.terminated=true;
   c.terminate_date=today();
-  applyFilters(); autoSave(); alert('해지 처리되었습니다. 데이터는 보관됩니다.');
+  applyFilters();
+  window._isLoading=false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 해지 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+    if(!ok) setTimeout(function(){ saveToApi(null); },2000);
+  });
 }
 function restoreContract(no){
   closeModal('confirm-modal');
   const c=CONTRACTS.find(x=>x.no===no);
   c.terminated=false;
   c.terminate_date=null;
-  applyFilters(); autoSave(); alert('계약이 복원되었습니다.');
+  applyFilters();
+  window._isLoading=false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 복원 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+  });
 }
 
 function confirmDelete(no){ confirmTerminate(no); } // 하위호환
