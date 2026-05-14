@@ -277,16 +277,10 @@ html, body {
       <td colspan="3"><input type="text" id="c-addr" placeholder=""></td>
     </tr>
     <tr>
+      <td class="sublabel">담 당 자</td>
+      <td><input type="text" id="c-manager" placeholder=""></td>
       <td class="sublabel">전 화 번 호</td>
       <td><input type="text" id="c-phone" placeholder=""></td>
-      <td class="sublabel">담당자 / 휴대폰</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px;white-space:nowrap">
-          <input type="text" id="c-manager" placeholder="">
-          /
-          <input type="text" id="c-mobile" placeholder="">
-        </div>
-      </td>
     </tr>
   </table>
 
@@ -451,7 +445,7 @@ function loadFromParams(){
   if(p.get('name'))   { document.getElementById('c-name').value=p.get('name'); }
   if(p.get('addr'))   document.getElementById('c-addr').value=p.get('addr');
   if(p.get('phone'))  document.getElementById('c-phone').value=p.get('phone');
-  if(p.get('mobile')) document.getElementById('c-mobile').value=p.get('mobile');
+  // c-mobile 제거됨
   if(p.get('manager'))document.getElementById('c-manager').value=p.get('manager');
   if(p.get('bizno'))  document.getElementById('c-bizno').value=p.get('bizno');
   if(p.get('model'))  document.getElementById('r1-model').value=p.get('model');
