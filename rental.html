@@ -4868,20 +4868,21 @@ function doLogin(){
     Object.keys(taxChunks).forEach(function(key) {
       promises.push(db.collection('rental').doc('tax_issues_' + key).set({issues: taxChunks[key]}));
     });
-    // DOC_FILES 별도 저장 (base64 데이터 포함으로 크기 큼)
-    var docData = data.DOC_FILES || [];
-    // 파일 데이터를 10개씩 청크로 분리
-    var docChunks = [];
-    for(var i=0; i<docData.length; i+=10){
-      docChunks.push(docData.slice(i, i+10));
+    // DOC_FILES 별도 저장 - DOC_FILES가 있을 때만 저장 (없으면 기존 청크 유지)
+    var docData = data.DOC_FILES || DOC_FILES || [];
+    if(docData.length > 0) {
+      var docChunks = [];
+      for(var i=0; i<docData.length; i+=10){
+        docChunks.push(docData.slice(i, i+10));
+      }
+      for(var i=0; i<20; i++){
+        promises.push(
+          db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0'))
+            .set(i < docChunks.length ? {docs: docChunks[i]} : {docs: []})
+        );
+      }
     }
-    // 기존 doc 청크 삭제 후 새로 저장
-    for(var i=0; i<20; i++){
-      promises.push(
-        db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0'))
-          .set(i < docChunks.length ? {docs: docChunks[i]} : {docs: []})
-      );
-    }
+    // DOC_FILES가 비어있으면 기존 청크 건드리지 않음
 
     return Promise.all(promises)
       .then(function(){ return true; })
