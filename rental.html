@@ -4137,7 +4137,7 @@ function renderTax() {
       '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxMemo('+t.seq+')">'+
         esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
-      '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'-')+'</td>'+
+      '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
       '<td style="font-size:12px;white-space:nowrap">'+t.rent.toLocaleString()+'원</td>'+
       cells+
     '</tr>';
@@ -4603,7 +4603,7 @@ function renderTaxClientList() {
         '<td style="font-weight:600">'+esc(t.name)+(t.terminated?'<span style="margin-left:6px;font-size:10px;background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px">해지</span>':'')+'</td>'+
         '<td style="font-size:12px">'+esc(t.manager||'-')+'</td>'+
         '<td style="font-size:12px">'+esc(t.phone||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--blue)">'+esc(t.email||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--blue)" title="'+(t.email||'')+'">'+esc(t.email||'-')+'</td>'+
         '<td style="font-size:12px">'+t.rent.toLocaleString()+'원 '+
           '<span style="font-size:10px;color:#6b7280">'+(t.vat_type==='excl'?'(VAT미포함)':'(VAT포함)')+'</span></td>'+
         '<td style="text-align:center;font-size:12px">'+t.qty+'</td>'+
