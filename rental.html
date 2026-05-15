@@ -330,7 +330,6 @@ body.locked { overflow:hidden; }
     <div class="card">
       <div class="card-header" id="inv-form-header">
         <span class="card-title" id="inv-form-title">📥 입고 등록</span>
-        <button class="btn btn-ghost btn-sm" onclick="closeInvForm()">✕ 닫기</button>
       </div>
       <div class="modal-body">
         <div id="inv-form-notice" style="border-radius:6px;padding:9px 14px;margin-bottom:14px;font-size:12px;font-weight:600"></div>
@@ -394,8 +393,8 @@ body.locked { overflow:hidden; }
         </div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="closeInvForm()">취소</button>
         <button class="btn btn-primary" id="inv-f-save-btn" onclick="saveInvForm()">💾 저장</button>
+        <button class="btn btn-ghost" onclick="closeInvForm()">✕ 닫기</button>
       </div>
     </div>
   </div>
@@ -3729,9 +3728,6 @@ function hidePayTip(){
 
 <!-- ══ PAGE: 장비/소모품 ══ -->
 <div class="page" id="page-inventory">
-
-
-
   <!-- 재고 현황 -->
   <div class="card" style="margin-bottom:16px">
     <div class="card-header">
