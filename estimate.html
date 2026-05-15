@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>견적서</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;background:#f0f0f0}
+.print-controls{background:#1e3a5f;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.print-controls h2{font-size:14px}
+.btn-print{background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700}
+.btn-print:hover{background:#e55a00}
+.page{width:210mm;background:#fff;margin:16px auto;padding:12mm 15mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.title{text-align:center;font-size:22pt;font-weight:900;letter-spacing:6px;margin-bottom:12px;border-bottom:3px double #000;padding-bottom:8px}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #333;padding:3px 5px;vertical-align:middle;font-size:9.5pt}
+.label{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
+input[type=text],input[type=date],input[type=number],textarea{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center}
+input:focus,textarea:focus{background:#fffde7}
+.right{text-align:right}
+.center{text-align:center}
+.total-row{background:#f0f0f0;font-weight:700}
+.stamp-area{position:relative;display:inline-block}
+.sign-line{border-bottom:1px solid #999;width:120px;display:inline-block}
+@page{margin:15mm 12mm 10mm 12mm}
+@media print{
+  .print-controls{display:none}
+  body{background:#fff}
+  .page{box-shadow:none;margin:0;padding:0;width:100%}
+  input,textarea{border-color:transparent!important;background:transparent!important}
+}
+@media(max-width:768px){
+  .page{width:100%;margin:0;padding:5mm;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="print-controls">
+  <h2>📄 견적서</h2>
+  <button class="btn-print" onclick="window.print()">🖨️ 출력하기</button>
+</div>
+<div class="page">
+  <div class="title">견 &nbsp; 적 &nbsp; 서</div>
+
+  <!-- 상단 정보 -->
+  <table style="margin-bottom:6px">
+    <tr>
+      <td class="label" style="width:60px">견적일자</td>
+      <td><input type="date" id="est-date"></td>
+      <td class="label" style="width:60px">유효기간</td>
+      <td><input type="text" placeholder="견적일로부터 30일"></td>
+      <td class="label" style="width:60px">담당자</td>
+      <td><input type="text" id="est-person"></td>
+    </tr>
+  </table>
+
+  <!-- 공급받는자 / 공급자 -->
+  <table style="margin-bottom:6px">
+    <tr>
+      <td class="label" rowspan="4" style="width:50px;font-size:11pt">공<br>급<br>받<br>는<br>자</td>
+      <td class="label" style="width:70px">상호(법인명)</td>
+      <td style="width:180px"><input type="text" id="buyer-name"> 귀중</td>
+      <td class="label" rowspan="4" style="width:50px;font-size:11pt">공<br>급<br>자</td>
+      <td class="label" style="width:70px">등록번호</td>
+      <td>122 - 07 - 72711</td>
+    </tr>
+    <tr>
+      <td class="label">사업장주소</td>
+      <td><input type="text" id="buyer-addr"></td>
+      <td class="label">상호(법인명)</td>
+      <td>잉크스테이션</td>
+    </tr>
+    <tr>
+      <td class="label">전화번호</td>
+      <td><input type="text" id="buyer-tel"></td>
+      <td class="label">성명</td>
+      <td>신 환 욱 (인)</td>
+    </tr>
+    <tr>
+      <td class="label">담당자</td>
+      <td><input type="text" id="buyer-person"></td>
+      <td class="label">주소</td>
+      <td>인천시 부평구 장제로222번길 25</td>
+    </tr>
+  </table>
+
+  <!-- 합계금액 -->
+  <table style="margin-bottom:6px">
+    <tr>
+      <td class="label" style="width:100px;font-size:11pt">합 계 금 액</td>
+      <td style="font-size:13pt;font-weight:900;text-align:center">
+        ￦ <span id="total-display">0</span> 원 &nbsp; (VAT 포함)
+      </td>
+    </tr>
+  </table>
+
+  <!-- 품목 테이블 -->
+  <table style="margin-bottom:6px">
+    <thead>
+      <tr style="background:#e8e8e8">
+        <th style="width:25px">No</th>
+        <th>품목명</th>
+        <th style="width:60px">규격</th>
+        <th style="width:40px">수량</th>
+        <th style="width:90px">단가(원)</th>
+        <th style="width:90px">공급가(원)</th>
+        <th style="width:80px">세액(원)</th>
+        <th style="width:90px">합계(원)</th>
+        <th style="width:80px">비고</th>
+      </tr>
+    </thead>
+    <tbody id="est-body"></tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="5" class="center">합 &nbsp; 계</td>
+        <td class="right" id="sum-supply">0</td>
+        <td class="right" id="sum-vat">0</td>
+        <td class="right" id="sum-total">0</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- 특이사항 -->
+  <table style="margin-bottom:10px">
+    <tr>
+      <td class="label" style="width:70px">특이사항</td>
+      <td><textarea id="est-note" rows="2" style="text-align:left;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;resize:none"></textarea></td>
+    </tr>
+  </table>
+
+  <p style="text-align:center;font-size:10pt;margin-bottom:8px">
+    위와 같이 견적합니다.
+  </p>
+  <p style="text-align:right;font-size:10pt">
+    잉크스테이션 &nbsp; 대표 : 신 환 욱 &nbsp;
+    <input type="text" id="est-tel" style="width:160px;border:none;border-bottom:1px solid #999;outline:none;font-size:9pt;font-family:inherit;text-align:center" value="☎ 080-506-4959 / 010-4785-7190">
+  </p>
+</div>
+
+<script>
+// 오늘 날짜
+document.getElementById('est-date').value = new Date().toISOString().slice(0,10);
+
+// 10행 생성
+var rows = '';
+for(var i=1; i<=10; i++){
+  rows += '<tr>' +
+    '<td class="center" style="color:#aaa">'+i+'</td>' +
+    '<td><input type="text" class="item-name" oninput="calcAll()"></td>' +
+    '<td><input type="text" class="item-spec" oninput="calcAll()"></td>' +
+    '<td><input type="number" class="item-qty" value="" min="0" oninput="calcAll()" style="text-align:center"></td>' +
+    '<td><input type="number" class="item-price" value="" min="0" oninput="calcAll()" style="text-align:right"></td>' +
+    '<td class="right item-supply"></td>' +
+    '<td class="right item-vat"></td>' +
+    '<td class="right item-total"></td>' +
+    '<td><input type="text" class="item-memo" oninput="calcAll()"></td>' +
+    '</tr>';
+}
+document.getElementById('est-body').innerHTML = rows;
+
+function calcAll(){
+  var rows = document.querySelectorAll('#est-body tr');
+  var sumSupply=0, sumVat=0, sumTotal=0;
+  rows.forEach(function(row){
+    var qty = parseFloat(row.querySelector('.item-qty').value)||0;
+    var price = parseFloat(row.querySelector('.item-price').value)||0;
+    var supply = Math.round(qty*price/1.1);
+    var vat = qty*price - supply;
+    var total = qty*price;
+    row.querySelector('.item-supply').textContent = total>0 ? supply.toLocaleString() : '';
+    row.querySelector('.item-vat').textContent = total>0 ? vat.toLocaleString() : '';
+    row.querySelector('.item-total').textContent = total>0 ? total.toLocaleString() : '';
+    sumSupply += supply;
+    sumVat += vat;
+    sumTotal += total;
+  });
+  document.getElementById('sum-supply').textContent = sumSupply.toLocaleString();
+  document.getElementById('sum-vat').textContent = sumVat.toLocaleString();
+  document.getElementById('sum-total').textContent = sumTotal.toLocaleString();
+  document.getElementById('total-display').textContent = sumTotal.toLocaleString();
+}
+</script>
+</body>
+</html>

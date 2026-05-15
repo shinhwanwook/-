@@ -364,8 +364,8 @@ body.locked { overflow:hidden; }
             <input class="inp" id="inv-f-vendor" placeholder="구매처 입력">
           </div>
           <div class="form-group" id="inv-f-no-grp" style="display:none">
-            <label>연결 거래처</label>
-            <select class="inp" id="inv-f-no"></select>
+            <label>거래처명</label>
+            <input class="inp" id="inv-f-no" placeholder="">
           </div>
           <div class="form-group">
             <label>담당자</label>
@@ -3446,6 +3446,12 @@ function renderInvList(){
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📋</div>내역이 없습니다</div></td></tr>`;
+  // 출고 합계금액 계산
+  var outTotal = list.filter(function(r){ return r.dir==='out'; })
+    .reduce(function(s,r){ return s+((r.price||0)*(r.qty||1)); }, 0);
+  var outTotalEl = document.getElementById('inv-out-total');
+  if(outTotalEl) outTotalEl.textContent = outTotal.toLocaleString()+'원';
+
   const pages=Math.ceil(list.length/INV_PAGE)||1;
   document.getElementById('inv-pg-info').textContent=`${invPage+1} / ${pages} 페이지`;
   document.getElementById('inv-prev').disabled=invPage===0;
@@ -3510,11 +3516,8 @@ function showInvForm(dir){
   document.getElementById('inv-f-no-grp').style.display       = isIn ? 'none' : '';
   document.getElementById('inv-f-purpose-grp').style.display  = isIn ? 'none' : '';
   if(!isIn){
-    var noSel = document.getElementById('inv-f-no');
-    noSel.innerHTML = '<option value="">-- 없음 --</option>';
-    CONTRACTS.filter(function(c){return !c.terminated;}).forEach(function(c){
-      noSel.innerHTML += '<option value="'+c.no+'">'+c.no+'. '+c.name+'</option>';
-    });
+    // 거래처명 입력칸 (input으로 변경됨)
+    document.getElementById('inv-f-no').value = '';
     document.getElementById('inv-f-purpose').value = '';
   }
 
