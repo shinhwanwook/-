@@ -325,80 +325,6 @@ body.locked { overflow:hidden; }
 </div>
 
 
-<!-- ▶ 입고/출고 인라인 폼 패널 -->
-  <div id="inv-form-panel" style="display:none;margin-bottom:16px">
-    <div class="card">
-      <div class="card-header" id="inv-form-header">
-        <span class="card-title" id="inv-form-title">📥 입고 등록</span>
-      </div>
-      <div class="modal-body">
-        <div id="inv-form-notice" style="display:none"></div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="required" id="inv-f-date-lbl">날짜</label>
-            <input class="inp" id="inv-f-date" type="date">
-          </div>
-          <div class="form-group">
-            <label class="required">분류</label>
-            <select class="inp" id="inv-f-cat">
-              <option value="소모품">소모품</option>
-              <option value="장비">장비</option>
-              <option value="부품">부품</option>
-            </select>
-          </div>
-          <div class="form-group form-full">
-            <label class="required">품목명</label>
-            <input class="inp" id="inv-f-item" placeholder="">
-          </div>
-          <div class="form-group">
-            <label class="required" id="inv-f-qty-lbl">수량</label>
-            <input class="inp" id="inv-f-qty" type="number" min="1" value="1" oninput="calcInvTotal()">
-          </div>
-          <div class="form-group">
-            <label id="inv-f-price-lbl">단가 (원)</label>
-            <input class="inp" id="inv-f-price" type="number" min="0" value="0" oninput="calcInvTotal()">
-          </div>
-          <div class="form-group" id="inv-f-vendor-grp">
-            <label>공급업체</label>
-            <input class="inp" id="inv-f-vendor" placeholder="구매처 입력">
-          </div>
-          <div class="form-group" id="inv-f-no-grp" style="display:none">
-            <label>거래처명</label>
-            <input class="inp" id="inv-f-no" placeholder="">
-          </div>
-          <div class="form-group">
-            <label>담당자</label>
-            <select class="inp" id="inv-f-person"></select>
-          </div>
-          <div class="form-group" id="inv-f-purpose-grp" style="display:none">
-            <label>출고 목적</label>
-            <select class="inp" id="inv-f-purpose">
-              <option value="">-- 선택 --</option>
-              <option value="거래처 설치">거래처 설치</option>
-              <option value="교체 출고">교체 출고</option>
-              <option value="A/S 출고">A/S 출고</option>
-              <option value="반품">반품</option>
-              <option value="폐기">폐기</option>
-              <option value="기타">기타</option>
-            </select>
-          </div>
-          <div class="form-group form-full">
-            <label>메모</label>
-            <input class="inp" id="inv-f-memo" placeholder="메모 입력">
-          </div>
-        </div>
-        <div id="inv-f-total-row" style="margin-top:12px;background:#f0fdf4;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:#166534;font-weight:600">합계금액</span>
-          <span id="inv-f-total" style="font-size:16px;font-weight:700;color:#166534">0 원</span>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-primary" id="inv-f-save-btn" onclick="saveInvForm()">💾 저장</button>
-        <button class="btn btn-ghost" onclick="closeInvForm()">✕ 닫기</button>
-      </div>
-    </div>
-  </div>
-
 
 <div id="loading-screen" style="display:none;position:fixed;inset:0;background:#1e3a5f;z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:#fff">
   <div style="font-size:48px;margin-bottom:20px">📋</div>
@@ -3728,6 +3654,80 @@ function hidePayTip(){
 
 <!-- ══ PAGE: 장비/소모품 ══ -->
 <div class="page" id="page-inventory">
+  <!-- ▶ 입고/출고 인라인 폼 패널 -->
+  <div id="inv-form-panel" style="display:none;margin-bottom:16px">
+    <div class="card">
+      <div class="card-header" id="inv-form-header">
+        <span class="card-title" id="inv-form-title">📥 입고 등록</span>
+      </div>
+      <div class="modal-body">
+        <div id="inv-form-notice" style="display:none"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="required" id="inv-f-date-lbl">날짜</label>
+            <input class="inp" id="inv-f-date" type="date">
+          </div>
+          <div class="form-group">
+            <label class="required">분류</label>
+            <select class="inp" id="inv-f-cat">
+              <option value="소모품">소모품</option>
+              <option value="장비">장비</option>
+              <option value="부품">부품</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label class="required">품목명</label>
+            <input class="inp" id="inv-f-item" placeholder="">
+          </div>
+          <div class="form-group">
+            <label class="required" id="inv-f-qty-lbl">수량</label>
+            <input class="inp" id="inv-f-qty" type="number" min="1" value="1" oninput="calcInvTotal()">
+          </div>
+          <div class="form-group">
+            <label id="inv-f-price-lbl">단가 (원)</label>
+            <input class="inp" id="inv-f-price" type="number" min="0" value="0" oninput="calcInvTotal()">
+          </div>
+          <div class="form-group" id="inv-f-vendor-grp">
+            <label>공급업체</label>
+            <input class="inp" id="inv-f-vendor" placeholder="구매처 입력">
+          </div>
+          <div class="form-group" id="inv-f-no-grp" style="display:none">
+            <label>거래처명</label>
+            <input class="inp" id="inv-f-no" placeholder="">
+          </div>
+          <div class="form-group">
+            <label>담당자</label>
+            <select class="inp" id="inv-f-person"></select>
+          </div>
+          <div class="form-group" id="inv-f-purpose-grp" style="display:none">
+            <label>출고 목적</label>
+            <select class="inp" id="inv-f-purpose">
+              <option value="">-- 선택 --</option>
+              <option value="거래처 설치">거래처 설치</option>
+              <option value="교체 출고">교체 출고</option>
+              <option value="A/S 출고">A/S 출고</option>
+              <option value="반품">반품</option>
+              <option value="폐기">폐기</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label>메모</label>
+            <input class="inp" id="inv-f-memo" placeholder="메모 입력">
+          </div>
+        </div>
+        <div id="inv-f-total-row" style="margin-top:12px;background:#f0fdf4;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:#166534;font-weight:600">합계금액</span>
+          <span id="inv-f-total" style="font-size:16px;font-weight:700;color:#166534">0 원</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" id="inv-f-save-btn" onclick="saveInvForm()">💾 저장</button>
+        <button class="btn btn-ghost" onclick="closeInvForm()">✕ 닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 재고 현황 -->
   <div class="card" style="margin-bottom:16px">
     <div class="card-header">
