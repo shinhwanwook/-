@@ -3509,7 +3509,7 @@ function showInvForm(dir){
 
   // 입고 전용
   document.getElementById('inv-f-vendor-grp').style.display  = isIn ? '' : 'none';
-  document.getElementById('inv-f-total-row').style.display   = isIn ? 'flex' : 'none';
+  document.getElementById('inv-f-total-row').style.display   = 'flex'; // 입고/출고 모두 표시
   if(isIn){ document.getElementById('inv-f-vendor').value = ''; }
 
   // 출고 전용
@@ -3534,6 +3534,15 @@ function calcInvTotal(){
   var p = parseInt(document.getElementById('inv-f-price').value) || 0;
   var el = document.getElementById('inv-f-total');
   if(el) el.textContent = (q*p).toLocaleString() + ' 원';
+  // 출고 시 합계 누계도 업데이트
+  updateOutRunningTotal();
+}
+function updateOutRunningTotal(){
+  if(_invFormDir !== 'out') return;
+  var outTotal = INVENTORY.filter(function(r){ return r.dir==='out'; })
+    .reduce(function(s,r){ return s+((r.price||0)*(r.qty||1)); }, 0);
+  var el = document.getElementById('inv-out-total');
+  if(el) el.textContent = outTotal.toLocaleString()+'원';
 }
 
 function saveInvForm(){
