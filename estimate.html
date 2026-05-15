@@ -91,7 +91,7 @@ input:focus,textarea:focus{background:#fffde7}
       <td class="label">담당자</td>
       <td><input type="text" id="buyer-person"></td>
       <td class="label">주소</td>
-      <td style="text-align:center"><input type="text" value="인천시 부평구 장제로222번길 25" style="width:100%;text-align:center;border:none;outline:none;font-family:inherit;font-size:9.5pt;background:transparent"></td>
+      <td style="white-space:normal;padding:0"><textarea id="supp-addr" rows="2" style="width:100%;border:none;outline:none;font-family:inherit;font-size:9.5pt;resize:none;text-align:left;word-break:break-all;overflow:hidden;padding:4px;background:transparent;display:block">인천시 부평구 장제로222번길 25</textarea></td>
     </tr>
   </table>
 
@@ -136,7 +136,7 @@ input:focus,textarea:focus{background:#fffde7}
   <table style="margin-bottom:10px">
     <tr>
       <td class="label" style="width:70px">특이사항</td>
-      <td><textarea id="est-note" rows="2" style="text-align:left;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;resize:none"></textarea></td>
+      <td><textarea id="est-note" rows="4" style="text-align:left;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;resize:none;min-height:60px"></textarea></td>
     </tr>
   </table>
 
@@ -145,7 +145,7 @@ input:focus,textarea:focus{background:#fffde7}
   </p>
   <p style="text-align:center;font-size:10pt;margin-top:8px">
     잉크스테이션 &nbsp; 대표 : 신 환 욱 &nbsp;
-    <input type="text" id="est-tel" style="width:180px;border:none;border-bottom:1px solid #999;outline:none;font-size:9pt;font-family:inherit;text-align:center" value="☎ 080-506-4959 / 010-4785-7190">
+    <input type="text" id="est-tel" style="width:280px;border:none;border-bottom:1px solid #999;outline:none;font-size:9pt;font-family:inherit;text-align:center" value="☎ 080-506-4959 / 010-4785-7190">
   </p>
   <div class="no-print" style="text-align:center;margin-top:16px">
     <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
@@ -158,6 +158,10 @@ input:focus,textarea:focus{background:#fffde7}
 document.getElementById('est-date').value = new Date().toISOString().slice(0,10);
 // 사업장주소 textarea 자동 높이
 document.getElementById('buyer-addr').addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+});
+document.getElementById('supp-addr').addEventListener('input', function(){
   this.style.height = 'auto';
   this.style.height = this.scrollHeight + 'px';
 });
