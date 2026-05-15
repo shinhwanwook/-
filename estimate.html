@@ -14,9 +14,9 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;backg
 .page{width:210mm;background:#fff;margin:16px auto;padding:12mm 15mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 .title{text-align:center;font-size:22pt;font-weight:900;letter-spacing:6px;margin-bottom:12px;border-bottom:3px double #000;padding-bottom:8px}
 table{width:100%;border-collapse:collapse}
-td,th{border:1px solid #333;padding:6px 8px;vertical-align:middle;font-size:9.5pt;height:28px}
+td,th{border:1px solid #333;padding:6px 8px;vertical-align:middle;font-size:9.5pt;min-height:28px}
 .label{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
-input[type=text],input[type=date],input[type=number],textarea{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center}
+input[type=text],input[type=date],input[type=number],textarea{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center;white-space:normal;word-break:keep-all}
 input:focus,textarea:focus{background:#fffde7}
 .right{text-align:right}
 .center{text-align:center}
@@ -71,7 +71,7 @@ input:focus,textarea:focus{background:#fffde7}
     </tr>
     <tr>
       <td class="label">사업장주소</td>
-      <td><input type="text" id="buyer-addr" style="text-align:left;white-space:normal;word-break:keep-all"></td>
+      <td style="white-space:normal"><input type="text" id="buyer-addr" style="text-align:left;white-space:normal;word-wrap:break-word"></td>
       <td class="label">상호(법인명)</td>
       <td style="text-align:center">잉크스테이션</td>
     </tr>
