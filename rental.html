@@ -3729,9 +3729,9 @@ function hidePayTip(){
       <span class="card-title">📦 장비 및 소모품 재고 현황</span>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary btn-sm" onclick="showInvForm('in')">＋ 입고 등록</button>
-        <button class="btn btn-sm" style="background:#059669;color:#fff;border:none" onclick="window.open('추정치.html','_blank')">📋 견적서</button>
+        <button class="btn btn-sm" style="background:#059669;color:#fff;border:none" onclick="window.open(encodeURI('추정치.html'),'_blank')">📋 견적서</button>
         <button class="btn btn-success btn-sm" onclick="showInvForm('out')">↗ 출고 등록</button>
-        <button class="btn btn-sm" style="background:#0284c7;color:#fff;border:none" onclick="window.open('배송 안내문.html','_blank')">📄 거래명세서</button>
+        <button class="btn btn-sm" style="background:#0284c7;color:#fff;border:none" onclick="window.open(encodeURI('배송 안내문.html'),'_blank')">📄 거래명세서</button>
       </div>
     </div>
     <div class="tbl-wrap">
@@ -3751,6 +3751,11 @@ function hidePayTip(){
       <input class="inp inp-search" type="text" id="inv-srch" placeholder="🔍 품목명 검색..." style="flex:1;min-width:140px" oninput="invPage=0;renderInvList()">
       <select class="inp" id="inv-dir" onchange="invPage=0;renderInvList()"><option value="">전체</option><option value="in">입고만</option><option value="out">출고만</option></select>
       <select class="inp" id="inv-cat" onchange="invPage=0;renderInvList()"><option value="">전체 분류</option><option value="장비">장비</option><option value="소모품">소모품</option><option value="부품">부품</option></select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;padding:6px 8px;background:#f5f3ff;border-radius:8px;margin-bottom:8px;font-size:13px">
+      <span style="color:#6b7280">출고 합계금액:</span>
+      &nbsp;
+      <span id="inv-out-total" style="font-weight:700;color:#9333ea;font-size:15px">0원</span>
     </div>
     <div class="tbl-wrap">
       <table>
