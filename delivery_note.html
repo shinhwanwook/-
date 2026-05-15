@@ -58,11 +58,11 @@ input:focus,textarea:focus{background:#fffde7}
   </table>
 
   <!-- 공급받는자 / 공급자 -->
-  <table style="margin-bottom:6px">
+  <table style="margin-bottom:6px;table-layout:auto;width:100%">
     <tr>
       <td class="label" rowspan="4" style="width:50px;font-size:11pt">공<br>급<br>받<br>는<br>자</td>
       <td class="label" style="width:70px">상호(법인명)</td>
-      <td style="width:180px">
+      <td style="min-width:180px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <input type="text" id="buyer-name" style="flex:1"> <span style="white-space:nowrap;font-weight:700">귀중</span>
         </div>
@@ -73,13 +73,13 @@ input:focus,textarea:focus{background:#fffde7}
     </tr>
     <tr>
       <td class="label">사업장주소</td>
-      <td style="white-space:normal;word-break:break-all;overflow:visible;min-width:120px"><input type="text" id="buyer-addr" style="text-align:left;white-space:normal;word-break:break-all;overflow-wrap:break-word;width:100%"></td>
+      <td style="white-space:normal;word-break:break-all;overflow:visible;height:auto"><input type="text" id="buyer-addr" style="text-align:left;white-space:pre-wrap;word-break:break-all;width:100%;min-height:24px;height:auto;overflow:visible"></td>
       <td class="label">상호(법인명)</td>
       <td style="text-align:center">잉크스테이션</td>
     </tr>
     <tr>
       <td class="label">전화번호</td>
-      <td><input type="text" id="buyer-tel"></td>
+      <td style="min-width:150px"><input type="text" id="buyer-tel" style="width:100%"></td>
       <td class="label">성명</td>
       <td>
         <div style="position:relative;display:flex;align-items:center;justify-content:flex-end;padding-right:56px">
