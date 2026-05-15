@@ -26,6 +26,7 @@ input:focus,textarea:focus{background:#fffde7}
 @page{margin:15mm 12mm 10mm 12mm}
 @media print{
   .print-controls{display:none}
+  .no-print{display:none!important}
   body{background:#fff}
   .page{box-shadow:none;margin:0;padding:0;width:100%}
   input,textarea{border-color:transparent!important;background:transparent!important}
@@ -71,7 +72,7 @@ input:focus,textarea:focus{background:#fffde7}
     </tr>
     <tr>
       <td class="label">사업장주소</td>
-      <td style="white-space:normal;word-break:break-all;height:auto"><input type="text" id="buyer-addr" style="text-align:left;white-space:normal;word-break:break-all;height:auto;min-height:28px"></td>
+      <td style="white-space:normal;word-break:break-all;overflow:visible;min-width:120px"><input type="text" id="buyer-addr" style="text-align:left;white-space:normal;word-break:break-all;overflow-wrap:break-word;width:100%"></td>
       <td class="label">상호(법인명)</td>
       <td style="text-align:center">잉크스테이션</td>
     </tr>
@@ -146,7 +147,7 @@ input:focus,textarea:focus{background:#fffde7}
     잉크스테이션 &nbsp; 대표 : 신 환 욱 &nbsp;
     <input type="text" id="est-tel" style="width:180px;border:none;border-bottom:1px solid #999;outline:none;font-size:9pt;font-family:inherit;text-align:center" value="☎ 080-506-4959 / 010-4785-7190">
   </p>
-  <div style="text-align:center;margin-top:16px">
+  <div class="no-print" style="text-align:center;margin-top:16px">
     <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
     <button onclick="window.close()" style="background:#6b7280;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer">✕ 닫기</button>
   </div>
