@@ -123,11 +123,11 @@ input:focus{background:#fffde7}
         <th colspan="5" style="text-align:center;letter-spacing:6px;font-size:9.5pt">공 &nbsp;&nbsp; 급 &nbsp;&nbsp; 내 &nbsp;&nbsp; 역</th>
       </tr>
       <tr style="background:#f4f4f4">
-        <th style="width:32px;font-size:8.5pt">월일</th>
+        <th style="width:35px;font-size:8.5pt">월일</th>
         <th style="font-size:8.5pt">품 &nbsp;&nbsp;&nbsp; 목</th>
-        <th style="width:32px;font-size:8.5pt">수량</th>
-        <th style="width:55px;font-size:8.5pt">단 가</th>
-        <th style="width:70px;font-size:8.5pt">공급대가(금액)</th>
+        <th style="width:35px;font-size:8.5pt">수량</th>
+        <th style="width:60px;font-size:8.5pt">단 가</th>
+        <th style="width:80px;font-size:8.5pt">공급대가(금액)</th>
       </tr>
     </thead>
     <tbody id="rc-body"></tbody>
@@ -153,7 +153,7 @@ document.getElementById('rc-date').value = new Date().toISOString().slice(0,10);
 var now = new Date();
 
 var rows='';
-for(var i=1;i<=10;i++){
+for(var i=1;i<=12;i++){
   rows+='<tr>'+
     '<td class="center" style="font-size:8.5pt"><input type="text" style="width:28px;font-size:8.5pt" value="'+(i===1?(now.getMonth()+1)+'/'+(now.getDate()):'')+'"></td>'+
     '<td><input type="text" class="rc-item" oninput="calcRC()" style="font-size:8.5pt"></td>'+
