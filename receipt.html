@@ -9,7 +9,7 @@
 body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;background:#f0f0f0}
 .print-controls{background:#1e3a5f;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .print-controls h2{font-size:14px}
-.page{width:148mm;background:#fff;margin:16px auto;padding:8mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.page{width:148mm;background:#fff;margin:16px auto;padding:15mm 10mm 10mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 table{width:100%;border-collapse:collapse}
 td,th{border:1px solid #333;padding:3px 5px;vertical-align:middle;font-size:9pt}
 .label{background:#f4f4f4;font-weight:700;text-align:center;white-space:nowrap}
@@ -18,12 +18,12 @@ input:focus{background:#fffde7}
 .center{text-align:center}
 .right{text-align:right}
 .no-print{display:block}
-@page{size:A5;margin:10mm 8mm}
+@page{size:A5;margin:15mm 10mm 10mm 10mm}
 @media print{
   .print-controls{display:none}
   .no-print{display:none!important}
   body{background:#fff}
-  .page{box-shadow:none;margin:0;padding:5mm;width:100%}
+  .page{box-shadow:none;margin:0;padding:15mm 10mm 10mm 10mm;width:100%}
   input{border-color:transparent!important;background:transparent!important}
 }
 </style>
@@ -36,63 +36,76 @@ input:focus{background:#fffde7}
 
 <div class="page">
   <!-- 제목 -->
-  <table style="margin-bottom:4px">
+  <table style="margin-bottom:3px">
     <tr>
-      <td style="border:1px solid #333;padding:4px 8px;font-size:9pt">NO. <input type="text" id="rc-no" style="width:60px;display:inline-block"></td>
-      <td style="border:1px solid #333;padding:4px 8px;text-align:center;font-size:16pt;font-weight:900;letter-spacing:4px">영 &nbsp; 수 &nbsp; 증</td>
-      <td style="border:1px solid #333;padding:4px 8px;font-size:9pt;text-align:right">(공급받는자용)</td>
+      <td style="border:1px solid #333;padding:3px 6px;font-size:9pt;width:80px">
+        NO. <input type="text" id="rc-no" style="width:50px;display:inline-block">
+      </td>
+      <td style="border:1px solid #333;padding:3px 6px;text-align:center;font-size:15pt;font-weight:900;letter-spacing:6px">
+        영 &nbsp; 수 &nbsp; 증
+      </td>
+      <td style="border:1px solid #333;padding:3px 6px;font-size:8.5pt;text-align:right;white-space:nowrap">
+        (공급받는자용)
+      </td>
     </tr>
   </table>
 
   <!-- 귀하 -->
-  <div style="text-align:right;font-size:11pt;font-weight:700;margin-bottom:4px;padding-right:4px">
-    <input type="text" id="rc-buyer" style="width:120px;border:none;border-bottom:1px solid #999;outline:none;font-size:11pt;font-family:inherit;text-align:right"> 귀하
+  <div style="text-align:right;font-size:10pt;font-weight:700;margin-bottom:3px;padding-right:4px">
+    <input type="text" id="rc-buyer" style="width:120px;border:none;border-bottom:1px solid #999;outline:none;font-size:10pt;font-family:inherit;text-align:right"> 귀하
   </div>
 
   <!-- 공급자 정보 -->
-  <table style="margin-bottom:4px">
+  <table style="margin-bottom:3px">
+    <colgroup>
+      <col style="width:28px">
+      <col style="width:58px">
+      <col>
+      <col style="width:35px">
+      <col style="width:70px">
+    </colgroup>
     <tr>
-      <td class="label" rowspan="4" style="width:28px;font-size:9pt;writing-mode:vertical-rl;text-orientation:upright;letter-spacing:4px">공급자</td>
-      <td class="label" style="width:55px;font-size:8.5pt">사업자<br>등록번호</td>
-      <td colspan="3" style="font-size:11pt;font-weight:700;letter-spacing:1px;text-align:center">
+      <td class="label" rowspan="4" style="font-size:9pt;writing-mode:vertical-rl;text-orientation:upright;letter-spacing:2px;text-align:center">공<br>급<br>자</td>
+      <td class="label" style="font-size:8pt">사업자<br>등록번호</td>
+      <td colspan="3" style="font-size:11pt;font-weight:900;text-align:center;letter-spacing:1px">
         122 - 07 - 72711
-        <div style="position:relative;display:inline-block;margin-left:8px;vertical-align:middle">
-          <img src="data:image/jpeg;base64,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" style="width:44px;height:44px;object-fit:contain;opacity:0.85;position:absolute;right:-48px;top:50%;transform:translateY(-50%);z-index:0">
+      </td>
+    </tr>
+    <tr>
+      <td class="label" style="font-size:8pt">상 &nbsp; 호</td>
+      <td style="font-weight:700;text-align:center">잉크스테이션</td>
+      <td class="label" style="font-size:8pt">성명</td>
+      <td>
+        <div style="position:relative;display:flex;align-items:center;justify-content:center">
+          <span style="position:relative;z-index:1;font-weight:700;white-space:nowrap">신 환 욱 (인)</span>
+          <img src="data:image/jpeg;base64,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" style="width:44px;height:44px;object-fit:contain;opacity:0.85;position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:0">
         </div>
       </td>
     </tr>
     <tr>
-      <td class="label" style="font-size:8.5pt">상 &nbsp; 호</td>
-      <td style="font-weight:700">잉크스테이션</td>
-      <td class="label" style="font-size:8.5pt;width:35px">성명</td>
-      <td style="position:relative">
-        <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-          <span style="font-weight:700;position:relative;z-index:1">신 환 욱</span>
-        </div>
+      <td class="label" style="font-size:8pt">사업장<br>소재지</td>
+      <td colspan="3">
+        <input type="text" value="인천시 부평구 장제로222번길 25" style="text-align:center">
       </td>
     </tr>
     <tr>
-      <td class="label" style="font-size:8.5pt">사업장<br>소재지</td>
-      <td colspan="3" style="font-size:8.5pt">인천시 부평구 장제로222번길 25</td>
-    </tr>
-    <tr>
-      <td class="label" style="font-size:8.5pt">업 &nbsp; 태</td>
-      <td>도, 소매</td>
-      <td class="label" style="font-size:8.5pt">종목</td>
-      <td style="font-size:8.5pt">컴퓨터및 주변기기</td>
+      <td class="label" style="font-size:8pt">업 &nbsp; 태</td>
+      <td style="text-align:center">도, 소매</td>
+      <td class="label" style="font-size:8pt">종목</td>
+      <td style="font-size:8pt;text-align:center">컴퓨터및<br>주변기기</td>
     </tr>
   </table>
 
   <!-- 작성년월일 / 공급대가총액 -->
-  <table style="margin-bottom:4px">
+  <table style="margin-bottom:3px">
     <tr>
       <td class="label" style="width:80px;font-size:8.5pt">작성년월일</td>
       <td class="label" style="font-size:9pt;font-weight:900">공급대가총액</td>
-      <td class="label" style="width:60px">비 고</td>
+      <td class="label" style="width:55px;font-size:8.5pt">비 고</td>
     </tr>
     <tr>
-      <td style="text-align:center;font-size:9pt">
-        <input type="date" id="rc-date" style="font-size:9pt;width:100%">
+      <td style="text-align:center">
+        <input type="date" id="rc-date" style="font-size:8.5pt">
       </td>
       <td style="text-align:center;font-size:12pt;font-weight:900">
         ￦ <span id="rc-total-display">0</span>
@@ -102,32 +115,32 @@ input:focus{background:#fffde7}
   </table>
 
   <!-- 공급내역 -->
-  <table>
+  <table style="margin-bottom:4px">
     <thead>
       <tr style="background:#e8e8e8">
-        <th colspan="2" style="text-align:center;letter-spacing:4px">공 &nbsp; 급 &nbsp; 내 &nbsp; 역</th>
+        <th colspan="5" style="text-align:center;letter-spacing:6px;font-size:9.5pt">공 &nbsp;&nbsp; 급 &nbsp;&nbsp; 내 &nbsp;&nbsp; 역</th>
       </tr>
       <tr style="background:#f4f4f4">
-        <th style="width:30px">월일</th>
-        <th>품 &nbsp;&nbsp;&nbsp; 목</th>
-        <th style="width:35px">수량</th>
-        <th style="width:60px">단 가</th>
-        <th style="width:80px">공급대가(금액)</th>
+        <th style="width:32px;font-size:8.5pt">월일</th>
+        <th style="font-size:8.5pt">품 &nbsp;&nbsp;&nbsp; 목</th>
+        <th style="width:32px;font-size:8.5pt">수량</th>
+        <th style="width:55px;font-size:8.5pt">단 가</th>
+        <th style="width:70px;font-size:8.5pt">공급대가(금액)</th>
       </tr>
     </thead>
     <tbody id="rc-body"></tbody>
     <tfoot>
       <tr>
-        <td colspan="3" style="text-align:center;font-weight:700;font-size:11pt;letter-spacing:4px">합 &nbsp; 계</td>
-        <td style="text-align:center;font-weight:700">￦</td>
+        <td colspan="3" style="text-align:center;font-weight:700;font-size:10pt;letter-spacing:4px">합 &nbsp; 계</td>
+        <td style="text-align:center;font-weight:700;font-size:10pt">￦</td>
         <td class="right" id="rc-sum" style="font-weight:700"></td>
       </tr>
     </tfoot>
   </table>
 
-  <p style="text-align:center;font-size:9pt;margin-top:6px">위 금액을 영수(청구)함</p>
+  <p style="text-align:center;font-size:9pt;margin-bottom:8px">위 금액을 영수(청구)함</p>
 
-  <div class="no-print" style="text-align:center;margin-top:14px">
+  <div class="no-print" style="text-align:center;margin-top:10px">
     <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
     <button onclick="window.close()" style="background:#6b7280;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer">✕ 닫기</button>
   </div>
@@ -137,15 +150,14 @@ input:focus{background:#fffde7}
 document.getElementById('rc-date').value = new Date().toISOString().slice(0,10);
 var now = new Date();
 
-// 15행 생성
 var rows='';
 for(var i=1;i<=15;i++){
   rows+='<tr>'+
-    '<td class="center"><input type="text" style="width:28px" value="'+(i===1?(now.getMonth()+1)+'/'+(now.getDate()):'')+'"></td>'+
-    '<td><input type="text" class="rc-item" oninput="calcRC()"></td>'+
-    '<td><input type="number" class="rc-qty" min="0" oninput="calcRC()" style="text-align:center"></td>'+
-    '<td><input type="number" class="rc-price" min="0" oninput="calcRC()" style="text-align:right"></td>'+
-    '<td class="right rc-amount"></td>'+
+    '<td class="center" style="font-size:8.5pt"><input type="text" style="width:28px;font-size:8.5pt" value="'+(i===1?(now.getMonth()+1)+'/'+(now.getDate()):'')+'"></td>'+
+    '<td><input type="text" class="rc-item" oninput="calcRC()" style="font-size:8.5pt"></td>'+
+    '<td><input type="number" class="rc-qty" min="0" oninput="calcRC()" style="text-align:center;font-size:8.5pt"></td>'+
+    '<td><input type="number" class="rc-price" min="0" oninput="calcRC()" style="text-align:right;font-size:8.5pt"></td>'+
+    '<td class="right rc-amount" style="font-size:8.5pt"></td>'+
     '</tr>';
 }
 document.getElementById('rc-body').innerHTML=rows;
