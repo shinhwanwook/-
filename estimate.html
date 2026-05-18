@@ -77,7 +77,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
     </tr>
     <tr>
       <td class="label">사업장주소</td>
-      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="buyer-addr" rows="2" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word"></textarea></td>
+      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="buyer-addr" rows="1" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word;overflow:hidden"></textarea></td>
       <td class="label">상호(법인명)</td>
       <td style="text-align:center;white-space:normal;word-break:break-all">잉크스테이션</td>
     </tr>
@@ -96,7 +96,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
       <td class="label">담당자</td>
       <td style="overflow:hidden"><input type="text" id="buyer-person" style="width:100%"></td>
       <td class="label">주소</td>
-      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="supp-addr" rows="2" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word">인천시 부평구 장제로222번길 25</textarea></td>
+      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="supp-addr" rows="1" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word;overflow:hidden">인천시 부평구 장제로222번길 25</textarea></td>
     </tr>
   </table>
 
@@ -174,10 +174,15 @@ document.getElementById('est-date').value = new Date().toISOString().slice(0,10)
 // textarea 자동 높이
 ['buyer-addr','supp-addr'].forEach(function(id){
   var el = document.getElementById(id);
-  if(el) el.addEventListener('input', function(){
-    this.style.height='auto';
-    this.style.height=this.scrollHeight+'px';
-  });
+  if(el){
+    // 초기 높이 설정
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+    el.addEventListener('input', function(){
+      this.style.height='auto';
+      this.style.height=this.scrollHeight+'px';
+    });
+  }
 });
 
 // 10행 생성
