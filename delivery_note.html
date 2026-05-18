@@ -58,19 +58,19 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   <!-- 공급받는자 / 공급자 -->
   <table style="margin-bottom:6px">
     <colgroup>
-      <col style="width:50px">
+      <col style="width:35px">
       <col style="width:75px">
-      <col style="width:155px">
-      <col style="width:50px">
+      <col style="width:165px">
+      <col style="width:35px">
       <col style="width:75px">
-      <col style="width:155px">
+      <col style="width:165px">
     </colgroup>
     <tr>
       <td class="label" rowspan="4" style="font-size:11pt">공<br>급<br>받<br>는<br>자</td>
       <td class="label">상호(법인명)</td>
-      <td>
+      <td style="white-space:normal;word-break:break-all;overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <input type="text" id="buyer-name" style="flex:1">
+          <input type="text" id="buyer-name" style="flex:1;min-width:0;word-break:break-all">
           <span style="white-space:nowrap;font-weight:700;margin-left:4px">귀중</span>
         </div>
       </td>
@@ -80,13 +80,13 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
     </tr>
     <tr>
       <td class="label">사업장주소</td>
-      <td style="padding:0"><textarea id="buyer-addr" rows="2" style="width:100%;padding:4px;text-align:left"></textarea></td>
+      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="buyer-addr" rows="2" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word"></textarea></td>
       <td class="label">상호(법인명)</td>
-      <td style="text-align:center">잉크스테이션</td>
+      <td style="text-align:center;white-space:normal;word-break:break-all">잉크스테이션</td>
     </tr>
     <tr>
       <td class="label">전화번호</td>
-      <td><input type="text" id="buyer-tel"></td>
+      <td style="overflow:hidden"><input type="text" id="buyer-tel" style="width:100%;word-break:break-all"></td>
       <td class="label">성명</td>
       <td>
         <div style="position:relative;display:flex;align-items:center;justify-content:flex-end;padding-right:56px">
@@ -97,9 +97,9 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
     </tr>
     <tr>
       <td class="label">담당자</td>
-      <td><input type="text" id="buyer-person"></td>
+      <td style="overflow:hidden"><input type="text" id="buyer-person" style="width:100%"></td>
       <td class="label">주소</td>
-      <td style="padding:0"><textarea id="supp-addr" rows="2" style="width:100%;padding:4px;text-align:left">인천시 부평구 장제로222번길 25</textarea></td>
+      <td style="padding:0;white-space:normal;word-break:break-all"><textarea id="supp-addr" rows="2" style="width:100%;padding:4px;text-align:left;word-break:break-all;overflow-wrap:break-word">인천시 부평구 장제로222번길 25</textarea></td>
     </tr>
   </table>
 
