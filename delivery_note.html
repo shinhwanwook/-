@@ -143,8 +143,15 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   <table style="margin-bottom:10px">
     <tr>
       <td class="label" style="width:80px">세금계산서발행</td>
-      <td style="width:80px" class="center">
-        여 <input type="checkbox" id="tax-yes" style="width:auto"> &nbsp; 부 <input type="checkbox" id="tax-no" style="width:auto">
+      <td class="center" colspan="1">
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;font-size:11px">
+          <input type="radio" name="dn-vat" id="dn-vat-yes" value="yes" checked onchange="calcAll()" style="width:auto">
+          <span style="color:#059669;font-weight:600">VAT(10%) 발행</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;font-size:11px">
+          <input type="radio" name="dn-vat" id="dn-vat-no" value="no" onchange="calcAll()" style="width:auto">
+          <span style="color:#6b7280">부 (세액 없음)</span>
+        </label>
       </td>
       <td class="label" style="width:50px">현금</td>
       <td><input type="text" id="dn-cash"></td>
@@ -195,14 +202,22 @@ for(var i=1;i<=15;i++){
 document.getElementById('dn-body').innerHTML=rows;
 
 function calcAll(){
+  var isVat = document.getElementById('dn-vat-yes') ? document.getElementById('dn-vat-yes').checked : true;
   var rows=document.querySelectorAll('#dn-body tr');
   var sumA=0,sumV=0;
   rows.forEach(function(row){
     var q=parseFloat(row.querySelector('.item-qty').value)||0;
     var p=parseFloat(row.querySelector('.item-price').value)||0;
     var total=q*p;
-    var supply=Math.round(total/1.1);
-    var vat=total-supply;
+    var supply, vat;
+    if(isVat){
+      supply=Math.round(total/1.1);
+      vat=total-supply;
+    } else {
+      // VAT 미발행 - 세액 없음
+      supply=total;
+      vat=0;
+    }
     row.querySelector('.item-amount').textContent=total>0?supply.toLocaleString():'';
     row.querySelector('.item-vat').textContent=total>0?vat.toLocaleString():'';
     sumA+=supply; sumV+=vat;
