@@ -100,6 +100,19 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
     </tr>
   </table>
 
+  <!-- VAT 선택 -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:6px;padding:6px 10px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e4f0">
+    <span style="font-weight:700;font-size:13px">세금계산서:</span>
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px">
+      <input type="radio" name="est-vat" id="est-vat-yes" value="yes" checked onchange="calcAll()">
+      <span style="font-weight:600;color:#059669">VAT(10%) 발행</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px">
+      <input type="radio" name="est-vat" id="est-vat-no" value="no" onchange="calcAll()">
+      <span style="font-weight:600;color:#6b7280">VAT 미발행 (세액 없음)</span>
+    </label>
+  </div>
+
   <!-- 합계금액 -->
   <table style="margin-bottom:6px">
     <tr>
@@ -185,14 +198,23 @@ for(var i=1;i<=10;i++){
 document.getElementById('est-body').innerHTML=rows;
 
 function calcAll(){
+  var isVat = document.getElementById('est-vat-yes') ? document.getElementById('est-vat-yes').checked : true;
   var rows=document.querySelectorAll('#est-body tr');
   var sumS=0,sumV=0,sumT=0;
   rows.forEach(function(row){
     var q=parseFloat(row.querySelector('.item-qty').value)||0;
     var p=parseFloat(row.querySelector('.item-price').value)||0;
     var total=q*p;
-    var supply=Math.round(total/1.1);
-    var vat=total-supply;
+    var supply, vat;
+    if(isVat){
+      // VAT(10%) 발행
+      supply=Math.round(total/1.1);
+      vat=total-supply;
+    } else {
+      // VAT 미발행 - 세액 없음
+      supply=total;
+      vat=0;
+    }
     row.querySelector('.item-supply').textContent=total>0?supply.toLocaleString():'';
     row.querySelector('.item-vat').textContent=total>0?vat.toLocaleString():'';
     row.querySelector('.item-total').textContent=total>0?total.toLocaleString():'';

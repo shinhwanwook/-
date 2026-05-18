@@ -3858,11 +3858,11 @@ function hidePayTip(){
           <div style="display:flex;gap:12px;margin-top:8px;align-items:center">
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:500">
               <input type="radio" name="tax-vat" id="tax-vat-excl" value="excl" checked onchange="calcTaxAmount()">
-              VAT 미포함 <span style="font-size:11px;color:#6b7280">(+10% 별도)</span>
+              VAT 미발행 <span style="font-size:11px;color:#6b7280">(세액 없음)</span>
             </label>
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:500">
               <input type="radio" name="tax-vat" id="tax-vat-incl" value="incl" onchange="calcTaxAmount()">
-              VAT 포함 <span style="font-size:11px;color:#6b7280">(세금 포함가)</span>
+              VAT(10%) 발행 <span style="font-size:11px;color:#6b7280">(세액 포함)</span>
             </label>
           </div>
           <div id="tax-amount-preview" style="margin-top:8px;background:#f0f9ff;border-radius:6px;padding:8px 12px;font-size:12px;display:none">
@@ -4362,19 +4362,19 @@ function calcTaxAmount(){
   preview.style.display = 'block';
   var supply, vat, total;
   if(isIncl){
-    // VAT포함: 입력금액 = 합계(렌탈금)
+    // VAT(10%) 발행: 입력금액 = 합계
     total  = amt;
     supply = Math.round(amt / 1.1);
     vat    = amt - supply;
   } else {
-    // VAT미포함: 입력금액 = 공급가
+    // VAT 미발행: 세액 없음
     supply = amt;
-    vat    = Math.round(amt * 0.1);
-    total  = amt + vat;
+    vat    = 0;
+    total  = amt;
   }
   document.getElementById('tax-supply-val').textContent = supply.toLocaleString() + ' 원';
-  document.getElementById('tax-vat-val').textContent    = vat.toLocaleString()    + ' 원';
-  document.getElementById('tax-total-val').textContent  = total.toLocaleString()  + ' 원';
+  document.getElementById('tax-vat-val').textContent    = vat.toLocaleString() + ' 원';
+  document.getElementById('tax-total-val').textContent  = total.toLocaleString() + ' 원';
 }
 
 function saveTaxIssue() {
@@ -4388,20 +4388,20 @@ function saveTaxIssue() {
 
   if(!date) {alert('발행일을 입력하세요.'); return;}
 
-  // 금액 계산 (VAT포함: amt=합계, VAT미포함: amt=공급가)
+  // 금액 계산 (VAT발행: 세액포함, VAT미발행: 세액없음)
   var amtInfo = '';
   var supply = 0, vat = 0, total = 0;
   if(amt > 0){
     if(isIncl){
-      // VAT포함: 입력금액이 합계(렌탈금)
+      // VAT(10%) 발행: 입력금액이 합계
       total  = amt;
       supply = Math.round(amt / 1.1);
       vat    = amt - supply;
     } else {
-      // VAT미포함: 입력금액이 공급가
+      // VAT 미발행: 세액 없음
       supply = amt;
-      vat    = Math.round(amt * 0.1);
-      total  = amt + vat;
+      vat    = 0;
+      total  = amt;
     }
     amtInfo = ' [공급가:'+supply.toLocaleString()+'원 / VAT:'+vat.toLocaleString()+'원 / 합계:'+total.toLocaleString()+'원]';
   }
