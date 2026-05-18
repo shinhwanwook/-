@@ -11,7 +11,7 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;backg
 .print-controls h2{font-size:14px}
 .page{width:148mm;background:#fff;margin:16px auto 0 auto;padding:15mm 10mm 10mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 table{width:100%;border-collapse:collapse}
-td,th{border:1px solid #333;padding:3px 5px;vertical-align:middle;font-size:9pt}
+td,th{border:1px solid #333;padding:3px 4px;vertical-align:middle;font-size:8.5pt}
 .label{background:#f4f4f4;font-weight:700;text-align:center;white-space:nowrap}
 input[type=text],input[type=date],input[type=number]{border:none;outline:none;width:100%;font-size:9pt;font-family:inherit;background:transparent;text-align:center}
 input:focus{background:#fffde7}
@@ -38,7 +38,7 @@ input:focus{background:#fffde7}
 
 <div class="page">
   <!-- 제목 -->
-  <table style="margin-bottom:3px">
+  <table style="margin-bottom:2px">
     <tr>
       <td style="border:1px solid #333;padding:3px 6px;font-size:9pt;width:80px">
         NO. <input type="text" id="rc-no" style="width:50px;display:inline-block">
@@ -53,12 +53,12 @@ input:focus{background:#fffde7}
   </table>
 
   <!-- 귀하 -->
-  <div style="text-align:right;font-size:10pt;font-weight:700;margin-bottom:3px;padding-right:4px">
+  <div style="text-align:right;font-size:10pt;font-weight:700;margin-bottom:2px;padding:5px 4px">
     <input type="text" id="rc-buyer" style="width:120px;border:none;border-bottom:1px solid #999;outline:none;font-size:10pt;font-family:inherit;text-align:right"> 귀하
   </div>
 
   <!-- 공급자 정보 -->
-  <table style="margin-bottom:3px">
+  <table style="margin-bottom:2px">
     <colgroup>
       <col style="width:28px">
       <col style="width:58px">
@@ -99,7 +99,7 @@ input:focus{background:#fffde7}
   </table>
 
   <!-- 작성년월일 / 공급대가총액 -->
-  <table style="margin-bottom:3px">
+  <table style="margin-bottom:2px">
     <tr>
       <td class="label" style="width:80px;font-size:8.5pt">작성년월일</td>
       <td class="label" style="font-size:9pt;font-weight:900">공급대가총액</td>
@@ -117,7 +117,7 @@ input:focus{background:#fffde7}
   </table>
 
   <!-- 공급내역 -->
-  <table style="margin-bottom:4px">
+  <table style="margin-bottom:2px">
     <thead>
       <tr style="background:#e8e8e8">
         <th colspan="5" style="text-align:center;letter-spacing:6px;font-size:9.5pt">공 &nbsp;&nbsp; 급 &nbsp;&nbsp; 내 &nbsp;&nbsp; 역</th>
@@ -140,7 +140,7 @@ input:focus{background:#fffde7}
     </tfoot>
   </table>
 
-  <p style="text-align:center;font-size:9pt;margin-bottom:8px;margin-top:4px;font-weight:600">위 금액을 영수(청구)함</p>
+  <p style="text-align:center;font-size:9pt;margin-bottom:4px;margin-top:3px;font-weight:600">위 금액을 영수(청구)함</p>
 
   <div class="no-print" style="text-align:center;margin-top:10px">
     <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
@@ -153,7 +153,7 @@ document.getElementById('rc-date').value = new Date().toISOString().slice(0,10);
 var now = new Date();
 
 var rows='';
-for(var i=1;i<=15;i++){
+for(var i=1;i<=10;i++){
   rows+='<tr>'+
     '<td class="center" style="font-size:8.5pt"><input type="text" style="width:28px;font-size:8.5pt" value="'+(i===1?(now.getMonth()+1)+'/'+(now.getDate()):'')+'"></td>'+
     '<td><input type="text" class="rc-item" oninput="calcRC()" style="font-size:8.5pt"></td>'+
