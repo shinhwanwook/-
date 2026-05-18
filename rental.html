@@ -753,6 +753,28 @@ body.locked { overflow:hidden; }
   </div>
 </div>
 
+<!-- ══ MODAL: 입금 메모 ══ -->
+<div class="modal-bg" id="pay-memo-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3 id="pay-memo-title">거래처 메모</h3>
+      <button class="modal-close" onclick="closeModal('pay-memo-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:8px;font-size:13px;color:var(--text3)">
+        입금관리 메모를 입력하세요. (저장 시 Firebase에 반영됩니다)
+      </div>
+      <textarea id="pay-memo-text" rows="6"
+        style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;outline:none"
+        placeholder="메모를 입력하세요..."></textarea>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between">
+      <button class="btn btn-ghost" onclick="closeModal('pay-memo-modal')">취소</button>
+      <button class="btn btn-primary" onclick="savePayMemo()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: 입금 등록/수정 ══ -->
 <div class="modal-bg" id="pay-modal">
   <div class="modal">
@@ -2232,6 +2254,27 @@ function confirmDelete(no){ confirmTerminate(no); } // 하위호환
 function cancelEdit(){editingNo=null;showPage('list');}
 
 // ══ 입금 등록/수정 ══
+var _payMemoNo = null;
+function openPayMemo(no){
+  var c = CONTRACTS.find(function(x){ return x.no===no; });
+  if(!c) return;
+  _payMemoNo = no;
+  document.getElementById('pay-memo-title').textContent = '📝 메모 — ' + c.name;
+  document.getElementById('pay-memo-text').value = c.pay_memo || '';
+  openModal('pay-memo-modal');
+}
+function savePayMemo(){
+  var c = CONTRACTS.find(function(x){ return x.no===_payMemoNo; });
+  if(!c) return;
+  c.pay_memo = document.getElementById('pay-memo-text').value.trim();
+  closeModal('pay-memo-modal');
+  window._isLoading = false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 메모 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+  });
+}
+
 function openPayEdit(){
   payEditNo=currentNo;payEditKey=null;
   document.getElementById('pm-title').textContent='입금 등록';
@@ -2435,7 +2478,7 @@ function renderPayment(){
     }).join('');
     return `<tr>
       <td style="color:#aaa">${c.no}</td>
-      <td style="font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${esc(c.name)}">${esc(c.name)}</td>
+      <td style="font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--blue)" title="${esc(c.name)}${c.pay_memo?'\n📝 '+c.pay_memo:''}" onclick="openPayMemo(${c.no})">${esc(c.name)}${c.pay_memo?'<span style="margin-left:3px;font-size:10px">📝</span>':''}</td>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis">${esc(c.manager||'-')}</td>
       <td style="font-weight:600;white-space:nowrap;${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</td>
       ${cells}
