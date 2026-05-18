@@ -9,7 +9,7 @@
 body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;background:#f0f0f0}
 .print-controls{background:#1e3a5f;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .print-controls h2{font-size:14px}
-.page{width:148mm;background:#fff;margin:16px auto;padding:15mm 10mm 10mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.page{width:148mm;background:#fff;margin:16px auto 0 auto;padding:15mm 10mm 10mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 table{width:100%;border-collapse:collapse}
 td,th{border:1px solid #333;padding:3px 5px;vertical-align:middle;font-size:9pt}
 .label{background:#f4f4f4;font-weight:700;text-align:center;white-space:nowrap}
@@ -22,9 +22,11 @@ input:focus{background:#fffde7}
 @media print{
   .print-controls{display:none}
   .no-print{display:none!important}
-  body{background:#fff}
-  .page{box-shadow:none;margin:0;padding:15mm 10mm 10mm 10mm;width:100%}
+  body{background:#fff;margin:0!important;padding:0!important;display:block!important;align-items:flex-start!important;justify-content:flex-start!important}
+  .page{box-shadow:none;margin:0!important;padding:15mm 10mm 10mm 10mm;width:148mm;position:absolute;top:0;left:0}
   input{border-color:transparent!important;background:transparent!important}
+  p{display:block!important;visibility:visible!important;font-size:9pt!important}
+  table,tr,td,th{page-break-inside:avoid}
 }
 </style>
 </head>
@@ -138,7 +140,7 @@ input:focus{background:#fffde7}
     </tfoot>
   </table>
 
-  <p style="text-align:center;font-size:9pt;margin-bottom:8px">위 금액을 영수(청구)함</p>
+  <p style="text-align:center;font-size:9pt;margin-bottom:8px;margin-top:4px;font-weight:600">위 금액을 영수(청구)함</p>
 
   <div class="no-print" style="text-align:center;margin-top:10px">
     <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
