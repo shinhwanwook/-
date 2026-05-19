@@ -484,14 +484,17 @@ body.locked { overflow:hidden; }
           </div>
         </div>
         <div class="form-group"><label>약정기간</label>
-          <select class="inp" id="f-contract-period">
+          <select class="inp" id="f-contract-period" onchange="toggleCustomPeriod()">
             <option value="">선택</option>
             <option value="12">12개월</option>
             <option value="24">24개월</option>
             <option value="36">36개월</option>
             <option value="48">48개월</option>
             <option value="60">60개월</option>
+            <option value="단기계약">단기계약</option>
+            <option value="custom">임의설정</option>
           </select>
+          <input class="inp" id="f-contract-period-custom" type="text" placeholder="예) 6개월, 3개월..." style="display:none;margin-top:4px">
         </div>
         <div class="form-group"><label>세금계산서</label><select class="inp" id="f-tax"><option value="무">무</option><option value="유">유</option></select></div>
         <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder=""></div>
@@ -1809,7 +1812,18 @@ function editContract(no){
   document.getElementById('f-qty').value=c.qty||1;
   document.getElementById('f-quota-bw').value=c.quota_bw||0;
   document.getElementById('f-quota-color').value=c.quota_color||0;
-  document.getElementById('f-contract-period').value=c.contract_period||'';
+  var _ep = c.contract_period||'';
+  var _periodSel = document.getElementById('f-contract-period');
+  var _customEl = document.getElementById('f-contract-period-custom');
+  var _fixedVals = ['','12','24','36','48','60','단기계약'];
+  if(_fixedVals.indexOf(_ep) >= 0){
+    _periodSel.value = _ep;
+    _customEl.style.display = 'none';
+  } else {
+    _periodSel.value = 'custom';
+    _customEl.value = _ep;
+    _customEl.style.display = 'block';
+  }
   document.getElementById('f-start-bw').value=c.start_bw||0;
   document.getElementById('f-start-color').value=c.start_color||0;
   document.getElementById('f-gdrive').value=c.gdrive||'';
@@ -1846,7 +1860,11 @@ function saveContract(){
     c.quota_color=parseInt(document.getElementById('f-quota-color').value)||0;
     c.extra_bw=parseInt(document.getElementById('f-extra-bw').value)||0;
     c.extra_color=parseInt(document.getElementById('f-extra-color').value)||0;
-    c.contract_period=document.getElementById('f-contract-period').value||'';
+    var _period = document.getElementById('f-contract-period').value||'';
+    if(_period === 'custom'){
+      _period = document.getElementById('f-contract-period-custom').value.trim() || '';
+    }
+    c.contract_period=_period;
     c.start_bw=parseInt(document.getElementById('f-start-bw').value)||0;
     c.start_color=parseInt(document.getElementById('f-start-color').value)||0;
     c.gdrive=document.getElementById('f-gdrive').value.trim();
@@ -2184,6 +2202,18 @@ function printContract(no){
     special: c.memo||''
   });
   window.open('ct.html?'+params.toString(), '_blank');
+}
+
+function toggleCustomPeriod(){
+  var sel = document.getElementById('f-contract-period');
+  var custom = document.getElementById('f-contract-period-custom');
+  if(sel.value === 'custom'){
+    custom.style.display = 'block';
+    custom.focus();
+  } else {
+    custom.style.display = 'none';
+    custom.value = '';
+  }
 }
 
 function openGdriveLink(){
