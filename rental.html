@@ -2910,9 +2910,9 @@ function applyPermissions(){
   var registerTab = document.getElementById('nav-tab-register');
   if(registerTab) registerTab.style.display = perm.contractWrite ? '' : 'none';
 
-  // 임대통계 탭 숨김 (권한 없으면)
+  // 임대통계 탭 - 관리자만 표시
   var statsTab = document.getElementById('nav-tab-stats');
-  if(statsTab) statsTab.style.display = perm.statsRead ? 'flex' : 'none';
+  if(statsTab) statsTab.style.display = window.isAdmin ? 'flex' : 'none';
 
   // 입금관리 탭 안내문구/추가사용료 버튼 숨김
   var payHint = document.getElementById('pay-hint');
