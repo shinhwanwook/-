@@ -13,7 +13,7 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;backg
 .page{width:210mm;background:#fff;margin:16px auto;padding:12mm 15mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 .title{text-align:center;font-size:22pt;font-weight:900;letter-spacing:6px;margin-bottom:12px;border-bottom:3px double #000;padding-bottom:8px}
 table{width:100%;border-collapse:collapse}
-td,th{border:1px solid #000;padding:6px 8px;vertical-align:middle;font-size:9.5pt;min-height:28px}
+td,th{border:1.5px solid #000;padding:6px 8px;vertical-align:middle;font-size:9.5pt;min-height:28px}
 .label{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
 input[type=text],input[type=date],input[type=number]{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center}
 input:focus,textarea:focus{background:#fffde7}
@@ -22,10 +22,11 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 .center{text-align:center}
 .total-row{background:#f0f0f0;font-weight:700}
 .no-print{display:block}
-@page{margin:15mm 12mm 10mm 12mm}
+@page{margin:15mm 10mm 10mm 10mm}
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-  table, td, th { border-color: #000 !important; border-width: 1px !important; }
+  table, td, th { border-color: #000 !important; border-width: 1.5px !important; border-style: solid !important; }
+  table { border-collapse: collapse !important; }
   .print-controls{display:none}
   .no-print{display:none!important}
   body{background:#fff}
