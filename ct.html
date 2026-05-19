@@ -52,13 +52,14 @@ html, body {
   max-width: 100%;
 }
 .party-table td {
-  border: 1px solid #333;
-  padding: 4px 5px;
-  vertical-align: middle;
-  text-align: center;
-  white-space: normal;
-  word-break: break-all;
-  overflow-wrap: break-word;
+  border: 1px solid #333 !important;
+  padding: 4px 5px !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+  white-space: normal !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
 }
 .party-table .label {
   background: #e8e8e8; font-weight: 700;
@@ -69,9 +70,10 @@ html, body {
   text-align: center; width: 100px; font-size: 8.5pt;
 }
 .party-table input[type=text] {
-  border: none; outline: none; width: 100%;
+  border: none !important; outline: none; width: 100%;
   font-size: 9pt; font-family: inherit; background: transparent;
-  text-align: center; white-space: normal; word-break: break-all;
+  text-align: center; white-space: normal !important; word-break: break-all !important;
+  overflow-wrap: break-word !important;
 }
 .party-table input:focus { background: #fffde7; }
 
@@ -102,12 +104,14 @@ html, body {
   overflow: hidden; white-space: nowrap;
 }
 .contract-table th, .contract-table td {
-  border: 1px solid #333;
-  padding: 3px 3px;
-  text-align: center; vertical-align: middle;
-  white-space: normal;
-  word-break: break-all;
-  overflow-wrap: break-word;
+  border: 1px solid #333 !important;
+  padding: 3px 3px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
 }
 .contract-table th {
   background: #e8e8e8; font-weight: 700; font-size: 8pt;
