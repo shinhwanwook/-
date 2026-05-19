@@ -255,7 +255,7 @@ html, body {
     </tr>
     <tr>
       <td class="sublabel">소 &nbsp; 재 &nbsp; 지</td>
-      <td colspan="2">인천시 부평구 장제로222번길 25</td>
+      <td colspan="2"><textarea id="lessor-addr" rows="1" style="resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-all;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;text-align:center;padding:0;line-height:1.4">인천시 부평구 장제로222번길 25</textarea></td>
       <td><textarea id="lessor-tel" rows="1" style="resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-all;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;text-align:center;padding:0;line-height:1.4">080-506-4959 / 010-4785-7190</textarea></td>
     </tr>
   </table>
@@ -470,6 +470,7 @@ function loadFromParams(){
   if(p.get('period')) document.getElementById('r1-period').value=p.get('period');
   if(p.get('date'))   document.getElementById('r-install-date').value=p.get('date');
   if(p.get('special')) document.getElementById('special').value=p.get('special');
+  if(p.get('lessor_addr')) document.getElementById('lessor-addr').value=p.get('lessor_addr');
 }
 loadFromParams();
 // textarea 자동 높이
