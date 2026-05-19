@@ -558,7 +558,7 @@ body.locked { overflow:hidden; }
           <div class="file-list" id="file-list"></div>
         </div>
 
-        <div class="form-group form-full"><label>비고</label><textarea class="inp" id="f-memo" placeholder="특이사항 입력..."></textarea></div>
+        <div class="form-group form-full"><label>비고 / 특약사항</label><textarea class="inp" id="f-memo" placeholder="특이사항 또는 특약사항 입력..."></textarea></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -2180,7 +2180,8 @@ function printContract(no){
     sbw:     c.start_bw||0,
     scolor:  c.start_color||0,
     period:  c.contract_period ? c.contract_period+'개월' : '',
-    date:    c.reg_date||''
+    date:    c.reg_date||'',
+    special: c.memo||''
   });
   window.open('contract_print.html?'+params.toString(), '_blank');
 }
