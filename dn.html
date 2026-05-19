@@ -30,7 +30,8 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   table, td, th { border-color: #000 !important; border-width: 1px !important; border-style: solid !important; }
-  table { border-collapse: collapse !important; border-right: 2.5px solid #000 !important; }
+  table { border-collapse: collapse !important; }
+  tr td:last-child, tr th:last-child { border-right: 2.5px solid #000 !important; }
   
   .print-controls{display:none}
   .no-print{display:none!important}
