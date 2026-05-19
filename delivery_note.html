@@ -69,8 +69,8 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
       <td class="label" rowspan="4" style="font-size:11pt">공<br>급<br>받<br>는<br>자</td>
       <td class="label">상호(법인명)</td>
       <td style="white-space:normal;word-break:break-all;overflow:visible;height:auto">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap">
-          <input type="text" id="buyer-name" style="flex:1;min-width:60px;word-break:break-all;overflow-wrap:break-word">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <textarea id="buyer-name" rows="1" style="flex:1;min-width:60px;word-break:break-all;overflow-wrap:break-word;border:none;outline:none;font-family:inherit;font-size:9.5pt;background:transparent;resize:none;overflow:hidden;padding:0"></textarea>
           <span style="white-space:nowrap;font-weight:700;margin-left:4px">귀중</span>
         </div>
       </td>
@@ -177,7 +177,7 @@ document.getElementById('dn-date').value = new Date().toISOString().slice(0,10);
 var now = new Date();
 
 // textarea 자동 높이
-['buyer-addr','supp-addr'].forEach(function(id){
+['buyer-name','buyer-addr','supp-addr'].forEach(function(id){
   var el = document.getElementById(id);
   if(el){
     // 초기 높이 설정
