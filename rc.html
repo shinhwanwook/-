@@ -164,6 +164,10 @@ for(var i=1;i<=12;i++){
 }
 document.getElementById('rc-body').innerHTML=rows;
 
+function autoH(ta){
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
+}
 function calcRC(){
   var rows=document.querySelectorAll('#rc-body tr');
   var sum=0;
