@@ -461,12 +461,12 @@ function loadFromParams(){
   if(p.get('type'))   document.getElementById('r1-type').value=p.get('type');
   if(p.get('qty'))    document.getElementById('r1-qty').value=p.get('qty');
   if(p.get('rent')){ var rent=parseInt(p.get('rent')); document.getElementById('r1-rent').value=rent.toLocaleString()+'원'; document.getElementById('r-total').value=rent.toLocaleString()+'원'; }
-  if(p.get('bw'))     document.getElementById('r1-bw').value=p.get('bw');
-  if(p.get('color'))  document.getElementById('r1-color').value=p.get('color');
-  if(p.get('ebw'))    document.getElementById('r-extra-bw').value=p.get('ebw');
-  if(p.get('ecolor')) document.getElementById('r-extra-color').value=p.get('ecolor');
-  if(p.get('sbw'))    document.getElementById('r1-sbw').value=p.get('sbw');
-  if(p.get('scolor')) document.getElementById('r1-scolor').value=p.get('scolor');
+  if(p.get('bw'))     document.getElementById('r1-bw').value=(parseInt(p.get('bw'))||0).toLocaleString();
+  if(p.get('color'))  document.getElementById('r1-color').value=(parseInt(p.get('color'))||0).toLocaleString();
+  if(p.get('ebw'))    document.getElementById('r-extra-bw').value=(parseInt(p.get('ebw'))||0).toLocaleString();
+  if(p.get('ecolor')) document.getElementById('r-extra-color').value=(parseInt(p.get('ecolor'))||0).toLocaleString();
+  if(p.get('sbw'))    document.getElementById('r1-sbw').value=(parseInt(p.get('sbw'))||0).toLocaleString();
+  if(p.get('scolor')) document.getElementById('r1-scolor').value=(parseInt(p.get('scolor'))||0).toLocaleString();
   if(p.get('period')) document.getElementById('r1-period').value=p.get('period');
   if(p.get('date'))   document.getElementById('r-install-date').value=p.get('date');
   if(p.get('special')) document.getElementById('special').value=p.get('special');
