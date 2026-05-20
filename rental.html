@@ -1425,9 +1425,6 @@ function applyFilters(){
     return true;
   });
 
-  // 조회 중인 월 강조 복원
-  if(window._filterMonth) highlightMonthTab(window._filterMonth);
-
   // 월별 발행 현황 배지 업데이트
   mlabels.forEach(function(l,i){
     var m = months[i];
