@@ -1424,6 +1424,25 @@ function applyFilters(){
     if(fr==='high'&&c.rent<70000) return false;
     return true;
   });
+
+  // 월별 발행 현황 배지 업데이트
+  mlabels.forEach(function(l,i){
+    var m = months[i];
+    var issued = 0, notIssued = 0;
+    list.forEach(function(t){
+      var issues = (TAX_ISSUES[String(t.seq)]||[]);
+      var hasIssue = issues.some(function(x){ return x.month===m; });
+      if(hasIssue) issued++;
+      else notIssued++;
+    });
+    var badge = document.getElementById('tax-badge-'+i);
+    if(badge){
+      var html = '';
+      if(issued > 0) html += '<span style="color:#166534;font-weight:600">✅'+issued+'</span> ';
+      if(notIssued > 0) html += '<span style="color:#991b1b;font-weight:600">⚠'+notIssued+'</span>';
+      badge.innerHTML = html;
+    }
+  });
   filtered.sort((a,b)=>{
     let av,bv;
     if(sortKey==='latest_payment'){
@@ -4242,19 +4261,10 @@ function renderTax() {
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
       var m = months[i];
-      // 해당 월 발행/미발행 현황
-      var issued = 0, notIssued = 0;
-      list.forEach(function(t){
-        var issues = (TAX_ISSUES[String(t.seq)]||[]);
-        var hasIssue = issues.some(function(x){ return x.month===m; });
-        if(hasIssue) issued++;
-        else notIssued++;
-      });
-      var badge = '';
-      if(issued > 0) badge += '<span style="display:block;font-size:9px;color:#166534;font-weight:600">✅'+issued+'</span>';
-      if(notIssued > 0) badge += '<span style="display:block;font-size:9px;color:#991b1b;font-weight:600">⚠'+notIssued+'</span>';
-      return '<th style="text-align:center;min-width:62px;width:62px;cursor:pointer;padding:2px" onclick="openMonthFilter(\'' + m + '\')">' +
-        '<div style="font-weight:700">'+l+'</div>' + badge + '</th>';
+      return '<th id="tax-th-m'+i+'" style="text-align:center;min-width:62px;width:62px;cursor:pointer;padding:2px" onclick="openMonthFilter(\'' + m + '\')">' +
+        '<div style="font-weight:700">'+l+'</div>' +
+        '<span id="tax-badge-'+i+'" style="font-size:9px"></span>' +
+        '</th>';
     }).join('');
 
   // 헤더 리사이즈 핸들러
