@@ -71,6 +71,7 @@ select.inp{cursor:pointer}
 table{width:100%;border-collapse:collapse;font-size:13px}
 /* ── 헤더 고정 (모든 탭 공통) ── */
 .tbl-wrap thead th{position:sticky;top:0;z-index:10;background:#f1f5f9;box-shadow:0 1px 0 #cbd5e1}
+thead th.tax-month-active{background:#1e3a5f!important;color:#fff!important;font-weight:900!important;}
 
 /* ── 계약목록: 거래처(3번째) 고정 ── */
 #page-list thead th:nth-child(3){position:sticky;top:0;left:0;z-index:20;background:#e8eef7}
@@ -4398,11 +4399,7 @@ function highlightMonthTab(month){
   // 모든 월 탭 초기화
   for(var i=0;i<12;i++){
     var th = document.getElementById('tax-th-m'+i);
-    if(th){
-      th.style.background = '';
-      th.style.color = '';
-      th.style.fontWeight = '';
-    }
+    if(th) th.classList.remove('tax-month-active');
   }
   if(!month) return;
   // 선택된 월 강조
@@ -4411,11 +4408,7 @@ function highlightMonthTab(month){
     var m = yr+'-'+String(i+1).padStart(2,'0');
     if(m === month){
       var th = document.getElementById('tax-th-m'+i);
-      if(th){
-        th.style.background = '#1e3a5f';
-        th.style.color = '#fff';
-        th.style.fontWeight = '900';
-      }
+      if(th) th.classList.add('tax-month-active');
       break;
     }
   }
