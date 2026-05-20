@@ -1430,8 +1430,7 @@ function applyFilters(){
     var m = months[i];
     var issued = 0, notIssued = 0;
     list.forEach(function(t){
-      var issues = (TAX_ISSUES[String(t.seq)]||[]);
-      var hasIssue = issues.some(function(x){ return x.month===m; });
+      var hasIssue = !!(t.issues && t.issues[m]);
       if(hasIssue) issued++;
       else notIssued++;
     });
@@ -4245,15 +4244,13 @@ function renderTax() {
       // 월 필터가 있으면 해당 월만, 없으면 전체 월 기준
       var checkMonths = window._filterMonth ? [window._filterMonth] : months;
       if(!checkMonths.every(function(ym){
-        var issues = TAX_ISSUES[String(t.seq)]||[];
-        return issues.some(function(x){ return x.month===ym; });
+        return !!(t.issues && t.issues[ym]);
       })) return false;
     }
     if(st==='miss') {
       var checkMonths2 = window._filterMonth ? [window._filterMonth] : months;
       if(!checkMonths2.some(function(ym){
-        var issues = TAX_ISSUES[String(t.seq)]||[];
-        return !issues.some(function(x){ return x.month===ym; });
+        return !(t.issues && t.issues[ym]);
       })) return false;
     }
     return true;
