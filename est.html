@@ -34,6 +34,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   body{background:#fff}
   .page{box-shadow:none;margin:0;padding:0;width:100%}
   input,textarea{border-color:transparent!important;background:transparent!important}
+  select{border:none!important;background:transparent!important;font-size:10pt!important;font-weight:600!important;-webkit-appearance:none;appearance:none;}
 }
 </style>
 </head>
@@ -123,7 +124,11 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
     <tr>
       <td class="label" style="width:100px;font-size:11pt">합 계 금 액</td>
       <td style="font-size:13pt;font-weight:900;text-align:center">
-        ￦ <span id="total-display">0</span> 원
+        <span id="total-display">0</span> 원 &nbsp;
+        <select id="vat-label" style="font-size:10pt;font-weight:600;border:1px solid #ccc;border-radius:4px;padding:2px 6px;font-family:inherit;background:#fff;cursor:pointer">
+          <option value="incl">VAT 포함</option>
+          <option value="excl">VAT 별도</option>
+        </select>
       </td>
     </tr>
   </table>
