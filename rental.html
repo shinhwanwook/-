@@ -4268,7 +4268,8 @@ function renderTax() {
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
       var m = months[i];
-      return '<th id="tax-th-m'+i+'" style="text-align:center;min-width:62px;width:62px;cursor:pointer;padding:2px" onclick="openMonthFilter(\'' + m + '\')">' +
+      var isActive = (window._filterMonth === m) ? ' tax-month-active' : '';
+      return '<th id="tax-th-m'+i+'" class="'+isActive+'" style="text-align:center;min-width:62px;width:62px;cursor:pointer;padding:2px" onclick="openMonthFilter(\'' + m + '\')">' +
         '<div style="font-weight:700">'+l+'</div>' +
         '<span id="tax-badge-'+i+'" style="font-size:9px"></span>' +
         '</th>';
