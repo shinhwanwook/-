@@ -4242,10 +4242,19 @@ function renderTax() {
     var txt = (t.name+t.manager).toLowerCase();
     if(q && txt.indexOf(q)<0) return false;
     if(st==='done') {
-      if(!months.every(function(ym){return !!t.issues[ym];})) return false;
+      // 월 필터가 있으면 해당 월만, 없으면 전체 월 기준
+      var checkMonths = window._filterMonth ? [window._filterMonth] : months;
+      if(!checkMonths.every(function(ym){
+        var issues = TAX_ISSUES[String(t.seq)]||[];
+        return issues.some(function(x){ return x.month===ym; });
+      })) return false;
     }
     if(st==='miss') {
-      if(!months.some(function(ym){return !t.issues[ym];})) return false;
+      var checkMonths2 = window._filterMonth ? [window._filterMonth] : months;
+      if(!checkMonths2.some(function(ym){
+        var issues = TAX_ISSUES[String(t.seq)]||[];
+        return !issues.some(function(x){ return x.month===ym; });
+      })) return false;
     }
     return true;
   });
@@ -4393,6 +4402,7 @@ function applyMonthFilter(type){
   var statusSel = document.getElementById('tax-status');
   if(type === 'all'){
     statusSel.value = '';
+    window._filterMonth = null;
   } else if(type === 'issued'){
     statusSel.value = 'done';
   } else {
@@ -4401,7 +4411,6 @@ function applyMonthFilter(type){
   // 해당 월 기준으로 필터링
   window._filterMonth = _selectedMonth;
   renderTax();
-  window._filterMonth = null;
 }
 
 function openTaxAddMonth(seq, ym) {
