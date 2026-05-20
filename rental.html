@@ -3927,6 +3927,27 @@ function hidePayTip(){
   </div>
 </div>
 
+<!-- MODAL: 월별 발행/미발행 필터 -->
+<div class="modal-bg" id="month-filter-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head">
+      <h3 id="month-filter-title">월별 조회</h3>
+      <button class="modal-close" onclick="closeModal('month-filter-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;font-size:13px;color:var(--text3)">조회할 항목을 선택하세요</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" onclick="applyMonthFilter('all')">📋 전체 조회</button>
+        <button class="btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:700" onclick="applyMonthFilter('issued')">✅ 발행 완료만 조회</button>
+        <button class="btn" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700" onclick="applyMonthFilter('notIssued')">⚠️ 미발행만 조회</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('month-filter-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: 세금계산서 발행 등록/수정 -->
 <div class="modal-bg" id="tax-modal">
   <div class="modal">
@@ -4220,7 +4241,20 @@ function renderTax() {
     '<th id="tax-th-email" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">이메일</th>' +
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
-      return '<th style="text-align:center;min-width:62px;width:62px;cursor:pointer" onclick="openTaxAddMonth(null,\''+months[i]+'\')">'+l+'</th>';
+      var m = months[i];
+      // 해당 월 발행/미발행 현황
+      var issued = 0, notIssued = 0;
+      list.forEach(function(t){
+        var issues = (TAX_ISSUES[String(t.seq)]||[]);
+        var hasIssue = issues.some(function(x){ return x.month===m; });
+        if(hasIssue) issued++;
+        else notIssued++;
+      });
+      var badge = '';
+      if(issued > 0) badge += '<span style="display:block;font-size:9px;color:#166534;font-weight:600">✅'+issued+'</span>';
+      if(notIssued > 0) badge += '<span style="display:block;font-size:9px;color:#991b1b;font-weight:600">⚠'+notIssued+'</span>';
+      return '<th style="text-align:center;min-width:62px;width:62px;cursor:pointer;padding:2px" onclick="openMonthFilter(\'' + m + '\')">' +
+        '<div style="font-weight:700">'+l+'</div>' + badge + '</th>';
     }).join('');
 
   // 헤더 리사이즈 핸들러
@@ -4334,6 +4368,30 @@ function openTaxAdd() {
     return '<option value="'+t.seq+'">'+esc(t.name)+'</option>';
   }).join('');
   openModal('tax-modal');
+}
+
+var _selectedMonth = '';
+function openMonthFilter(month){
+  _selectedMonth = month;
+  var yr = document.getElementById('tax-year').value;
+  var mNum = parseInt(month.split('-')[1]);
+  document.getElementById('month-filter-title').textContent = yr+'년 '+mNum+'월 조회';
+  openModal('month-filter-modal');
+}
+function applyMonthFilter(type){
+  closeModal('month-filter-modal');
+  var statusSel = document.getElementById('tax-status');
+  if(type === 'all'){
+    statusSel.value = '';
+  } else if(type === 'issued'){
+    statusSel.value = 'done';
+  } else {
+    statusSel.value = 'miss';
+  }
+  // 해당 월 기준으로 필터링
+  window._filterMonth = _selectedMonth;
+  renderTax();
+  window._filterMonth = null;
 }
 
 function openTaxAddMonth(seq, ym) {
