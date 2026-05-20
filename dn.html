@@ -116,8 +116,8 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
       <td style="font-size:13pt;font-weight:900;text-align:center">
         <span id="total-display">0</span> 원 &nbsp;
         <select id="vat-label" style="font-size:10pt;font-weight:600;border:1px solid #ccc;border-radius:4px;padding:2px 6px;font-family:inherit;background:#fff;cursor:pointer">
-          <option value="incl">VAT 포함</option>
-          <option value="excl">VAT 별도</option>
+          <option value="incl">(VAT 포함)</option>
+          <option value="excl">(VAT 별도)</option>
         </select>
       </td>
     </tr>
@@ -208,7 +208,7 @@ for(var i=1;i<=15;i++){
     '<td style="white-space:normal"><textarea class="item-name" rows="1" oninput="calcAll();autoH(this)" style="resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-all;width:100%;border:none;outline:none;font-size:9.5pt;font-family:inherit;background:transparent;padding:2px;line-height:1.3"></textarea></td>'+
     '<td><input type="text" class="item-spec"></td>'+
     '<td><input type="number" class="item-qty" value="" min="0" oninput="calcAll()" style="text-align:center"></td>'+
-    '<td><input type="number" class="item-price" value="" min="0" oninput="calcAll()" style="text-align:right"></td>'+
+    '<td><input type="text" class="item-price" value="" oninput="fmtPrice(this);calcAll()" style="text-align:right"></td>'+
     '<td class="right item-amount"></td>'+
     '<td class="right item-vat"></td>'+
     '<td><input type="text"></td>'+
@@ -216,6 +216,15 @@ for(var i=1;i<=15;i++){
 }
 document.getElementById('dn-body').innerHTML=rows;
 
+function fmtPrice(el){
+  var raw = el.value.replace(/[^0-9]/g,'');
+  var num = parseInt(raw)||0;
+  el.value = num > 0 ? num.toLocaleString() : '';
+  el.dataset.raw = raw;
+}
+function getPriceRaw(el){
+  return parseInt((el.dataset.raw || el.value.replace(/[^0-9]/g,''))||'0')||0;
+}
 function autoH(ta){
   ta.style.height='auto';
   ta.style.height=ta.scrollHeight+'px';
@@ -226,7 +235,7 @@ function calcAll(){
   var sumA=0,sumV=0;
   rows.forEach(function(row){
     var q=parseFloat(row.querySelector('.item-qty').value)||0;
-    var p=parseFloat(row.querySelector('.item-price').value)||0;
+    var p=getPriceRaw(row.querySelector('.item-price'));
     var total=q*p;
     var supply, vat;
     if(isVat){
