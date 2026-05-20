@@ -3926,7 +3926,7 @@ function hidePayTip(){
         <option value="2024">2024년</option>
         <option value="2023">2023년</option>
       </select>
-      <select class="inp" id="tax-status" onchange="renderTax()">
+      <select class="inp" id="tax-status" onchange="window._filterMonth=null;highlightMonthTab(null);renderTax()">
         <option value="">전체</option>
         <option value="miss">미발행 포함</option>
         <option value="done">발행 완료만</option>
@@ -4394,19 +4394,48 @@ function openMonthFilter(month){
   document.getElementById('month-filter-title').textContent = yr+'년 '+mNum+'월 조회';
   openModal('month-filter-modal');
 }
+function highlightMonthTab(month){
+  // 모든 월 탭 초기화
+  for(var i=0;i<12;i++){
+    var th = document.getElementById('tax-th-m'+i);
+    if(th){
+      th.style.background = '';
+      th.style.color = '';
+      th.style.fontWeight = '';
+    }
+  }
+  if(!month) return;
+  // 선택된 월 강조
+  var yr = document.getElementById('tax-year').value;
+  for(var i=0;i<12;i++){
+    var m = yr+'-'+String(i+1).padStart(2,'0');
+    if(m === month){
+      var th = document.getElementById('tax-th-m'+i);
+      if(th){
+        th.style.background = '#1e3a5f';
+        th.style.color = '#fff';
+        th.style.fontWeight = '900';
+      }
+      break;
+    }
+  }
+}
 function applyMonthFilter(type){
   closeModal('month-filter-modal');
   var statusSel = document.getElementById('tax-status');
   if(type === 'all'){
     statusSel.value = '';
     window._filterMonth = null;
+    highlightMonthTab(null);
   } else if(type === 'issued'){
     statusSel.value = 'done';
+    window._filterMonth = _selectedMonth;
+    highlightMonthTab(_selectedMonth);
   } else {
     statusSel.value = 'miss';
+    window._filterMonth = _selectedMonth;
+    highlightMonthTab(_selectedMonth);
   }
-  // 해당 월 기준으로 필터링
-  window._filterMonth = _selectedMonth;
   renderTax();
 }
 
