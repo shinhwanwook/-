@@ -1534,6 +1534,7 @@ function openDetail(no){
     ['계약서',c.gdrive?`<a href="${c.gdrive}" target="_blank" style="color:var(--blue);font-weight:600;text-decoration:underline">📎 계약서 열기</a>`:'−'],
     ['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
     ['약정매수 (흑백/컬러)',`흑백 <strong>${(c.quota_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.quota_color||0).toLocaleString()}</strong>매`,'full'],
+    ['시작매수 (흑백/컬러)',`흑백 <strong>${(c.start_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.start_color||0).toLocaleString()}</strong>매`,'full'],
     ['초과 추가단가',`흑백 <strong>${(c.extra_bw||0).toLocaleString()}</strong>원/매 &nbsp;/&nbsp; 컬러 <strong>${(c.extra_color||0).toLocaleString()}</strong>원/매`,'full'],
     ['A/S 담당자',staffNames||'-','full'],
     ['주소',c.address,'full'],['비고',c.memo||'-','full']
