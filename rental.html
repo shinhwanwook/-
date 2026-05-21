@@ -72,6 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 /* ── 헤더 고정 (모든 탭 공통) ── */
 .tbl-wrap thead th{position:sticky;top:0;z-index:10;background:#f1f5f9;box-shadow:0 1px 0 #cbd5e1}
 thead th.tax-month-active{background:#1e3a5f!important;color:#fff!important;font-weight:900!important;}
+thead th.pay-month-active{background:#166534!important;color:#fff!important;font-weight:900!important;}
 
 /* ── 계약목록: 거래처(3번째) 고정 ── */
 #page-list thead th:nth-child(3){position:sticky;top:0;left:0;z-index:20;background:#e8eef7}
@@ -384,7 +385,7 @@ body.locked { overflow:hidden; }
       <button class="btn btn-primary" onclick="showPage('register')">＋ 신규 등록</button>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="srch" placeholder="🔍 거래처명, 전화번호(하이픈 없이도 가능), 주소, 기기 검색...">
+      <input class="inp inp-search" type="text" id="srch" placeholder="🔍 거래처명, 전화번호(하이픈 없이도 가능), 주소, 기기 검색..." oninput="applyFilters()">
       <select class="inp" id="flt-cms"><option value="">전체 유형</option><option value="CMS">CMS</option><option value="입금">입금</option><option value="카드">카드</option></select>
       <select class="inp" id="flt-staff" style="min-width:110px"><option value="">A/S담당 전체</option></select>
       <select class="inp" id="flt-paid">
@@ -2507,6 +2508,8 @@ function renderPayment(){
   const fromVal=document.getElementById('pay-from').value; // "YYYY-MM"
   const toVal=document.getElementById('pay-to').value;
   const onlyMiss=document.getElementById('pay-status').value==='miss';
+  const _pm = _paySelectedMonth || '';
+  const _pf = _payFilterType || '';
 
   if(!fromVal||!toVal) return;
 
@@ -2526,7 +2529,7 @@ function renderPayment(){
     const [y,m]=k.split('-');
     const label=(y!==prevY?`<span style="font-size:10px;color:#9ca3af;display:block">${y}</span>`:'')+`${parseInt(m)}월`;
     prevY=y;
-    return `<th style="white-space:nowrap;min-width:46px">${label}</th>`;
+    return `<th id="pay-th-m-${k}" style="white-space:nowrap;min-width:46px;cursor:pointer" onclick="openPayMonthFilter('${k}')">${label}</th>`;
   }).join('');
   theadRow.innerHTML=`<th>NO</th><th class="pay-resizable" style="min-width:60px;position:relative;user-select:none" id="pay-th-name">거래처</th><th class="pay-resizable" style="min-width:50px;position:relative;user-select:none" id="pay-th-mgr">담당자</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
   attachPayResizers();
@@ -4389,6 +4392,31 @@ function openTaxAdd() {
 }
 
 var _selectedMonth = '';
+var _paySelectedMonth = '';
+var _payFilterType = '';
+function openPayMonthFilter(month){
+  _paySelectedMonth = month;
+  var mNum = parseInt(month.split('-')[1]);
+  var yr = month.split('-')[0];
+  document.getElementById('pay-month-filter-title').textContent = yr+'년 '+mNum+'월 조회';
+  openModal('pay-month-filter-modal');
+}
+function applyPayMonthFilter(type){
+  closeModal('pay-month-filter-modal');
+  _payFilterType = type;
+  // 월 탭 강조 초기화
+  document.querySelectorAll('[id^="pay-th-m-"]').forEach(function(th){
+    th.classList.remove('pay-month-active');
+  });
+  if(type !== 'all'){
+    var th = document.getElementById('pay-th-m-'+_paySelectedMonth);
+    if(th) th.classList.add('pay-month-active');
+  } else {
+    _paySelectedMonth = '';
+  }
+  renderPayment();
+}
+
 function openMonthFilter(month){
   _selectedMonth = month;
   var yr = document.getElementById('tax-year').value;
