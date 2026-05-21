@@ -3920,6 +3920,26 @@ function hidePayTip(){
 </div>
 
 <!-- MODAL: 월별 발행/미발행 필터 -->
+<div class="modal-bg" id="pay-month-filter-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head">
+      <h3 id="pay-month-filter-title">월별 조회</h3>
+      <button class="modal-close" onclick="closeModal('pay-month-filter-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;font-size:13px;color:var(--text3)">조회할 항목을 선택하세요</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" onclick="applyPayMonthFilter('all')">📋 전체 조회</button>
+        <button class="btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:700" onclick="applyPayMonthFilter('paid')">✅ 완납만 조회</button>
+        <button class="btn" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700" onclick="applyPayMonthFilter('unpaid')">⚠️ 미납만 조회</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('pay-month-filter-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="month-filter-modal">
   <div class="modal" style="max-width:360px">
     <div class="modal-head">
