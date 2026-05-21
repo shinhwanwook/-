@@ -3047,7 +3047,13 @@ function applyRestoredData(data) {
   if(data.EXTRA_PAYS)  EXTRA_PAYS  = data.EXTRA_PAYS;
   if(data.INVENTORY)   INVENTORY   = data.INVENTORY;
   if(data.STAFF_LIST)  STAFF_LIST  = data.STAFF_LIST;
-  if(data.TAX_CLIENTS) TAX_CLIENTS = data.TAX_CLIENTS;
+  if(data.TAX_CLIENTS) {
+    TAX_CLIENTS = data.TAX_CLIENTS;
+    // nextTaxSeq를 최대 seq+1로 재설정 (중복 방지)
+    var maxTaxSeq = 0;
+    TAX_CLIENTS.forEach(function(t){ if(t.seq > maxTaxSeq) maxTaxSeq = t.seq; });
+    if(maxTaxSeq >= nextTaxSeq) nextTaxSeq = maxTaxSeq + 1;
+  }
   if(data.DOC_FILES)   DOC_FILES   = data.DOC_FILES;
   const cfg = data.CONFIG || {};
   if(cfg.ADMIN_PW || data.ADMIN_PW)    ADMIN_PW    = String(cfg.ADMIN_PW || data.ADMIN_PW);
