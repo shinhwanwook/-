@@ -132,6 +132,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 /* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.detail-item{display:flex;flex-direction:column;gap:3px}
+.detail-full{grid-column:1/-1}
 .form-grid.cols3{grid-template-columns:1fr 1fr 1fr}
 .form-full{grid-column:1/-1}
 .form-group{display:flex;flex-direction:column;gap:5px}
@@ -232,6 +235,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 @media(max-width:768px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .form-grid,.form-grid.cols3{grid-template-columns:1fr}
+  .detail-grid{grid-template-columns:1fr 1fr!important}
   .nav-tab{padding:0 10px;font-size:12px}
   .page{padding:10px}
   .tbl-wrap{max-height:calc(100vh - 220px)}
@@ -707,7 +711,7 @@ body.locked { overflow:hidden; }
         <div class="dtab" onclick="switchDtab(3)">방문/A/S</div>
         <div class="dtab" onclick="switchDtab(4)">출력카운터</div>
       </div>
-      <div class="dtab-panel active" id="dtab-0"><div class="form-grid" id="dm-info"></div></div>
+      <div class="dtab-panel active" id="dtab-0"><div class="detail-grid" id="dm-info"></div></div>
       <div class="dtab-panel" id="dtab-1">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:13px;color:var(--text3)">최근 12개월 납부 현황 (클릭 시 수정)</span>
@@ -1538,7 +1542,7 @@ function openDetail(no){
     ['초과 추가단가',`흑백 <strong>${(c.extra_bw||0).toLocaleString()}</strong>원/매 &nbsp;/&nbsp; 컬러 <strong>${(c.extra_color||0).toLocaleString()}</strong>원/매`],
     ['A/S 담당자',staffNames||'-'],
     ['주소',c.address,'full'],['비고',c.memo||'-','full']
-  ].map(([l,v,f])=>`<div class="form-group${f?' form-full':''}"><label>${l}</label><p style="font-size:13px">${v||'-'}</p></div>`).join('');
+  ].map(([l,v,f])=>`<div class="detail-item${f?' detail-full':''}"><label style="font-size:11px;color:var(--text3);font-weight:600">${l}</label><p style="font-size:13px;margin-top:2px">${v||'-'}</p></div>`).join('');
   // 해지/복원 버튼 동적 변경 (관리자만)
   const termBtn=document.getElementById('dm-terminate-btn');
   if(!isAdmin){
