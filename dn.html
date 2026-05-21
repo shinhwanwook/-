@@ -254,6 +254,40 @@ function calcAll(){
   document.getElementById('sum-vat').textContent=sumV.toLocaleString();
   document.getElementById('total-display').textContent=(sumA+sumV).toLocaleString();
 }
+
+// URL 파라미터 자동 입력
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  if(!p.toString()) return;
+  var date=p.get('date'), name=p.get('name'), addr=p.get('addr');
+  var tel=p.get('phone'), person=p.get('manager');
+  var item1=p.get('item1'), spec1=p.get('spec1');
+  var qty1=p.get('qty1'), price1=p.get('price1');
+
+  if(date){ var el=document.getElementById('dn-date'); if(el) el.value=date; }
+  if(name){ var el=document.getElementById('buyer-name'); if(el) el.value=name; }
+  if(addr){ var el=document.getElementById('buyer-addr'); if(el) el.value=addr; }
+  if(tel){ var el=document.getElementById('buyer-tel'); if(el) el.value=tel; }
+  if(person){ var el=document.getElementById('buyer-person'); if(el) el.value=person; }
+
+  if(item1){
+    var rows=document.querySelectorAll('#dn-body tr');
+    if(rows.length>0){
+      var row=rows[0];
+      var ta=row.querySelector('.item-name');
+      var inQty=row.querySelector('.item-qty');
+      var inPrice=row.querySelector('.item-price');
+      if(ta){ ta.value=item1+(spec1?' ('+spec1+')':''); autoH(ta); }
+      if(inQty) inQty.value=qty1||1;
+      if(inPrice&&price1){
+        var num=parseInt(price1)||0;
+        inPrice.value=num>0?num.toLocaleString():'';
+        inPrice.dataset.raw=String(price1);
+      }
+      calcAll();
+    }
+  }
+})();
 </script>
 </body>
 </html>

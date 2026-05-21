@@ -3662,6 +3662,8 @@ function renderInvList(){
       <td><div class="tbl-action">
         <button class="btn btn-xs btn-ghost" onclick="editInv(${r.id})">수정</button>
         <button class="btn btn-xs btn-danger" onclick="confirmDeleteInv(${r.id})">삭제</button>
+        ${r.dir==='out'?`<button class="btn btn-xs" style="background:#1d4ed8;color:#fff" onclick="printInvDn(${r.id})">📄 명세서</button>
+        <button class="btn btn-xs" style="background:#166534;color:#fff" onclick="printInvRc(${r.id})">🧾 영수증</button>`:''}
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📋</div>내역이 없습니다</div></td></tr>`;
@@ -3848,6 +3850,42 @@ function clearInvFilter(){
   invPage = 0;
   renderInvList();
 }
+function printInvDn(id){
+  var r = INVENTORY.find(function(x){ return x.id===id; });
+  if(!r) return;
+  var c = r.no ? CONTRACTS.find(function(x){ return x.no===r.no; }) : null;
+  var params = new URLSearchParams({
+    date:     r.date||'',
+    name:     c ? (c.name||'') : '',
+    bizno:    c ? (c.bizno||'') : '',
+    addr:     c ? (c.address||'') : '',
+    manager:  c ? (c.manager||'') : '',
+    phone:    c ? (c.phone||'') : '',
+    item1:    r.item||'',
+    spec1:    r.cat||'',
+    qty1:     r.qty||1,
+    price1:   r.price||0,
+  });
+  window.open('dn.html?'+params.toString(), '_blank');
+}
+
+function printInvRc(id){
+  var r = INVENTORY.find(function(x){ return x.id===id; });
+  if(!r) return;
+  var c = r.no ? CONTRACTS.find(function(x){ return x.no===r.no; }) : null;
+  var total = (r.qty||1) * (r.price||0);
+  var params = new URLSearchParams({
+    date:    r.date||'',
+    to:      c ? (c.name||'') : '',
+    item:    r.item||'',
+    qty:     r.qty||1,
+    price:   r.price||0,
+    total:   total,
+    memo:    r.memo||'',
+  });
+  window.open('rc.html?'+params.toString(), '_blank');
+}
+
 function confirmDeleteInv(id){
   showConfirm('이 입출고 내역을 삭제하시겠습니까?',()=>{
     INVENTORY=INVENTORY.filter(r=>r.id!==id);

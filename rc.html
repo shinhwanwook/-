@@ -181,6 +181,40 @@ function calcRC(){
   document.getElementById('rc-sum').textContent=sum>0?sum.toLocaleString():'';
   document.getElementById('rc-total-display').textContent=sum>0?sum.toLocaleString():'0';
 }
+
+// URL 파라미터 자동 입력
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  if(!p.toString()) return;
+  var date=p.get('date'), to=p.get('to');
+  var item=p.get('item'), qty=p.get('qty');
+  var price=p.get('price'), memo=p.get('memo');
+
+  if(date){ var el=document.getElementById('rc-date'); if(el) el.value=date; }
+  if(to){ var el=document.getElementById('rc-buyer'); if(el) el.value=to; }
+  if(memo){ var el=document.getElementById('rc-note'); if(el) el.value=memo; }
+
+  // 첫번째 품목 행 입력
+  if(item){
+    var rows=document.querySelectorAll('#rc-body tr');
+    if(rows.length>0){
+      var row=rows[0];
+      var monthEl=row.querySelector('input[type="text"]:first-child');
+      var itemEl=row.querySelector('.rc-item');
+      var qtyEl=row.querySelector('.rc-qty');
+      var priceEl=row.querySelector('.rc-price');
+      if(date && monthEl) monthEl.value = date.slice(5,10).replace('-','/');
+      if(itemEl){ itemEl.value=item; autoH(itemEl); }
+      if(qtyEl) qtyEl.value=qty||1;
+      if(priceEl&&price){
+        var num=parseInt(price)||0;
+        priceEl.value=num>0?num.toLocaleString():'';
+        priceEl.dataset.raw=String(price);
+      }
+      calcRC();
+    }
+  }
+})();
 </script>
 </body>
 </html>
