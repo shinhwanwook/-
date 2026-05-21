@@ -4207,6 +4207,45 @@ function hidePayTip(){
   </div>
 </div>
 
+<!-- MODAL: 세금계산서 거래처 상세 -->
+<div class="modal-bg" id="tax-client-detail-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h3 id="tcd-title">거래처 상세</h3>
+      <button class="modal-close" onclick="closeModal('tax-client-detail-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div><span style="color:#6b7280">사업자번호</span><br><strong id="tcd-bizno">-</strong></div>
+          <div><span style="color:#6b7280">담당자</span><br><strong id="tcd-manager">-</strong></div>
+          <div><span style="color:#6b7280">전화번호</span><br><strong id="tcd-phone">-</strong></div>
+          <div><span style="color:#6b7280">이메일</span><br><strong id="tcd-email">-</strong></div>
+          <div><span style="color:#6b7280">렌탈금</span><br><strong id="tcd-rent">-</strong></div>
+          <div><span style="color:#6b7280">수량</span><br><strong id="tcd-qty">-</strong></div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px">📝 메모</label>
+        <textarea id="tcd-memo" rows="4"
+          style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;outline:none"
+          placeholder="메모를 입력하세요..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-warn btn-sm" id="tcd-terminate-btn" onclick="taxClientDetailTerminate()">해지</button>
+        <button class="btn btn-success btn-sm" id="tcd-restore-btn" onclick="taxClientDetailRestore()" style="display:none">복원</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal('tax-client-detail-modal')">닫기</button>
+        <button class="btn btn-sm" style="background:#6366f1;color:#fff;border:none" onclick="taxClientDetailEdit()">✏️ 수정</button>
+        <button class="btn btn-primary" onclick="saveTaxClientDetailMemo()">💾 메모저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: 세금계산서 발행 등록/수정 -->
 <div class="modal-bg" id="tax-modal">
   <div class="modal">
@@ -4385,6 +4424,56 @@ var _taxEditKey = null; // "seq-YYYY-MM"
 // ── 요약 통계 ──
 // issues 값에서 날짜 문자열 추출 (문자열 또는 {date:...} 객체 모두 처리)
 var _taxMemoSeq = null;
+var _tcdSeq = null;
+function openTaxClientDetail(seq){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(seq); });
+  if(!t) return;
+  _tcdSeq = seq;
+  document.getElementById('tcd-title').textContent = (t.terminated?'[해지] ':'')+t.name;
+  document.getElementById('tcd-bizno').textContent = t.bizno||'-';
+  document.getElementById('tcd-manager').textContent = t.manager||'-';
+  document.getElementById('tcd-phone').textContent = t.phone||'-';
+  document.getElementById('tcd-email').textContent = t.email||'-';
+  document.getElementById('tcd-rent').textContent = (t.rent||0).toLocaleString()+'원';
+  document.getElementById('tcd-qty').textContent = t.qty||'-';
+  document.getElementById('tcd-memo').value = t.memo||'';
+  document.getElementById('tcd-terminate-btn').style.display = t.terminated?'none':'';
+  document.getElementById('tcd-restore-btn').style.display = t.terminated?'':'none';
+  openModal('tax-client-detail-modal');
+}
+function saveTaxClientDetailMemo(){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  if(!t) return;
+  t.memo = document.getElementById('tcd-memo').value.trim();
+  closeModal('tax-client-detail-modal');
+  window._isLoading=false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 메모 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+  });
+  renderTax();
+}
+function taxClientDetailEdit(){
+  closeModal('tax-client-detail-modal');
+  openTaxClientEdit(_tcdSeq);
+}
+function taxClientDetailTerminate(){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  if(!t) return;
+  showConfirm('['+t.name+'] 거래처를 해지하시겠습니까?', function(){
+    closeModal('tax-client-detail-modal');
+    terminateTaxClient(_tcdSeq);
+  }, '해지', false);
+}
+function taxClientDetailRestore(){
+  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  if(!t) return;
+  showConfirm('['+t.name+'] 거래처를 복원하시겠습니까?', function(){
+    closeModal('tax-client-detail-modal');
+    restoreTaxClient(_tcdSeq);
+  }, '복원', true);
+}
+
 function openTaxMemo(seq){
   var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(seq); });
   if(!t) return;
@@ -4548,7 +4637,7 @@ function renderTax() {
         '<div style="'+cellStyle+'">'+cellContent+'</div></td>';
     }).join('');
     return '<tr>'+
-      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxMemo('+t.seq+')">'+
+      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')">'+
         esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
