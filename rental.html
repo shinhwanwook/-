@@ -3634,8 +3634,13 @@ function renderInvList(){
     if(cat&&r.cat!==cat) return false;
     // 거래처 검색
     if(clientQ){
-      var c2 = CONTRACTS.find(function(x){ return x.no===r.no; });
-      var cname = c2 ? (c2.name||'') : (r.no||'');
+      var cname = '';
+      if(r.dir==='out' && r.no){
+        var c2 = CONTRACTS.find(function(x){ return x.no===r.no; });
+        cname = c2 ? (c2.name||'') : '';
+      } else if(r.dir==='in'){
+        cname = r.vendor||'';
+      }
       if(!String(cname).toLowerCase().includes(clientQ)) return false;
     }
     // 날짜 범위 필터
@@ -3689,6 +3694,16 @@ var _invFormDir = 'in';
 var _editInvId  = null;
 
 function showInvForm(dir){
+  // 거래처 select 채우기
+  var noSel = document.getElementById('inv-f-no');
+  if(noSel){
+    var activeList = CONTRACTS.filter(function(c){ return !c.terminated; });
+    activeList.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ko'); });
+    noSel.innerHTML = '<option value="">-- 거래처 선택 --</option>' +
+      activeList.map(function(c){
+        return '<option value="'+c.no+'">'+esc(c.name)+'</option>';
+      }).join('');
+  }
   _invFormDir = dir;
   _editInvId  = null;
   document.getElementById('inv-form-panel').style.display = 'block';
@@ -3831,7 +3846,7 @@ function editInv(id){
   if(r.dir==='in'){
     document.getElementById('inv-f-vendor').value = r.vendor || '';
   } else {
-    document.getElementById('inv-f-no').value      = r.no || '';
+    document.getElementById('inv-f-no').value      = r.no ? String(r.no) : '';
     document.getElementById('inv-f-purpose').value = r.purpose || '';
   }
   calcInvTotal();
@@ -4116,7 +4131,9 @@ function hidePayTip(){
           </div>
           <div class="form-group" id="inv-f-no-grp" style="display:none">
             <label>거래처명</label>
-            <input class="inp" id="inv-f-no" placeholder="">
+            <select class="inp" id="inv-f-no">
+              <option value="">-- 거래처 선택 --</option>
+            </select>
           </div>
           <div class="form-group">
             <label>담당자</label>
