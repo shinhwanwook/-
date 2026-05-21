@@ -4455,7 +4455,12 @@ function saveTaxClientDetailMemo(){
 }
 function taxClientDetailEdit(){
   closeModal('tax-client-detail-modal');
-  openTaxClientEdit(_tcdSeq);
+  // 거래처 관리 모달 열고 수정 폼 표시
+  renderTaxClientList();
+  openModal('tax-client-modal');
+  setTimeout(function(){
+    openTaxClientEdit(_tcdSeq);
+  }, 100);
 }
 function taxClientDetailTerminate(){
   var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
