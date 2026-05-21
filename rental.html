@@ -3049,6 +3049,13 @@ function applyRestoredData(data) {
   if(data.STAFF_LIST)  STAFF_LIST  = data.STAFF_LIST;
   if(data.TAX_CLIENTS) {
     TAX_CLIENTS = data.TAX_CLIENTS;
+    // 중복 seq 제거 (seq 기준 첫번째만 유지)
+    var seenSeqs = {};
+    TAX_CLIENTS = TAX_CLIENTS.filter(function(t){
+      if(seenSeqs[t.seq]) return false;
+      seenSeqs[t.seq] = true;
+      return true;
+    });
     // nextTaxSeq를 최대 seq+1로 재설정 (중복 방지)
     var maxTaxSeq = 0;
     TAX_CLIENTS.forEach(function(t){ if(t.seq > maxTaxSeq) maxTaxSeq = t.seq; });
@@ -4242,6 +4249,7 @@ function hidePayTip(){
       <div style="display:flex;gap:8px">
         <button class="btn btn-warn btn-sm" id="tcd-terminate-btn" onclick="taxClientDetailTerminate()">해지</button>
         <button class="btn btn-success btn-sm" id="tcd-restore-btn" onclick="taxClientDetailRestore()" style="display:none">복원</button>
+        <button class="btn btn-danger btn-sm" onclick="taxClientDetailDelete()">🗑️ 삭제</button>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost" onclick="closeModal('tax-client-detail-modal')">닫기</button>
@@ -4484,6 +4492,20 @@ function taxClientDetailRestore(){
     closeModal('tax-client-detail-modal');
     restoreTaxClient(_tcdSeq);
   }, '복원', true);
+}
+function taxClientDetailDelete(){
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_tcdSeq); });
+  if(!t) return;
+  showConfirm('['+t.name+'] 거래처를 완전히 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.', function(){
+    TAX_CLIENTS = TAX_CLIENTS.filter(function(x){ return x.seq !== parseInt(_tcdSeq); });
+    closeModal('tax-client-detail-modal');
+    window._isLoading = false;
+    saveToLocal();
+    saveToApi(function(ok){
+      showSaveStatus(ok?'✅ 거래처 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+    });
+    renderTax();
+  }, '삭제', false);
 }
 
 function openTaxMemo(seq){
