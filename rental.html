@@ -3414,6 +3414,44 @@ function renderPayStats(){
 
   document.getElementById('stat-pay-body').innerHTML = bodyHtml ||
     '<tr><td colspan="16" style="text-align:center;color:#9ca3af;padding:16px">데이터가 없습니다</td></tr>';
+
+  // 합계 요약 렌더링
+  var totalRent = filtered.reduce(function(s,c){ return s+(c.rent||0); }, 0);
+  var totalMonthlyRent = totalRent * months.length;
+  var totalPaidAmt2 = filtered.reduce(function(s,c){
+    var cnt = months.filter(function(ym){ return !!(c.payments && c.payments[ym]); }).length;
+    return s + cnt*(c.rent||0);
+  }, 0);
+  var totalUnpaidAmt2 = totalMonthlyRent - totalPaidAmt2;
+  var totalRate = totalMonthlyRent > 0 ? Math.round(totalPaidAmt2/totalMonthlyRent*100) : 0;
+  var rateColor2 = totalRate>=90?'#166534':totalRate>=50?'#92400e':'#991b1b';
+
+  var summaryEl = document.getElementById('stat-pay-summary');
+  if(summaryEl){
+    summaryEl.innerHTML =
+      '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px;flex:1;min-width:160px">' +
+        '<div style="font-size:11px;color:#166534;font-weight:600">💰 거래처 렌탈금 합계 (월)</div>' +
+        '<div style="font-size:18px;font-weight:900;color:#166534">'+totalRent.toLocaleString()+'원</div>' +
+        '<div style="font-size:11px;color:#6b7280">조회 거래처 '+filtered.length+'곳</div>' +
+      '</div>' +
+      '<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px 16px;flex:1;min-width:160px">' +
+        '<div style="font-size:11px;color:#1d4ed8;font-weight:600">📅 조회기간 렌탈금 합계</div>' +
+        '<div style="font-size:18px;font-weight:900;color:#1d4ed8">'+totalMonthlyRent.toLocaleString()+'원</div>' +
+        '<div style="font-size:11px;color:#6b7280">'+fromM+'월~'+toM+'월 ('+months.length+'개월)</div>' +
+      '</div>' +
+      '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:10px 16px;flex:1;min-width:160px">' +
+        '<div style="font-size:11px;color:#166534;font-weight:600">✅ 완납 합계</div>' +
+        '<div style="font-size:18px;font-weight:900;color:#166534">'+totalPaidAmt2.toLocaleString()+'원</div>' +
+      '</div>' +
+      '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 16px;flex:1;min-width:160px">' +
+        '<div style="font-size:11px;color:#991b1b;font-weight:600">⚠️ 미납 합계</div>' +
+        '<div style="font-size:18px;font-weight:900;color:#991b1b">'+totalUnpaidAmt2.toLocaleString()+'원</div>' +
+      '</div>' +
+      '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:10px 16px;flex:1;min-width:160px">' +
+        '<div style="font-size:11px;color:#6d28d9;font-weight:600">📊 전체 납부율</div>' +
+        '<div style="font-size:18px;font-weight:900;color:'+rateColor2+'">'+totalRate+'%</div>' +
+      '</div>';
+  }
 }
 
 function renderStats(){
@@ -3936,6 +3974,9 @@ function hidePayTip(){
       </table>
     </div>
   </div>
+
+  <!-- 입금통계 합계 요약 -->
+  <div id="stat-pay-summary" style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap"></div>
 
   <!-- 유형별/납부방법별 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
