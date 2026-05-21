@@ -4426,7 +4426,8 @@ var _taxEditKey = null; // "seq-YYYY-MM"
 var _taxMemoSeq = null;
 var _tcdSeq = null;
 function openTaxClientDetail(seq){
-  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(seq); });
+  var seqNum = parseInt(seq);
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === seqNum; });
   if(!t) return;
   _tcdSeq = seq;
   document.getElementById('tcd-title').textContent = (t.terminated?'[해지] ':'')+t.name;
@@ -4442,7 +4443,7 @@ function openTaxClientDetail(seq){
   openModal('tax-client-detail-modal');
 }
 function saveTaxClientDetailMemo(){
-  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_tcdSeq); });
   if(!t) return;
   t.memo = document.getElementById('tcd-memo').value.trim();
   closeModal('tax-client-detail-modal');
@@ -4459,11 +4460,11 @@ function taxClientDetailEdit(){
   renderTaxClientList();
   openModal('tax-client-modal');
   setTimeout(function(){
-    openTaxClientEdit(_tcdSeq);
+    openTaxClientEdit(parseInt(_tcdSeq));
   }, 100);
 }
 function taxClientDetailTerminate(){
-  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_tcdSeq); });
   if(!t) return;
   showConfirm('['+t.name+'] 거래처를 해지하시겠습니까?', function(){
     closeModal('tax-client-detail-modal');
@@ -4471,7 +4472,7 @@ function taxClientDetailTerminate(){
   }, '해지', false);
 }
 function taxClientDetailRestore(){
-  var t = TAX_CLIENTS.find(function(x){ return String(x.seq)===String(_tcdSeq); });
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_tcdSeq); });
   if(!t) return;
   showConfirm('['+t.name+'] 거래처를 복원하시겠습니까?', function(){
     closeModal('tax-client-detail-modal');
