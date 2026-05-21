@@ -1427,38 +1427,8 @@ function applyFilters(){
     return true;
   });
 
-  // 월별 발행 현황 배지 업데이트
-  mlabels.forEach(function(l,i){
-    var m = months[i];
-    var issued = 0, notIssued = 0;
-    list.forEach(function(t){
-      var hasIssue = !!(t.issues && t.issues[m]);
-      if(hasIssue) issued++;
-      else notIssued++;
-    });
-    var badge = document.getElementById('tax-badge-'+i);
-    if(badge){
-      var html = '';
-      if(issued > 0) html += '<span style="color:#166534;font-weight:600">✅'+issued+'</span> ';
-      if(notIssued > 0) html += '<span style="color:#991b1b;font-weight:600">⚠'+notIssued+'</span>';
-      badge.innerHTML = html;
-    }
-  });
-  filtered.sort((a,b)=>{
-    let av,bv;
-    if(sortKey==='latest_payment'){
-      av=latestPayment(a); bv=latestPayment(b);
-    } else if(sortKey==='latest_visit'){
-      const sa=SERVICES.filter(s=>s.no===a.no).sort((x,y)=>y.date.localeCompare(x.date))[0];
-      const sb=SERVICES.filter(s=>s.no===b.no).sort((x,y)=>y.date.localeCompare(x.date))[0];
-      av=sa?sa.date:''; bv=sb?sb.date:'';
-    } else {
-      av=a[sortKey]; bv=b[sortKey];
-    }
-    av=av||''; bv=bv||'';
-    return sortDir*(av>bv?1:av<bv?-1:0);
-  });
-  page=0; renderList();
+
+    page=0; renderList();
 }
 function sortBy(k){
   if(sortKey===k) sortDir*=-1; else{sortKey=k;sortDir=1;}
