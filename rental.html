@@ -3305,7 +3305,115 @@ function loadColWidths(){
 // ══════════════════════════════════════════
 //  임대통계
 // ══════════════════════════════════════════
+function renderPayStats(){
+  var yr = document.getElementById('stat-pay-year').value;
+  var type = document.getElementById('stat-pay-type').value;
+  if(!yr) return;
+
+  var months = [];
+  for(var m=1;m<=12;m++) months.push(yr+'-'+String(m).padStart(2,'0'));
+
+  var activeContracts = CONTRACTS.filter(function(c){ return !c.terminated; });
+
+  // 월별 요약
+  var paidCounts = new Array(12).fill(0);
+  var unpaidCounts = new Array(12).fill(0);
+  var paidAmts = new Array(12).fill(0);
+  var unpaidAmts = new Array(12).fill(0);
+
+  activeContracts.forEach(function(c){
+    months.forEach(function(ym, i){
+      var hasPay = !!(c.payments && c.payments[ym]);
+      if(hasPay){
+        paidCounts[i]++;
+        paidAmts[i] += c.rent||0;
+      } else {
+        unpaidCounts[i]++;
+        unpaidAmts[i] += c.rent||0;
+      }
+    });
+  });
+
+  // 월별 요약 테이블
+  var monthHtml = '';
+  // 완납수
+  monthHtml += '<tr style="background:#dcfce7">';
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:600;color:#166534">✅ 완납수</td>';
+  var totalPaid = 0;
+  paidCounts.forEach(function(v){ totalPaid+=v; monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;color:#166534">'+v+'</td>'; });
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#166534">'+totalPaid+'</td></tr>';
+
+  // 미납수
+  monthHtml += '<tr style="background:#fee2e2">';
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:600;color:#991b1b">⚠️ 미납수</td>';
+  var totalUnpaid = 0;
+  unpaidCounts.forEach(function(v){ totalUnpaid+=v; monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;color:#991b1b">'+v+'</td>'; });
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#991b1b">'+totalUnpaid+'</td></tr>';
+
+  // 완납금액
+  monthHtml += '<tr>';
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:600">💰 완납금액</td>';
+  var totalPaidAmt = 0;
+  paidAmts.forEach(function(v){ totalPaidAmt+=v; monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right">'+v.toLocaleString()+'</td>'; });
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:700">'+totalPaidAmt.toLocaleString()+'</td></tr>';
+
+  // 미납금액
+  monthHtml += '<tr style="background:#fff7ed">';
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:600;color:#c2410c">💸 미납금액</td>';
+  var totalUnpaidAmt = 0;
+  unpaidAmts.forEach(function(v){ totalUnpaidAmt+=v; monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;color:#c2410c">'+v.toLocaleString()+'</td>'; });
+  monthHtml += '<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#c2410c">'+totalUnpaidAmt.toLocaleString()+'</td></tr>';
+
+  document.getElementById('stat-pay-month-body').innerHTML = monthHtml;
+
+  // 거래처별 상세
+  var filtered = activeContracts;
+  if(type === 'paid'){
+    filtered = activeContracts.filter(function(c){
+      return months.some(function(ym){ return !!(c.payments && c.payments[ym]); });
+    });
+  } else if(type === 'unpaid'){
+    filtered = activeContracts.filter(function(c){
+      return months.some(function(ym){ return !(c.payments && c.payments[ym]); });
+    });
+  }
+
+  filtered.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ko'); });
+
+  var bodyHtml = filtered.map(function(c){
+    var paidCount = 0;
+    var cells = months.map(function(ym){
+      var hasPay = !!(c.payments && c.payments[ym]);
+      if(hasPay) paidCount++;
+      var bg = hasPay ? 'background:#dcfce7;color:#166534' : 'background:#fee2e2;color:#991b1b';
+      var txt = hasPay ? '✅' : '⚠️';
+      return '<td style="text-align:center;'+bg+'">'+txt+'</td>';
+    }).join('');
+    var rate = Math.round(paidCount/12*100);
+    var rateColor = rate>=90?'#166534':rate>=50?'#92400e':'#991b1b';
+    return '<tr>'+
+      '<td style="font-weight:600;white-space:nowrap">'+esc(c.name)+'</td>'+
+      '<td style="text-align:right">'+(c.rent||0).toLocaleString()+'원</td>'+
+      cells+
+      '<td style="text-align:right;font-weight:700;color:'+rateColor+'">'+rate+'%</td>'+
+      '</tr>';
+  }).join('');
+
+  document.getElementById('stat-pay-body').innerHTML = bodyHtml ||
+    '<tr><td colspan="15" style="text-align:center;color:#9ca3af;padding:16px">데이터가 없습니다</td></tr>';
+}
+
 function renderStats(){
+  // 입금통계 연도 초기화
+  var curYr = new Date().getFullYear();
+  var yrSel = document.getElementById('stat-pay-year');
+  if(yrSel && !yrSel.value){
+    yrSel.innerHTML = '';
+    for(var y=curYr;y>=curYr-5;y--){
+      yrSel.innerHTML += '<option value="'+y+'"'+(y===curYr?' selected':'')+'>'+y+'년</option>';
+    }
+  }
+  renderPayStats();
   const statusFilter = document.getElementById('stat-status-filter').value;
   const base = statusFilter==='active' ? CONTRACTS.filter(c=>!c.terminated) : CONTRACTS;
 
@@ -3738,6 +3846,70 @@ function hidePayTip(){
       </div>
     </div>
   </div>
+  <!-- 입금통계 -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header">
+      <span class="card-title">💰 월별 입금 통계</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="inp" id="stat-pay-year" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()"></select>
+        <select class="inp" id="stat-pay-type" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()">
+          <option value="all">전체</option>
+          <option value="paid">완납</option>
+          <option value="unpaid">미납</option>
+        </select>
+      </div>
+    </div>
+    <!-- 월별 요약 -->
+    <div style="overflow-x:auto;margin-bottom:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f1f5f9">
+            <th style="padding:6px 8px;text-align:left;border:1px solid #e2e8f0">구분</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">1월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">2월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">3월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">4월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">5월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">6월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">7월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">8월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">9월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">10월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">11월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">12월</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0;font-weight:700">합계</th>
+          </tr>
+        </thead>
+        <tbody id="stat-pay-month-body"></tbody>
+      </table>
+    </div>
+    <!-- 거래처별 상세 -->
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:120px">거래처</th>
+            <th style="text-align:right">렌탈금(월)</th>
+            <th style="text-align:right;min-width:50px">1월</th>
+            <th style="text-align:right;min-width:50px">2월</th>
+            <th style="text-align:right;min-width:50px">3월</th>
+            <th style="text-align:right;min-width:50px">4월</th>
+            <th style="text-align:right;min-width:50px">5월</th>
+            <th style="text-align:right;min-width:50px">6월</th>
+            <th style="text-align:right;min-width:50px">7월</th>
+            <th style="text-align:right;min-width:50px">8월</th>
+            <th style="text-align:right;min-width:50px">9월</th>
+            <th style="text-align:right;min-width:50px">10월</th>
+            <th style="text-align:right;min-width:50px">11월</th>
+            <th style="text-align:right;min-width:50px">12월</th>
+            <th style="text-align:right;font-weight:700">납부율</th>
+          </tr>
+        </thead>
+        <tbody id="stat-pay-body"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- 유형별/납부방법별 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
     <div class="card">
