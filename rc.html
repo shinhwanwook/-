@@ -199,7 +199,8 @@ function calcRC(){
     var rows=document.querySelectorAll('#rc-body tr');
     if(rows.length>0){
       var row=rows[0];
-      var monthEl=row.querySelector('input[type="text"]:first-child');
+      var allInputs=row.querySelectorAll('input[type="text"]');
+      var monthEl=allInputs.length>0?allInputs[0]:null;
       var itemEl=row.querySelector('.rc-item');
       var qtyEl=row.querySelector('.rc-qty');
       var priceEl=row.querySelector('.rc-price');
@@ -207,7 +208,10 @@ function calcRC(){
       if(itemEl){ itemEl.value=item; autoH(itemEl); }
       if(qtyEl) qtyEl.value=parseInt(qty)||1;
       if(priceEl&&price){
-        priceEl.value=parseInt(price)||0;
+        var pNum=parseInt(price)||0;
+        priceEl.value=pNum;
+        // trigger input event to recalc
+        priceEl.dispatchEvent(new Event('input'));
       }
       calcRC();
     }
