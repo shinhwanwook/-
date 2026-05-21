@@ -3625,10 +3625,22 @@ function renderInvList(){
   const q=document.getElementById('inv-srch').value.toLowerCase();
   const dir=document.getElementById('inv-dir').value;
   const cat=document.getElementById('inv-cat').value;
+  const clientQ = (document.getElementById('inv-client-srch')||{value:''}).value.toLowerCase();
+  const dateFrom = (document.getElementById('inv-date-from')||{value:''}).value;
+  const dateTo = (document.getElementById('inv-date-to')||{value:''}).value;
   let list=INVENTORY.filter(r=>{
     if(q&&!r.item.toLowerCase().includes(q)) return false;
     if(dir&&r.dir!==dir) return false;
     if(cat&&r.cat!==cat) return false;
+    // 거래처 검색
+    if(clientQ){
+      var c2 = CONTRACTS.find(function(x){ return x.no===r.no; });
+      var cname = c2 ? (c2.name||'') : (r.no||'');
+      if(!String(cname).toLowerCase().includes(clientQ)) return false;
+    }
+    // 날짜 범위 필터
+    if(dateFrom && r.date < dateFrom) return false;
+    if(dateTo && r.date > dateTo) return false;
     return true;
   }).sort((a,b)=>invSortDir*b.date.localeCompare(a.date));
   const start=invPage*INV_PAGE, end=start+INV_PAGE;
@@ -3826,6 +3838,16 @@ function editInv(id){
 }
 
 function openInvModal(dir){ showInvForm(dir); }
+function clearInvFilter(){
+  document.getElementById('inv-srch').value = '';
+  document.getElementById('inv-client-srch').value = '';
+  document.getElementById('inv-dir').value = '';
+  document.getElementById('inv-cat').value = '';
+  document.getElementById('inv-date-from').value = '';
+  document.getElementById('inv-date-to').value = '';
+  invPage = 0;
+  renderInvList();
+}
 function confirmDeleteInv(id){
   showConfirm('이 입출고 내역을 삭제하시겠습니까?',()=>{
     INVENTORY=INVENTORY.filter(r=>r.id!==id);
@@ -4117,9 +4139,14 @@ function hidePayTip(){
       <span class="card-title">📋 입출고 이력</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="inv-srch" placeholder="🔍 품목명 검색..." style="flex:1;min-width:140px" oninput="invPage=0;renderInvList()">
+      <input class="inp inp-search" type="text" id="inv-srch" placeholder="🔍 품목명 검색..." style="flex:1;min-width:120px" oninput="invPage=0;renderInvList()">
+      <input class="inp" type="text" id="inv-client-srch" placeholder="거래처 검색" style="min-width:100px" oninput="invPage=0;renderInvList()">
       <select class="inp" id="inv-dir" onchange="invPage=0;renderInvList()"><option value="">전체</option><option value="in">입고만</option><option value="out">출고만</option></select>
       <select class="inp" id="inv-cat" onchange="invPage=0;renderInvList()"><option value="">전체 분류</option><option value="장비">장비</option><option value="소모품">소모품</option><option value="부품">부품</option></select>
+      <input class="inp" type="date" id="inv-date-from" onchange="invPage=0;renderInvList()" style="min-width:130px">
+      <span style="font-size:12px;color:#6b7280">~</span>
+      <input class="inp" type="date" id="inv-date-to" onchange="invPage=0;renderInvList()" style="min-width:130px">
+      <button class="btn btn-ghost btn-sm" onclick="clearInvFilter()">초기화</button>
     </div>
     <div style="display:flex;justify-content:flex-end;align-items:center;padding:6px 8px;background:#f5f3ff;border-radius:8px;margin-bottom:8px;font-size:13px">
       <span style="color:#6b7280">출고 합계금액:</span>
