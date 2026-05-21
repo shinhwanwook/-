@@ -3737,11 +3737,7 @@ function showInvForm(dir){
   document.getElementById('inv-f-total').textContent = '0 원';
 
   // 담당자
-  var pSel = document.getElementById('inv-f-person');
-  pSel.innerHTML = '<option value="">-- 선택 --</option>';
-  STAFF_LIST.forEach(function(s){
-    pSel.innerHTML += '<option value="'+s.name+'">'+s.name+'</option>';
-  });
+
 
   // 입고 전용
   document.getElementById('inv-f-vendor-grp').style.display  = isIn ? '' : 'none';
