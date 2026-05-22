@@ -2624,6 +2624,39 @@ function renderPayment(){
 }
 
 // ══ 방문/A/S ══
+// 방문/AS 거래처 자동완성
+function filterSvcClients(q){
+  var dropdown = document.getElementById('sm-no-dropdown');
+  if(!dropdown) return;
+  var keyword = (q||'').toLowerCase();
+  var list = CONTRACTS.filter(function(c){
+    return !c.terminated && (c.name||'').toLowerCase().includes(keyword);
+  }).slice(0,10);
+  if(!keyword || list.length===0){
+    dropdown.style.display = 'none';
+    if(!keyword) document.getElementById('sm-no').value = '';
+    return;
+  }
+  dropdown.innerHTML = list.map(function(c){
+    return '<div class="svc-dropdown-item" onmousedown="selectSvcClient('+c.no+',\''+c.name.replace(/'/g,"\\'")+'\')">'
+      +'<span style="font-weight:600">'+esc(c.name)+'</span>'
+      +'<span style="font-size:11px;color:#6b7280;margin-left:6px">'+esc(c.phone||'')+'</span>'
+      +'</div>';
+  }).join('');
+  dropdown.style.display = 'block';
+}
+function selectSvcClient(no, name){
+  document.getElementById('sm-no').value = no;
+  document.getElementById('sm-no-search').value = name;
+  document.getElementById('sm-no-dropdown').style.display = 'none';
+}
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('sm-no-dropdown');
+  if(dd && !dd.contains(e.target) && e.target.id!=='sm-no-search'){
+    dd.style.display = 'none';
+  }
+});
+
 var _svcDetailNo = null;
 
 function openSvcDetail(no){
