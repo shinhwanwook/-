@@ -2590,7 +2590,8 @@ function renderPayment(){
     totalExtra += EXTRA_PAYS.filter(function(e){ return e.no===c.no&&keys.some(function(k){ return e.date.slice(0,7)===k; }); }).reduce(function(s,e){ return s+e.amount; }, 0);
   });
   var summaryEl = document.getElementById('pay-summary-cards');
-  if(summaryEl){
+  if(summaryEl) summaryEl.style.display = window.isAdmin ? 'flex' : 'none';
+  if(summaryEl && window.isAdmin){
     summaryEl.innerHTML =
       '<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
         '<div style="font-size:11px;color:#1d4ed8;font-weight:600">💰 거래처 렌탈금(월)</div>'+
