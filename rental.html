@@ -869,6 +869,40 @@ body.locked { overflow:hidden; }
   </div>
 </div>
 
+<!-- ══ MODAL: 방문/AS 거래처별 이력 ══ -->
+<div class="modal-bg" id="svc-detail-modal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-head">
+      <h3 id="svc-detail-title">이력 관리</h3>
+      <button class="modal-close" onclick="closeModal('svc-detail-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span id="svc-detail-count" style="font-size:13px;color:var(--text3)"></span>
+        <button class="btn btn-primary btn-sm" id="svc-detail-add-btn" onclick="svcDetailAdd()">＋ 이력 등록</button>
+      </div>
+      <div class="tbl-wrap" style="max-height:420px">
+        <table>
+          <thead>
+            <tr>
+              <th style="min-width:90px">날짜</th>
+              <th style="min-width:60px">유형</th>
+              <th>내용</th>
+              <th style="min-width:70px">담당자</th>
+              <th style="min-width:80px">처리결과</th>
+              <th style="min-width:80px">관리</th>
+            </tr>
+          </thead>
+          <tbody id="svc-detail-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('svc-detail-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: 서류 업로드 ══ -->
 <div class="modal-bg" id="doc-modal">
   <div class="modal">
@@ -2584,6 +2618,65 @@ function renderPayment(){
 }
 
 // ══ 방문/A/S ══
+var _svcDetailNo = null;
+
+function openSvcDetail(no){
+  _svcDetailNo = no;
+  var c = CONTRACTS.find(function(x){ return x.no===no; });
+  document.getElementById('svc-detail-title').textContent = (c?c.name:'거래처') + ' — 방문/AS 이력';
+  renderSvcDetail();
+  openModal('svc-detail-modal');
+}
+
+function renderSvcDetail(){
+  var list = SERVICES.filter(function(s){ return s.no===_svcDetailNo; })
+    .sort(function(a,b){ return b.date.localeCompare(a.date); });
+  document.getElementById('svc-detail-count').textContent = '총 '+list.length+'건';
+  var html = list.length ? list.map(function(s){
+    var tCls = s.type==='방문'?'lt-visit':s.type==='A/S'?'lt-as':'lt-other';
+    return '<tr>'+
+      '<td style="white-space:nowrap;font-size:12px">'+esc(s.date)+'</td>'+
+      '<td><span class="log-type '+tCls+'">'+esc(s.type)+'</span></td>'+
+      '<td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(s.content)+'">'+esc(s.content)+'</td>'+
+      '<td style="font-size:12px;color:var(--purple)">'+esc(s.person||'-')+'</td>'+
+      '<td style="font-size:12px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(s.result||'')+'">'+esc(s.result||'-')+'</td>'+
+      '<td><div class="tbl-action">'+
+        '<button class="btn btn-xs btn-ghost" onclick="svcDetailEdit('+s.id+')">수정</button>'+
+        '<button class="btn btn-xs btn-danger" onclick="svcDetailDelete('+s.id+')">삭제</button>'+
+      '</div></td>'+
+      '</tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">이력이 없습니다</td></tr>';
+  document.getElementById('svc-detail-body').innerHTML = html;
+}
+
+function svcDetailAdd(){
+  closeModal('svc-detail-modal');
+  openServiceAdd(_svcDetailNo);
+  // 저장 후 다시 팝업 열기 위해 콜백 설정
+  window._afterSvcSave = function(){ openSvcDetail(_svcDetailNo); };
+}
+
+function svcDetailEdit(id){
+  closeModal('svc-detail-modal');
+  editService(id);
+  window._afterSvcSave = function(){ openSvcDetail(_svcDetailNo); };
+}
+
+function svcDetailDelete(id){
+  var s = SERVICES.find(function(x){ return x.id===id; });
+  if(!s) return;
+  showConfirm(s.date+' '+s.type+' 이력을 삭제하시겠습니까?', function(){
+    SERVICES = SERVICES.filter(function(x){ return x.id!==id; });
+    window._isLoading = false;
+    saveToLocal();
+    saveToApi(function(ok){
+      showSaveStatus(ok?'✅ 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+    });
+    renderService();
+    renderSvcDetail();
+  }, '삭제', false);
+}
+
 function openServiceAdd(no){
   editingSvcId=null;
   document.getElementById('sm-title').textContent='방문 / A/S 이력 등록';
@@ -2658,7 +2751,7 @@ function renderService(){
     const tCls=s.type==='방문'?'lt-visit':s.type==='A/S'?'lt-as':'lt-other';
     return `<tr>
       <td style="white-space:nowrap">${s.date}</td>
-      <td style="font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c?c.name:'(삭제됨)')}</td>
+      <td style="font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--blue)" onclick="openSvcDetail(${s.no})" title="클릭하면 이력 관리">${esc(c?c.name:'(삭제됨)')}</td>
       <td><span class="log-type ${tCls}">${s.type}</span></td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.content)}">${esc(s.content)}</td>
       <td style="color:var(--purple);font-size:12px">${esc(s.person||'-')}</td>
