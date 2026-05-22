@@ -1235,6 +1235,7 @@ function getStaffName(id){
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(!window.isAdmin) applyPermissions();
   document.getElementById('page-'+id).classList.add('active');
   const idx={list:0,register:1,payment:2,service:3,docs:4,stats:5,inventory:6,tax:7}[id];
   document.querySelectorAll('.nav-tab')[idx].classList.add('active');
@@ -2081,6 +2082,8 @@ function saveAccount(){
     else delete a.permissions;
     saveAccountsToStorage();
     showAcctMsg('✅ 계정이 수정되었습니다.', true);
+    // 현재 로그인 사용자 권한이면 즉시 적용
+    if(a.id === _currentUserId) applyPermissions();
   } else {
     // 추가 - key는 아이디 기반
     const newKey = id.toLowerCase().replace(/\s+/g,'_');
