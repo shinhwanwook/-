@@ -591,6 +591,9 @@ body.locked { overflow:hidden; }
 
 <!-- ══ PAGE: 입금 관리 ══ -->
 <div class="page" id="page-payment">
+  <!-- 입금관리 합계 카드 -->
+  <div id="pay-summary-cards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+
   <div class="card">
     <div class="card-header">
       <span class="card-title">입금 관리</span>
@@ -2575,6 +2578,43 @@ function renderPayment(){
   });
 
   const yr=toVal.slice(0,4); // 추가사용료 기준연도
+  // 합계 카드 렌더링
+  var totalRent = list.reduce(function(s,c){ return s+(c.rent||0); }, 0);
+  var totalPaidRent = 0, totalUnpaidRent = 0;
+  var totalExtra = 0;
+  list.forEach(function(c){
+    var paidCount = keys.filter(function(k){ return c.payments[k]&&/^\d{4}/.test(c.payments[k]); }).length;
+    var unpaidCount = keys.length - paidCount;
+    totalPaidRent += paidCount * (c.rent||0);
+    totalUnpaidRent += unpaidCount * (c.rent||0);
+    totalExtra += EXTRA_PAYS.filter(function(e){ return e.no===c.no&&keys.some(function(k){ return e.date.startsWith(k.slice(0,4)); }); }).reduce(function(s,e){ return s+e.amount; }, 0);
+  });
+  var summaryEl = document.getElementById('pay-summary-cards');
+  if(summaryEl){
+    summaryEl.innerHTML =
+      '<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
+        '<div style="font-size:11px;color:#1d4ed8;font-weight:600">💰 거래처 렌탈금(월)</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#1d4ed8">'+totalRent.toLocaleString()+'원</div>'+
+        '<div style="font-size:11px;color:#6b7280">'+list.length+'개 거래처</div>'+
+      '</div>'+
+      '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
+        '<div style="font-size:11px;color:#166534;font-weight:600">✅ 완납 합계</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#166534">'+totalPaidRent.toLocaleString()+'원</div>'+
+      '</div>'+
+      '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
+        '<div style="font-size:11px;color:#991b1b;font-weight:600">⚠️ 미납 합계</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#991b1b">'+totalUnpaidRent.toLocaleString()+'원</div>'+
+      '</div>'+
+      '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
+        '<div style="font-size:11px;color:#6d28d9;font-weight:600">➕ 추가사용료</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#6d28d9">'+totalExtra.toLocaleString()+'원</div>'+
+      '</div>'+
+      '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
+        '<div style="font-size:11px;color:#c2410c;font-weight:600">📊 총 합계</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#c2410c">'+(totalPaidRent+totalExtra).toLocaleString()+'원</div>'+
+      '</div>';
+  }
+
   document.getElementById('pay-body').innerHTML=list.map(c=>{
     const extraSum=EXTRA_PAYS.filter(e=>e.no===c.no&&keys.some(k=>e.date.startsWith(k.slice(0,4)))).reduce((s,e)=>s+e.amount,0);
     const cells=keys.map(k=>{
@@ -2640,7 +2680,6 @@ function filterSvcClients(q){
   dropdown.innerHTML = list.map(function(c){
     return '<div class="svc-dropdown-item" onmousedown="selectSvcClient('+c.no+',\''+c.name.replace(/'/g,"\\'")+'\')">'
       +'<span style="font-weight:600">'+esc(c.name)+'</span>'
-      +'<span style="font-size:11px;color:#6b7280;margin-left:6px">'+esc(c.phone||'')+'</span>'
       +'</div>';
   }).join('');
   dropdown.style.display = 'block';
