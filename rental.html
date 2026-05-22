@@ -2684,9 +2684,19 @@ function openServiceAdd(no){
   document.getElementById('sm-content').value='';
   document.getElementById('sm-result').value='';
   document.getElementById('sm-type').value='방문';
-  const sel=document.getElementById('sm-no');
-  sel.innerHTML=CONTRACTS.map(c=>`<option value="${c.no}" ${c.no===no?'selected':''}>${c.no}. ${esc(c.name)}</option>`).join('');
-  if(no) sel.value=no;
+  // 거래처 검색 초기화
+  var smNoEl = document.getElementById('sm-no');
+  var smSearchEl = document.getElementById('sm-no-search');
+  if(no){
+    var c2 = CONTRACTS.find(function(x){ return x.no===no; });
+    if(smNoEl) smNoEl.value = no;
+    if(smSearchEl) smSearchEl.value = c2 ? c2.name : '';
+  } else {
+    if(smNoEl) smNoEl.value = '';
+    if(smSearchEl) smSearchEl.value = '';
+  }
+  var dd = document.getElementById('sm-no-dropdown');
+  if(dd) dd.style.display = 'none';
   const psel=document.getElementById('sm-person');
   psel.innerHTML='<option value="">-- 선택 --</option>'+STAFF_LIST.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
   openModal('svc-modal');
@@ -2700,9 +2710,12 @@ function editService(id){
   document.getElementById('sm-type').value=s.type;
   document.getElementById('sm-content').value=s.content;
   document.getElementById('sm-result').value=s.result||'';
-  const sel=document.getElementById('sm-no');
-  sel.innerHTML=CONTRACTS.map(c=>`<option value="${c.no}" ${c.no===s.no?'selected':''}>${c.no}. ${esc(c.name)}</option>`).join('');
-  sel.value=s.no;
+  var c2 = CONTRACTS.find(function(x){ return x.no===s.no; });
+  document.getElementById('sm-no').value = s.no;
+  var smSrch = document.getElementById('sm-no-search');
+  if(smSrch) smSrch.value = c2 ? c2.name : '';
+  var dd = document.getElementById('sm-no-dropdown');
+  if(dd) dd.style.display = 'none';
   const psel=document.getElementById('sm-person');
   psel.innerHTML='<option value="">-- 선택 --</option>'+STAFF_LIST.map(st=>`<option value="${esc(st.name)}" ${st.name===s.person?'selected':''}>${esc(st.name)}</option>`).join('');
   openModal('svc-modal');
