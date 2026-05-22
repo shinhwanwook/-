@@ -1017,7 +1017,10 @@ body.locked { overflow:hidden; }
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-service-write"> 방문/AS 등록</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-read" checked> 세금계산서 조회</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-tax-write"> 세금계산서 등록</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-inventory-read" checked> 장비/소모품 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-inventory-write"> 장비/소모품 등록</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-stats-read"> 임대통계 조회</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-print"> 출력(계약서/견적서 등)</label>
             </div>
           </div>
 
@@ -2005,15 +2008,18 @@ function updatePermUI(){
 }
 function getPermFromForm(){
   return {
-    contractRead:  document.getElementById('perm-contract-read').checked,
-    contractWrite: document.getElementById('perm-contract-write').checked,
-    paymentRead:   document.getElementById('perm-payment-read').checked,
-    paymentWrite:  document.getElementById('perm-payment-write').checked,
-    serviceRead:   document.getElementById('perm-service-read').checked,
-    serviceWrite:  document.getElementById('perm-service-write').checked,
-    taxRead:       document.getElementById('perm-tax-read').checked,
-    taxWrite:      document.getElementById('perm-tax-write').checked,
-    statsRead:     document.getElementById('perm-stats-read').checked
+    contractRead:   document.getElementById('perm-contract-read').checked,
+    contractWrite:  document.getElementById('perm-contract-write').checked,
+    paymentRead:    document.getElementById('perm-payment-read').checked,
+    paymentWrite:   document.getElementById('perm-payment-write').checked,
+    serviceRead:    document.getElementById('perm-service-read').checked,
+    serviceWrite:   document.getElementById('perm-service-write').checked,
+    taxRead:        document.getElementById('perm-tax-read').checked,
+    taxWrite:       document.getElementById('perm-tax-write').checked,
+    inventoryRead:  document.getElementById('perm-inventory-read').checked,
+    inventoryWrite: document.getElementById('perm-inventory-write').checked,
+    statsRead:      document.getElementById('perm-stats-read').checked,
+    print:          document.getElementById('perm-print').checked
   };
 }
 function setPermToForm(perm){
@@ -2977,9 +2983,21 @@ function applyPermissions(){
   var registerTab = document.getElementById('nav-tab-register');
   if(registerTab) registerTab.style.display = perm.contractWrite ? '' : 'none';
 
-  // 임대통계 탭 - 관리자만 표시
+  // 임대통계 탭
   var statsTab = document.getElementById('nav-tab-stats');
-  if(statsTab) statsTab.style.display = window.isAdmin ? 'flex' : 'none';
+  if(statsTab) statsTab.style.display = (window.isAdmin || perm.statsRead) ? 'flex' : 'none';
+
+  // 장비/소모품 탭
+  var invTab = document.getElementById('nav-tab-inventory');
+  if(invTab) invTab.style.display = (window.isAdmin || perm.inventoryRead !== false) ? 'flex' : 'none';
+
+  // 장비/소모품 등록/수정 버튼
+  var invWriteBtns = document.querySelectorAll('[onclick*="showInvForm"],[onclick*="saveInvForm"],[onclick*="confirmDeleteInv"]');
+  invWriteBtns.forEach(function(b){ b.style.display = (window.isAdmin || perm.inventoryWrite) ? '' : 'none'; });
+
+  // 출력 버튼 (계약서/견적서/거래명세서/영수증)
+  var printBtns = document.querySelectorAll('[onclick*="printContract"],[onclick*="printEst"],[onclick*="printDn"],[onclick*="printRc"],[onclick*="printInvDn"],[onclick*="printInvRc"]');
+  printBtns.forEach(function(b){ b.style.display = (window.isAdmin || perm.print !== false) ? '' : 'none'; });
 
   // 입금관리 탭 안내문구/추가사용료 버튼 숨김
   var payHint = document.getElementById('pay-hint');
