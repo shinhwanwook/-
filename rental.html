@@ -4031,21 +4031,22 @@ function hidePayTip(){
     <div class="card-header">
       <span class="card-title">💰 월별 입금 통계</span>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <select class="inp" id="stat-pay-year" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()"></select>
-        <span style="font-size:12px;color:#6b7280">~</span>
-        <select class="inp" id="stat-pay-year-to" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()"></select>
-        <select class="inp" id="stat-pay-from-month" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()">
+        <div style="display:flex;align-items:center;gap:4px;background:#f1f5f9;padding:4px 8px;border-radius:6px">
+          <span style="font-size:11px;color:#6b7280;white-space:nowrap">기간</span>
+          <select class="inp" id="stat-pay-year" style="font-size:12px;padding:2px 4px" onchange="renderPayStats()"></select>
+          <select class="inp" id="stat-pay-from-month" style="font-size:12px;padding:2px 4px" onchange="renderPayStats()">
           <option value="1">1월~</option><option value="2">2월~</option><option value="3">3월~</option>
           <option value="4">4월~</option><option value="5">5월~</option><option value="6">6월~</option>
           <option value="7">7월~</option><option value="8">8월~</option><option value="9">9월~</option>
           <option value="10">10월~</option><option value="11">11월~</option><option value="12">12월~</option>
         </select>
         <select class="inp" id="stat-pay-to-month" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()">
-          <option value="1">~1월</option><option value="2">~2월</option><option value="3">~3월</option>
-          <option value="4">~4월</option><option value="5">~5월</option><option value="6">~6월</option>
-          <option value="7">~7월</option><option value="8">~8월</option><option value="9">~9월</option>
-          <option value="10">~10월</option><option value="11">~11월</option><option value="12" selected>~12월</option>
-        </select>
+          <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+          <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+          <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+          <option value="10">10월</option><option value="11">11월</option><option value="12" selected>12월</option>
+          </select>
+        </div>
         <select class="inp" id="stat-pay-type" style="font-size:12px;padding:4px 8px" onchange="renderPayStats()">
           <option value="all">전체</option>
           <option value="paid">완납</option>
