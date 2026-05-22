@@ -345,14 +345,14 @@ body.locked { overflow:hidden; }
 <div id="app-wrapper" style="display:none">
 <nav class="nav">
   <div class="nav-logo">📋 임대관리<span>시스템 v3</span></div>
-  <div class="nav-tab active" onclick="showPage('list')">계약 목록</div>
-  <div class="nav-tab" onclick="showPage('register')">신규 등록</div>
-  <div class="nav-tab" onclick="showPage('payment')">입금 관리</div>
-  <div class="nav-tab" onclick="showPage('service')">방문/A/S</div>
+  <div class="nav-tab active" id="nav-tab-list" onclick="showPage('list')">계약 목록</div>
+  <div class="nav-tab" id="nav-tab-register" onclick="showPage('register')">신규 등록</div>
+  <div class="nav-tab" id="nav-tab-payment" onclick="showPage('payment')">입금 관리</div>
+  <div class="nav-tab" id="nav-tab-service" onclick="showPage('service')">방문/A/S</div>
   <div class="nav-tab" onclick="showPage('docs')">📁 계약서류</div>
   <div class="nav-tab" id="nav-tab-stats" onclick="showPage('stats')" style="display:none">📊 임대통계</div>
   <div class="nav-tab" id="nav-tab-inventory" onclick="showPage('inventory')" style="display:none">📦 장비/소모품</div>
-  <div class="nav-tab" onclick="showPage('tax')">🧾 세금계산서</div>
+  <div class="nav-tab" id="nav-tab-tax" onclick="showPage('tax')">🧾 세금계산서</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
@@ -3001,6 +3001,22 @@ function applyPermissions(){
   // 출력 버튼 (계약서/견적서/거래명세서/영수증)
   var printBtns = document.querySelectorAll('[onclick*="printContract"],[onclick*="printEst"],[onclick*="printDn"],[onclick*="printRc"],[onclick*="printInvDn"],[onclick*="printInvRc"]');
   printBtns.forEach(function(b){ b.style.display = (window.isAdmin || perm.print !== false) ? '' : 'none'; });
+
+  // 세금계산서 탭 숨김/표시
+  var taxTab = document.getElementById('nav-tab-tax');
+  if(taxTab) taxTab.style.display = (perm.taxRead !== false) ? 'flex' : 'none';
+
+  // 입금관리 탭 숨김/표시
+  var payTab = document.getElementById('nav-tab-payment');
+  if(payTab) payTab.style.display = (perm.paymentRead !== false) ? 'flex' : 'none';
+
+  // 방문/AS 탭 숨김/표시
+  var svcTab = document.getElementById('nav-tab-service');
+  if(svcTab) svcTab.style.display = (perm.serviceRead !== false) ? 'flex' : 'none';
+
+  // 계약목록 탭 숨김/표시
+  var listTab = document.getElementById('nav-tab-list');
+  if(listTab) listTab.style.display = (perm.contractRead !== false) ? 'flex' : 'none';
 
   // 입금관리 탭 안내문구/추가사용료 버튼 숨김
   var payHint = document.getElementById('pay-hint');
