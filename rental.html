@@ -2587,7 +2587,7 @@ function renderPayment(){
     var unpaidCount = keys.length - paidCount;
     totalPaidRent += paidCount * (c.rent||0);
     totalUnpaidRent += unpaidCount * (c.rent||0);
-    totalExtra += EXTRA_PAYS.filter(function(e){ return e.no===c.no&&keys.some(function(k){ return e.date.startsWith(k.slice(0,4)); }); }).reduce(function(s,e){ return s+e.amount; }, 0);
+    totalExtra += EXTRA_PAYS.filter(function(e){ return e.no===c.no&&keys.some(function(k){ return e.date.slice(0,7)===k; }); }).reduce(function(s,e){ return s+e.amount; }, 0);
   });
   var summaryEl = document.getElementById('pay-summary-cards');
   if(summaryEl){
