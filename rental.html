@@ -36,8 +36,10 @@ body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg)
 .page.active{display:block}
 
 /* STATS */
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
-.stat{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:10px 14px;flex:1;min-width:130px}
+.summary-cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.summary-card{border-radius:8px;padding:10px 14px;flex:1;min-width:130px}
 .stat-n{font-size:22px;font-weight:700;color:var(--blue)}
 .stat-l{font-size:12px;color:var(--text3);margin-top:2px}
 .stat-sub{font-size:11px;color:var(--red);font-weight:600;margin-top:2px}
@@ -235,6 +237,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
 @media(max-width:768px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .form-grid,.form-grid.cols3{grid-template-columns:1fr}
+  .stats,.summary-cards{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  #pay-summary-cards{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
   .detail-grid{grid-template-columns:1fr 1fr!important}
   .nav-tab{padding:0 10px;font-size:12px}
   .page{padding:10px}
@@ -370,12 +374,12 @@ body.locked { overflow:hidden; }
 <div class="page active" id="page-list">
   <!-- 관리자 통계 (관리자만 표시) -->
   <div id="stats-wrap" style="display:none">
-    <div class="stats">
-      <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">총 계약 건수</div></div>
-      <div class="stat"><div class="stat-n" id="st-cms">0</div><div class="stat-l">CMS 자동이체</div></div>
-      <div class="stat"><div class="stat-n" id="st-monthly">0</div><div class="stat-l">월 총 렌탈금</div></div>
-      <div class="stat"><div class="stat-n" id="st-paid">0</div><div class="stat-l">최근 납부완료</div><div class="stat-sub" id="st-unpaid"></div></div>
-      <div class="stat"><div class="stat-n" id="st-deposit">0</div><div class="stat-l">보증금 합계</div></div>
+    <div class="stats" id="contract-summary-cards">
+      <div class="stat" style="background:#eff6ff;border:1px solid #93c5fd"><div class="stat-n" style="font-size:18px;color:#1d4ed8" id="st-total">0</div><div class="stat-l" style="font-size:11px;color:#1d4ed8;font-weight:600">📋 총 계약 건수</div></div>
+      <div class="stat" style="background:#f0fdf4;border:1px solid #86efac"><div class="stat-n" style="font-size:18px;color:#166534" id="st-cms">0</div><div class="stat-l" style="font-size:11px;color:#166534;font-weight:600">🔄 CMS 자동이체</div></div>
+      <div class="stat" style="background:#fff7ed;border:1px solid #fed7aa"><div class="stat-n" style="font-size:18px;color:#c2410c" id="st-monthly">0</div><div class="stat-l" style="font-size:11px;color:#c2410c;font-weight:600">💰 월 총 렌탈금</div></div>
+      <div class="stat" style="background:#dcfce7;border:1px solid #86efac"><div class="stat-n" style="font-size:18px;color:#166534" id="st-paid">0</div><div class="stat-l" style="font-size:11px;color:#166534;font-weight:600">✅ 최근 납부완료</div><div class="stat-sub" id="st-unpaid"></div></div>
+      <div class="stat" style="background:#f5f3ff;border:1px solid #c4b5fd"><div class="stat-n" style="font-size:18px;color:#6d28d9" id="st-deposit">0</div><div class="stat-l" style="font-size:11px;color:#6d28d9;font-weight:600">🏦 보증금 합계</div></div>
     </div>
   </div>
   <!-- 비관리자 잠금 안내 -->
@@ -4217,7 +4221,7 @@ function hidePayTip(){
 
 <!-- ══ PAGE: 임대통계 ══ -->
 <div class="page" id="page-stats">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="stats-summary-cards"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px" id="stats-summary-cards"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <!-- 장비별 현황 -->
     <div class="card">
@@ -4918,12 +4922,12 @@ function renderTax() {
   // 요약 카드
   var sum = getTaxSummary(yr);
   document.getElementById('tax-summary').innerHTML = [
-    ['🧾','총 거래처', sum.total+'곳', ''],
-    ['✅','이번달 발행', sum.thisMonth+'곳', ''],
-    ['⚠️','미발행 있음', sum.missing+'곳', 'color:var(--red)'],
-    ['📅','기준연도', yr+'년', '']
+    ['🧾','총 거래처', sum.total+'곳', 'background:#eff6ff;border:1px solid #93c5fd', '#1d4ed8'],
+    ['✅','이번달 발행', sum.thisMonth+'곳', 'background:#dcfce7;border:1px solid #86efac', '#166534'],
+    ['⚠️','미발행 있음', sum.missing+'곳', 'background:#fee2e2;border:1px solid #fca5a5', '#991b1b'],
+    ['📅','기준연도', yr+'년', 'background:#f5f3ff;border:1px solid #c4b5fd', '#6d28d9']
   ].map(function(arr) {
-    return '<div class="stat" style="display:flex;align-items:center;gap:12px"><span style="font-size:26px">'+arr[0]+'</span><div><div class="stat-n" style="'+arr[3]+'">'+arr[2]+'</div><div class="stat-l">'+arr[1]+'</div></div></div>';
+    return '<div class="stat" style="'+arr[3]+'"><div style="font-size:18px;font-weight:900;color:'+arr[4]+'">'+arr[2]+'</div><div style="font-size:11px;font-weight:600;color:'+arr[4]+'">'+arr[0]+' '+arr[1]+'</div></div>';
   }).join('');
 
   // 필터

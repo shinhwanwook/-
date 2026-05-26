@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>견적서</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -23,6 +23,14 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 .total-row{background:#f0f0f0;font-weight:700}
 .no-print{display:block}
 @page{margin:15mm 12mm 10mm 12mm}
+@media screen and (max-width:600px){
+  body{background:#fff}
+  .page{width:100%!important;margin:0!important;padding:8px!important;box-shadow:none!important}
+  .print-controls{padding:8px 10px}
+  table{font-size:8pt!important}
+  th,td{padding:2px 3px!important}
+  .title{font-size:14pt!important}
+}
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   table, td, th { border-color: #000 !important; border-width: 1px !important; border-style: solid !important; }
