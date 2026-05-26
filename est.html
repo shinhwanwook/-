@@ -51,7 +51,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 <body>
 <div class="print-controls">
   <h2>📄 견적서</h2>
-  <button class="btn-print" onclick="doPrint()">🖨️ 출력하기</button>
+  <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력하기</button>
 </div>
 <div class="page-wrapper"><div class="page">
   <div class="title">견 &nbsp; 적 &nbsp; 서</div>
@@ -264,8 +264,15 @@ function calcAll(){
   document.getElementById('total-display').textContent=sumT.toLocaleString();
 }
 
-function doPrint(){
-  setTimeout(function(){ window.print(); }, 300);
+var _printLock = false;
+function doPrint(e){
+  if(e) e.preventDefault();
+  if(_printLock) return;
+  _printLock = true;
+  setTimeout(function(){ 
+    window.print();
+    setTimeout(function(){ _printLock = false; }, 1000);
+  }, 100);
 }
 </script>
 </body>

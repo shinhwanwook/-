@@ -33,7 +33,7 @@ input:focus{background:#fffde7}
 <body>
 <div class="print-controls">
   <h2>📄 영수증</h2>
-  <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700">🖨️ 출력하기</button>
+  <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;user-select:none;-webkit-user-select:none;touch-action:manipulation" onclick="doPrint()" ontouchend="doPrint()">🖨️ 출력하기</button>
 </div>
 
 <div class="page">
@@ -218,8 +218,15 @@ function calcRC(){
   }
 })();
 
-function doPrint(){
-  setTimeout(function(){ window.print(); }, 300);
+var _printLock = false;
+function doPrint(e){
+  if(e) e.preventDefault();
+  if(_printLock) return;
+  _printLock = true;
+  setTimeout(function(){ 
+    window.print();
+    setTimeout(function(){ _printLock = false; }, 1000);
+  }, 100);
 }
 </script>
 </body>

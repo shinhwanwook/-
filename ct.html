@@ -231,7 +231,7 @@ html, body {
 
 <div class="print-controls">
   <h2>📄 장비 임대/유지보수 계약서</h2>
-  <button class="btn-print" onclick="doPrint()">🖨️ 출력하기</button>
+  <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력하기</button>
 </div>
 
 <div class="page-wrapper"><div class="page" id="contract-page">
@@ -490,6 +490,17 @@ setTimeout(function(){
     ta.addEventListener('input',function(){ autoH(this); });
   });
 },200);
+
+var _printLock = false;
+function doPrint(e){
+  if(e) e.preventDefault();
+  if(_printLock) return;
+  _printLock = true;
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){ _printLock = false; }, 1000);
+  }, 100);
+}
 </script>
 </body>
 </html>
