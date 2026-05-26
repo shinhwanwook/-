@@ -3664,14 +3664,21 @@ function renderPayStats(){
   filtered.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ko'); });
 
   // 거래처별 테이블 헤더 동적 생성
-  var detailMonthHead = document.getElementById('stat-pay-detail-months');
-  if(detailMonthHead){
-    var thHtml = months.map(function(ym){
-      var p = ym.split('-');
-      var label = p[0]===String(parseInt(yr)) && p[0]===yrTo ? parseInt(p[1])+'월' : p[0]+'년 '+parseInt(p[1])+'월';
-      return '<th style="text-align:center;min-width:50px;white-space:nowrap">'+label+'</th>';
-    }).join('');
-    detailMonthHead.outerHTML = thHtml;
+  var detailHead = document.getElementById('stat-pay-detail-head');
+  if(detailHead){
+    var thHtml = '<tr><th style="min-width:120px">거래처</th><th style="text-align:right">렌탈금(월)</th>'+
+      months.map(function(ym){
+        var p = ym.split('-');
+        var label = p[0]===String(parseInt(yr)) && p[0]===yrTo ? parseInt(p[1])+'월' : p[0]+'년 '+parseInt(p[1])+'월';
+        return '<th style="text-align:center;min-width:50px;white-space:nowrap">'+label+'</th>';
+      }).join('')+
+      '<th style="text-align:right;font-weight:700">입금합계</th>'+
+      '<th style="text-align:right;font-weight:700">납부율</th></tr>';
+    detailHead.innerHTML = thHtml;
+    detailHead.style.display = '';
+    // 기존 고정 헤더 숨기기
+    var oldHead = document.querySelector('#stat-pay-body').closest('table').querySelector('thead:first-of-type');
+    if(oldHead && oldHead.id !== 'stat-pay-detail-head') oldHead.style.display = 'none';
   }
 
   var bodyHtml = filtered.map(function(c){
@@ -4314,6 +4321,7 @@ function hidePayTip(){
             <th style="text-align:right;font-weight:700">납부율</th>
           </tr>
         </thead>
+        <thead id="stat-pay-detail-head" style="display:none"></thead>
         <tbody id="stat-pay-body"></tbody>
       </table>
     </div>
