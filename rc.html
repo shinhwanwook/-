@@ -29,11 +29,18 @@ input:focus{background:#fffde7}
   table,tr,td,th{page-break-inside:avoid}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="print-controls">
   <h2>📄 영수증</h2>
   <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;user-select:none;-webkit-user-select:none;touch-action:manipulation" onclick="doPrint()" ontouchend="doPrint()">🖨️ 출력하기</button>
+  <button class="btn-print" id="pdf-btn" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
+  <script>
+    document.getElementById('pdf-btn').addEventListener('click', downloadPDF);
+    document.getElementById('pdf-btn').addEventListener('touchend', function(e){ e.preventDefault(); downloadPDF(); });
+  </script>
 </div>
 
 <div class="page">
@@ -223,10 +230,28 @@ function doPrint(e){
   if(e) e.preventDefault();
   if(_printLock) return;
   _printLock = true;
-  setTimeout(function(){ 
+  setTimeout(function(){
     window.print();
     setTimeout(function(){ _printLock = false; }, 1000);
   }, 100);
+}
+function downloadPDF(){
+  var pageEl = document.querySelector('.page') || document.getElementById('contract-page');
+  if(!pageEl){ alert('페이지를 찾을 수 없습니다.'); return; }
+  var btn = document.getElementById('pdf-btn');
+  if(btn){ btn.textContent = '⏳ 생성중...'; btn.disabled = true; }
+  html2canvas(pageEl, {scale:2, useCORS:true, allowTaint:true}).then(function(canvas){
+    var imgData = canvas.toDataURL('image/jpeg', 0.95);
+    var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    var w = pdf.internal.pageSize.getWidth();
+    var h = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+    pdf.save('document.pdf');
+    if(btn){ btn.textContent = '📥 PDF저장'; btn.disabled = false; }
+  }).catch(function(err){
+    alert('PDF 생성 실패: ' + err.message);
+    if(btn){ btn.textContent = '📥 PDF저장'; btn.disabled = false; }
+  });
 }
 </script>
 </body>

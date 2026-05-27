@@ -47,6 +47,8 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   select{border:none!important;background:transparent!important;font-size:10pt!important;font-weight:600!important;-webkit-appearance:none;appearance:none;}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="print-controls">
@@ -269,10 +271,28 @@ function doPrint(e){
   if(e) e.preventDefault();
   if(_printLock) return;
   _printLock = true;
-  setTimeout(function(){ 
+  setTimeout(function(){
     window.print();
     setTimeout(function(){ _printLock = false; }, 1000);
   }, 100);
+}
+function downloadPDF(){
+  var pageEl = document.querySelector('.page') || document.getElementById('contract-page');
+  if(!pageEl){ alert('페이지를 찾을 수 없습니다.'); return; }
+  var btn = document.getElementById('pdf-btn');
+  if(btn){ btn.textContent = '⏳ 생성중...'; btn.disabled = true; }
+  html2canvas(pageEl, {scale:2, useCORS:true, allowTaint:true}).then(function(canvas){
+    var imgData = canvas.toDataURL('image/jpeg', 0.95);
+    var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    var w = pdf.internal.pageSize.getWidth();
+    var h = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+    pdf.save('document.pdf');
+    if(btn){ btn.textContent = '📥 PDF저장'; btn.disabled = false; }
+  }).catch(function(err){
+    alert('PDF 생성 실패: ' + err.message);
+    if(btn){ btn.textContent = '📥 PDF저장'; btn.disabled = false; }
+  });
 }
 </script>
 </body>

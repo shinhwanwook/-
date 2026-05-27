@@ -226,6 +226,8 @@ html, body {
   .stamp-wrap img { opacity: 0.9 !important; }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -241,6 +243,11 @@ html, body {
       e.preventDefault();
       window.print();
     });
+  </script>
+  <button class="btn-print" id="pdf-btn" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
+  <script>
+    document.getElementById('pdf-btn').addEventListener('click', downloadPDF);
+    document.getElementById('pdf-btn').addEventListener('touchend', function(e){ e.preventDefault(); downloadPDF(); });
   </script>
 </div>
 
@@ -488,6 +495,7 @@ function loadFromParams(){
   if(p.get('period')) document.getElementById('r1-period').value=p.get('period');
   if(p.get('date'))   document.getElementById('r-install-date').value=p.get('date');
   if(p.get('special')) document.getElementById('special').value=p.get('special');
+  if(p.get('deposit')){ var dep=document.getElementById('r-deposit'); if(dep){ dep.value=p.get('deposit'); autoH(dep); } }
   if(p.get('lessor_addr')) document.getElementById('lessor-addr').value=p.get('lessor_addr');
 }
 loadFromParams();
