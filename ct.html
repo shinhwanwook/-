@@ -231,7 +231,17 @@ html, body {
 
 <div class="print-controls">
   <h2>📄 장비 임대/유지보수 계약서</h2>
-  <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력하기</button>
+  <button class="btn-print" id="print-btn" style="user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent">🖨️ 출력하기</button>
+  <script>
+    document.getElementById('print-btn').addEventListener('click', function(e){
+      e.preventDefault();
+      window.print();
+    });
+    document.getElementById('print-btn').addEventListener('touchend', function(e){
+      e.preventDefault();
+      window.print();
+    });
+  </script>
 </div>
 
 <div class="page-wrapper"><div class="page" id="contract-page">
@@ -375,7 +385,9 @@ html, body {
       </tr>
       <tr>
         <th colspan="2" style="text-align:center">설 치 일 자</th>
-        <td colspan="7"><input type="date" id="r-install-date" style="font-size:9pt;border:none;outline:none;font-family:inherit;background:transparent"></td>
+        <td colspan="4"><input type="date" id="r-install-date" style="font-size:9pt;border:none;outline:none;font-family:inherit;background:transparent"></td>
+        <th colspan="1" style="text-align:center">보 증 금</th>
+        <td colspan="2"><textarea id="r-deposit" rows="1" style="resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-all;width:100%;border:none;outline:none;font-size:9pt;font-family:inherit;background:transparent;text-align:center;padding:0;line-height:1.4"></textarea></td>
       </tr>
     </tfoot>
   </table>

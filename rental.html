@@ -2277,7 +2277,8 @@ function printContract(no){
     scolor:  c.start_color||0,
     period:  c.contract_period ? c.contract_period+'개월' : '',
     date:    c.reg_date||'',
-    special: c.memo||''
+    special: c.memo||'',
+    deposit: c.deposit ? c.deposit.toLocaleString()+'원' : ''
   });
   window.open('ct.html?'+params.toString(), '_blank');
 }
