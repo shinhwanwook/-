@@ -5861,7 +5861,10 @@ function doLogin(){
 
       // 2단계: 입금 청크 로드
       var payPromises = [];
-      for(var i = 1; i <= 27; i++) {
+      // 최대 계약번호 기준으로 청크 범위 동적 계산 (여유있게 60까지)
+      var maxNo = result.CONTRACTS ? Math.max.apply(null, result.CONTRACTS.map(function(c){ return c.no||1; })) : 1;
+      var maxChunk = Math.max(30, Math.floor((maxNo-1)/20) + 3); // 여유 3청크
+      for(var i = 1; i <= maxChunk; i++) {
         payPromises.push(db.collection('rental').doc('pay_' + String(i).padStart(2,'0')).get());
       }
       return Promise.all(payPromises);

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>견적서</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -23,16 +23,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 .total-row{background:#f0f0f0;font-weight:700}
 .no-print{display:block}
 @page{margin:15mm 12mm 10mm 12mm}
-@media (max-width:480px){
-  html,body{overflow-x:hidden!important;width:100%!important;margin:0!important;padding:0!important}
-  .page-wrapper{width:100%!important;overflow-x:hidden!important}
-  .page{width:210mm!important;zoom:0.43!important;-moz-transform:scale(0.43)!important;-moz-transform-origin:top left!important;margin:0!important;padding:10mm 8mm!important;box-shadow:none!important}
-  .print-controls{padding:8px 10px}
-}
-@media (min-width:481px) and (max-width:768px){
-  .page-wrapper{overflow-x:hidden!important}
-  .page{width:210mm!important;zoom:0.55!important;margin:0!important;padding:10mm 10mm!important;box-shadow:none!important}
-}
+
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   table, td, th { border-color: #000 !important; border-width: 1px !important; border-style: solid !important; }
@@ -55,7 +46,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   <h2>📄 견적서</h2>
   <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력하기</button>
 </div>
-<div class="page-wrapper"><div class="page">
+<div class="page">
   <div class="title">견 &nbsp; 적 &nbsp; 서</div>
 
   <!-- 상단 정보 -->

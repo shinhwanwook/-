@@ -244,11 +244,7 @@ html, body {
       window.print();
     });
   </script>
-  <button class="btn-print" id="pdf-btn" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
-  <script>
-    document.getElementById('pdf-btn').addEventListener('click', downloadPDF);
-    document.getElementById('pdf-btn').addEventListener('touchend', function(e){ e.preventDefault(); downloadPDF(); });
-  </script>
+  <button class="btn-print" id="pdf-btn" onclick="downloadPDF()" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
 </div>
 
 <div class="page-wrapper"><div class="page" id="contract-page">
@@ -510,6 +506,25 @@ setTimeout(function(){
     ta.addEventListener('input',function(){ autoH(this); });
   });
 },200);
+
+function downloadPDF(){
+  var pageEl = document.getElementById('contract-page') || document.querySelector('.page');
+  if(!pageEl){ alert('페이지를 찾을 수 없습니다.'); return; }
+  var btn = document.getElementById('pdf-btn');
+  if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
+  html2canvas(pageEl, {scale:2, useCORS:true, allowTaint:true, logging:false}).then(function(canvas){
+    var imgData = canvas.toDataURL('image/jpeg', 0.95);
+    var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    var w = pdf.internal.pageSize.getWidth();
+    var h = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+    pdf.save('계약서.pdf');
+    if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
+  }).catch(function(err){
+    alert('PDF 생성 실패: '+err.message);
+    if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
+  });
+}
 
 var _printLock = false;
 function doPrint(e){
