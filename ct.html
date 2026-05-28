@@ -196,7 +196,8 @@ html, body {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   table, td, th { border-color: #000 !important; border-width: 1px !important; border-style: solid !important; }
   table { border-collapse: collapse !important; }
-  tr td:last-child, tr th:last-child { border-right: 2.5px solid #000 !important; }
+  .party-table tr td:last-child, .party-table tr th:last-child,
+  .contract-table tr td:last-child, .contract-table tr th:last-child { border-right: 2.5px solid #000 !important; }
   
   .print-controls { display: none !important; }
   html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
@@ -396,7 +397,7 @@ html, body {
   </table>
 
   <!-- 입금계좌 -->
-  <div class="bank-info" style="display:flex;align-items:center;gap:6px">
+  <div class="bank-info" style="display:flex;align-items:center;gap:6px;border:1px solid #000;padding:4px 8px">
     <strong style="white-space:nowrap">입금계좌 :</strong>
     <textarea id="bank-info-text" rows="1" style="flex:1;resize:none;overflow:hidden;border:none;outline:none;font-family:inherit;font-size:9.5pt;background:transparent;padding:0;line-height:1.4">국민은행 207-21-0821-755 / 농협 130044-56-121102 (예금주 : 신환욱)</textarea>
   </div>
