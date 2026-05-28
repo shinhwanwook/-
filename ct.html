@@ -514,16 +514,25 @@ function downloadPDF(){
   var btn = document.getElementById('pdf-btn');
   if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
 
+  // @media print CSS 비활성화 (선 중복 방지)
+  var printStyles = [];
+  document.querySelectorAll('style').forEach(function(s){
+    if(s.textContent.indexOf('@media print') >= 0){
+      printStyles.push({el:s, text:s.textContent});
+      s.textContent = s.textContent.replace(/@media print\s*\{[\s\S]*?\}\s*\}/g, '');
+    }
+  });
+
   // 모바일 zoom/transform 임시 해제
   var wrapper = document.querySelector('.page-wrapper');
   var origWrapStyle = wrapper ? wrapper.getAttribute('style') : null;
   var origPageStyle = pageEl.getAttribute('style') || '';
   if(wrapper) wrapper.style.cssText = '';
-  pageEl.style.cssText = 'width:210mm!important;zoom:1!important;transform:none!important;margin:0!important;padding:15mm 10mm 10mm 10mm!important;background:#fff!important;box-shadow:none!important';
+  pageEl.style.cssText = 'width:210mm!important;zoom:1!important;transform:none!important;margin:0!important;padding:15mm 10mm 10mm 10mm!important;background:#fff!important;box-shadow:none!important;max-width:none!important';
 
   setTimeout(function(){
     html2canvas(pageEl, {
-      scale: 1.5,
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -533,15 +542,15 @@ function downloadPDF(){
       windowHeight: pageEl.scrollHeight
     }).then(function(canvas){
       // 스타일 복원
+      printStyles.forEach(function(ps){ ps.el.textContent = ps.text; });
       if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
       else if(wrapper) wrapper.removeAttribute('style');
       pageEl.setAttribute('style', origPageStyle);
 
-      var imgData = canvas.toDataURL('image/jpeg', 0.92);
+      var imgData = canvas.toDataURL('image/jpeg', 0.95);
       var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
       var w = pdf.internal.pageSize.getWidth();
       var h = (canvas.height * w) / canvas.width;
-      // A4 한 페이지 초과 시 여러 페이지로
       var pageH = pdf.internal.pageSize.getHeight();
       if(h <= pageH){
         pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
@@ -556,6 +565,7 @@ function downloadPDF(){
       pdf.save('계약서.pdf');
       if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
     }).catch(function(err){
+      printStyles.forEach(function(ps){ ps.el.textContent = ps.text; });
       if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
       pageEl.setAttribute('style', origPageStyle);
       alert('PDF 생성 실패: '+err.message);
