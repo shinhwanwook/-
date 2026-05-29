@@ -53,11 +53,11 @@ html, body {
   border: 1px solid #000;
 }
 .party-table td {
-  border: 1px solid #000 !important;
-  padding: 4px 5px !important;
-  vertical-align: middle !important;
-  text-align: center !important;
-  white-space: normal !important;
+  border: 1px solid #000;
+  padding: 4px 5px;
+  vertical-align: middle;
+  text-align: center;
+  white-space: normal;
   word-break: break-all !important;
   overflow-wrap: break-word !important;
   overflow: visible !important;
@@ -107,10 +107,10 @@ html, body {
   overflow: hidden; white-space: nowrap;
 }
 .contract-table th, .contract-table td {
-  border: 1px solid #000 !important;
-  padding: 3px 3px !important;
-  text-align: center !important;
-  vertical-align: middle !important;
+  border: 1px solid #000;
+  padding: 3px 3px;
+  text-align: center;
+  vertical-align: middle;
   white-space: normal !important;
   word-break: break-all !important;
   overflow-wrap: break-word !important;
@@ -194,11 +194,7 @@ html, body {
 }
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-  table, td, th { border-color: #000 !important; border-width: 1px !important; border-style: solid !important; }
-  table { border-collapse: collapse !important; }
-  .party-table tr td:last-child, .party-table tr th:last-child,
-  .contract-table tr td:last-child, .contract-table tr th:last-child { border-right: 2.5px solid #000 !important; }
-  
+  table { border-collapse: collapse; }
   .print-controls { display: none !important; }
   html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
   .page-wrapper { display: block !important; width: 100% !important; height: auto !important; }
@@ -514,21 +510,18 @@ function downloadPDF(){
   var btn = document.getElementById('pdf-btn');
   if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
 
-  // @media print CSS 비활성화 (선 중복 방지)
-  var printStyles = [];
-  document.querySelectorAll('style').forEach(function(s){
-    if(s.textContent.indexOf('@media print') >= 0){
-      printStyles.push({el:s, text:s.textContent});
-      s.textContent = s.textContent.replace(/@media print\s*\{[\s\S]*?\}\s*\}/g, '');
-    }
-  });
-
-  // 모바일 zoom/transform 임시 해제
+  // 모바일 zoom 임시 해제
   var wrapper = document.querySelector('.page-wrapper');
   var origWrapStyle = wrapper ? wrapper.getAttribute('style') : null;
   var origPageStyle = pageEl.getAttribute('style') || '';
   if(wrapper) wrapper.style.cssText = '';
-  pageEl.style.cssText = 'width:210mm!important;zoom:1!important;transform:none!important;margin:0!important;padding:15mm 10mm 10mm 10mm!important;background:#fff!important;box-shadow:none!important;max-width:none!important';
+  pageEl.style.cssText = 'width:210mm;zoom:1;transform:none;margin:0;padding:15mm 10mm 10mm 10mm;background:#fff;box-shadow:none;max-width:none';
+
+  // PDF용 임시 border 균일화 style 삽입
+  var pdfStyle = document.createElement('style');
+  pdfStyle.id = 'pdf-border-fix';
+  pdfStyle.textContent = 'table td, table th { border: 0.5px solid #555 !important; box-shadow: none !important; }';
+  document.head.appendChild(pdfStyle);
 
   setTimeout(function(){
     html2canvas(pageEl, {
@@ -537,16 +530,14 @@ function downloadPDF(){
       allowTaint: true,
       logging: false,
       width: pageEl.scrollWidth,
-      height: pageEl.scrollHeight,
-      windowWidth: pageEl.scrollWidth,
-      windowHeight: pageEl.scrollHeight
+      height: pageEl.scrollHeight
     }).then(function(canvas){
-      // 스타일 복원
-      printStyles.forEach(function(ps){ ps.el.textContent = ps.text; });
+      // 임시 style 제거
+      var fix = document.getElementById('pdf-border-fix');
+      if(fix) fix.remove();
       if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
       else if(wrapper) wrapper.removeAttribute('style');
       pageEl.setAttribute('style', origPageStyle);
-
       var imgData = canvas.toDataURL('image/jpeg', 0.95);
       var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
       var w = pdf.internal.pageSize.getWidth();
@@ -555,17 +546,18 @@ function downloadPDF(){
       if(h <= pageH){
         pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
       } else {
-        var position = 0;
-        while(position < h){
-          pdf.addImage(imgData, 'JPEG', 0, -position, w, h);
-          position += pageH;
-          if(position < h) pdf.addPage();
+        var pos = 0;
+        while(pos < h){
+          pdf.addImage(imgData, 'JPEG', 0, -pos, w, h);
+          pos += pageH;
+          if(pos < h) pdf.addPage();
         }
       }
       pdf.save('계약서.pdf');
       if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
     }).catch(function(err){
-      printStyles.forEach(function(ps){ ps.el.textContent = ps.text; });
+      var fix = document.getElementById('pdf-border-fix');
+      if(fix) fix.remove();
       if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
       pageEl.setAttribute('style', origPageStyle);
       alert('PDF 생성 실패: '+err.message);
