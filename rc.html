@@ -18,7 +18,7 @@ input:focus{background:#fffde7}
 .center{text-align:center}
 .right{text-align:right}
 .no-print{display:block}
-@page{margin:15mm 10mm 10mm 10mm}
+@page {margin:15mm 10mm 10mm 10mmsize: A4 portrait;}
 @media print{
   .print-controls{display:none}
   .no-print{display:none!important}
@@ -29,14 +29,12 @@ input:focus{background:#fffde7}
   table,tr,td,th{page-break-inside:avoid}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="print-controls">
   <h2>📄 영수증</h2>
-  <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;user-select:none;-webkit-user-select:none;touch-action:manipulation" onclick="doPrint()" ontouchend="doPrint()">🖨️ 출력하기</button>
-  <button class="btn-print" id="pdf-btn" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
+  <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;user-select:none;-webkit-user-select:none;touch-action:manipulation" onclick="doPrint()" ontouchend="doPrint()">🖨️ 출력 / PDF저장</button>
+  
   <script>
     document.getElementById('pdf-btn').addEventListener('click', downloadPDF);
     document.getElementById('pdf-btn').addEventListener('touchend', function(e){ e.preventDefault(); downloadPDF(); });
@@ -150,7 +148,7 @@ input:focus{background:#fffde7}
   <p style="text-align:center;font-size:9pt;margin-bottom:4px;margin-top:3px;font-weight:600">위 금액을 영수(청구)함</p>
 
   <div class="no-print" style="text-align:center;margin-top:10px">
-    <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
+    <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력 / PDF저장</button>
     <button onclick="window.close()" style="background:#6b7280;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer">✕ 닫기</button>
   </div>
 </div>
@@ -235,75 +233,9 @@ function doPrint(e){
     setTimeout(function(){ _printLock = false; }, 1000);
   }, 100);
 }
-function downloadPDF(){
-  var pageEl = document.querySelector('.page');
-  if(!pageEl) return;
-  var btn = document.getElementById('pdf-btn');
-  if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
+// PDF 저장 = 인쇄 창에서 "PDF로 저장" 선택
+function downloadPDF(){ doPrint(); }
 
-  // @media print 스타일 비활성화 (선 중복 방지)
-  var sheets = Array.from(document.styleSheets);
-  var disabledSheets = [];
-  sheets.forEach(function(sheet){
-    try{
-      var rules = Array.from(sheet.cssRules||[]);
-      rules.forEach(function(rule, i){
-        if(rule.media && Array.from(rule.media).indexOf('print') >= 0){
-          sheet.deleteRule(i);
-          disabledSheets.push({sheet:sheet, rule:rule, index:i});
-        }
-      });
-    }catch(e){}
-  });
-
-  // PDF용 임시 border 균일화 style 삽입
-  var pdfStyle = document.createElement('style');
-  pdfStyle.id = 'pdf-border-fix';
-  pdfStyle.textContent = 'table td, table th { border: 0.5px solid #555 !important; box-shadow: none !important; }';
-  document.head.appendChild(pdfStyle);
-
-  setTimeout(function(){
-    html2canvas(pageEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: pageEl.scrollWidth,
-      height: pageEl.scrollHeight
-    }).then(function(canvas){
-      // 임시 style 제거
-      var fix = document.getElementById('pdf-border-fix');
-      if(fix) fix.remove();
-      // 스타일 복원
-      disabledSheets.forEach(function(ds){
-        try{ ds.sheet.insertRule(ds.rule.cssText, ds.index); }catch(e){}
-      });
-      var imgData = canvas.toDataURL('image/jpeg', 0.95);
-      var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-      var w = pdf.internal.pageSize.getWidth();
-      var h = (canvas.height * w) / canvas.width;
-      var pageH = pdf.internal.pageSize.getHeight();
-      if(h <= pageH){
-        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      } else {
-        var pos = 0;
-        while(pos < h){
-          pdf.addImage(imgData, 'JPEG', 0, -pos, w, h);
-          pos += pageH;
-          if(pos < h) pdf.addPage();
-        }
-      }
-      pdf.save('영수증.pdf');
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    }).catch(function(err){
-      disabledSheets.forEach(function(ds){
-        try{ ds.sheet.insertRule(ds.rule.cssText, ds.index); }catch(e){}
-      });
-      alert('PDF 생성 실패: '+err.message);
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    });
-  }, 200);
-}
 </script>
 </body>
 </html>

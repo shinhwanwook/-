@@ -191,7 +191,7 @@ html, body {
 }
 @page {
   margin: 15mm 10mm 10mm 10mm;
-}
+size: A4 portrait;}
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   table { border-collapse: collapse; }
@@ -223,14 +223,12 @@ html, body {
   .stamp-wrap img { opacity: 0.9 !important; }
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <div class="print-controls">
   <h2>📄 장비 임대/유지보수 계약서</h2>
-  <button class="btn-print" id="print-btn" style="user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent">🖨️ 출력하기</button>
+  <button class="btn-print" id="print-btn" style="user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent">🖨️ 출력 / PDF저장</button>
   <script>
     document.getElementById('print-btn').addEventListener('click', function(e){
       e.preventDefault();
@@ -241,7 +239,7 @@ html, body {
       window.print();
     });
   </script>
-  <button class="btn-print" id="pdf-btn" onclick="downloadPDF()" style="background:#1d4ed8;user-select:none;-webkit-user-select:none;touch-action:manipulation">📥 PDF저장</button>
+  
 </div>
 
 <div class="page-wrapper"><div class="page" id="contract-page">
@@ -504,67 +502,7 @@ setTimeout(function(){
   });
 },200);
 
-function downloadPDF(){
-  var pageEl = document.getElementById('contract-page') || document.querySelector('.page');
-  if(!pageEl){ alert('페이지를 찾을 수 없습니다.'); return; }
-  var btn = document.getElementById('pdf-btn');
-  if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
 
-  // 모바일 zoom 임시 해제
-  var wrapper = document.querySelector('.page-wrapper');
-  var origWrapStyle = wrapper ? wrapper.getAttribute('style') : null;
-  var origPageStyle = pageEl.getAttribute('style') || '';
-  if(wrapper) wrapper.style.cssText = '';
-  pageEl.style.cssText = 'width:210mm;zoom:1;transform:none;margin:0;padding:15mm 10mm 10mm 10mm;background:#fff;box-shadow:none;max-width:none';
-
-  // PDF용 임시 border 균일화 style 삽입
-  var pdfStyle = document.createElement('style');
-  pdfStyle.id = 'pdf-border-fix';
-  pdfStyle.textContent = 'table td, table th { border: 0.5px solid #555 !important; box-shadow: none !important; }';
-  document.head.appendChild(pdfStyle);
-
-  setTimeout(function(){
-    html2canvas(pageEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: pageEl.scrollWidth,
-      height: pageEl.scrollHeight
-    }).then(function(canvas){
-      // 임시 style 제거
-      var fix = document.getElementById('pdf-border-fix');
-      if(fix) fix.remove();
-      if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
-      else if(wrapper) wrapper.removeAttribute('style');
-      pageEl.setAttribute('style', origPageStyle);
-      var imgData = canvas.toDataURL('image/jpeg', 0.95);
-      var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-      var w = pdf.internal.pageSize.getWidth();
-      var h = (canvas.height * w) / canvas.width;
-      var pageH = pdf.internal.pageSize.getHeight();
-      if(h <= pageH){
-        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      } else {
-        var pos = 0;
-        while(pos < h){
-          pdf.addImage(imgData, 'JPEG', 0, -pos, w, h);
-          pos += pageH;
-          if(pos < h) pdf.addPage();
-        }
-      }
-      pdf.save('계약서.pdf');
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    }).catch(function(err){
-      var fix = document.getElementById('pdf-border-fix');
-      if(fix) fix.remove();
-      if(wrapper && origWrapStyle) wrapper.setAttribute('style', origWrapStyle);
-      pageEl.setAttribute('style', origPageStyle);
-      alert('PDF 생성 실패: '+err.message);
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    });
-  }, 300);
-}
 
 var _printLock = false;
 function doPrint(e){
@@ -576,6 +514,8 @@ function doPrint(e){
     setTimeout(function(){ _printLock = false; }, 1000);
   }, 100);
 }
+// PDF 저장 = 인쇄 창에서 "PDF로 저장" 선택
+function downloadPDF(){ doPrint(); }
 </script>
 </body>
 </html>

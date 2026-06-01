@@ -26,7 +26,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 .sign-item{display:flex;align-items:center;gap:8px}
 .sign-line{border-bottom:1px solid #999;width:100px;display:inline-block}
 .no-print{display:block}
-@page{margin:15mm 12mm 10mm 12mm}
+@page {margin:15mm 12mm 10mm 12mmsize: A4 portrait;}
 
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
@@ -39,13 +39,11 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   select{border:none!important;background:transparent!important;font-size:10pt!important;font-weight:600!important;-webkit-appearance:none;appearance:none;}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="print-controls">
   <h2>📄 거래명세서</h2>
-  <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력하기</button>
+  <button class="btn-print" onclick="doPrint()" ontouchend="doPrint()" style="user-select:none;-webkit-user-select:none;touch-action:manipulation">🖨️ 출력 / PDF저장</button>
 </div>
 <div class="page">
   <div class="title">거 래 명 세 서</div>
@@ -178,7 +176,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   </div>
 
   <div class="no-print" style="text-align:center;margin-top:16px">
-    <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력하기</button>
+    <button onclick="window.print()" style="background:#ff6b00;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨️ 출력 / PDF저장</button>
     <button onclick="window.close()" style="background:#6b7280;color:#fff;border:none;padding:8px 24px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer">✕ 닫기</button>
   </div>
 </div>
@@ -299,75 +297,9 @@ function doPrint(e){
     setTimeout(function(){ _printLock = false; }, 1000);
   }, 100);
 }
-function downloadPDF(){
-  var pageEl = document.querySelector('.page');
-  if(!pageEl) return;
-  var btn = document.getElementById('pdf-btn');
-  if(btn){ btn.textContent='⏳ 생성중...'; btn.disabled=true; }
+// PDF 저장 = 인쇄 창에서 "PDF로 저장" 선택
+function downloadPDF(){ doPrint(); }
 
-  // @media print 스타일 비활성화 (선 중복 방지)
-  var sheets = Array.from(document.styleSheets);
-  var disabledSheets = [];
-  sheets.forEach(function(sheet){
-    try{
-      var rules = Array.from(sheet.cssRules||[]);
-      rules.forEach(function(rule, i){
-        if(rule.media && Array.from(rule.media).indexOf('print') >= 0){
-          sheet.deleteRule(i);
-          disabledSheets.push({sheet:sheet, rule:rule, index:i});
-        }
-      });
-    }catch(e){}
-  });
-
-  // PDF용 임시 border 균일화 style 삽입
-  var pdfStyle = document.createElement('style');
-  pdfStyle.id = 'pdf-border-fix';
-  pdfStyle.textContent = 'table td, table th { border: 0.5px solid #555 !important; box-shadow: none !important; }';
-  document.head.appendChild(pdfStyle);
-
-  setTimeout(function(){
-    html2canvas(pageEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: pageEl.scrollWidth,
-      height: pageEl.scrollHeight
-    }).then(function(canvas){
-      // 임시 style 제거
-      var fix = document.getElementById('pdf-border-fix');
-      if(fix) fix.remove();
-      // 스타일 복원
-      disabledSheets.forEach(function(ds){
-        try{ ds.sheet.insertRule(ds.rule.cssText, ds.index); }catch(e){}
-      });
-      var imgData = canvas.toDataURL('image/jpeg', 0.95);
-      var pdf = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-      var w = pdf.internal.pageSize.getWidth();
-      var h = (canvas.height * w) / canvas.width;
-      var pageH = pdf.internal.pageSize.getHeight();
-      if(h <= pageH){
-        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      } else {
-        var pos = 0;
-        while(pos < h){
-          pdf.addImage(imgData, 'JPEG', 0, -pos, w, h);
-          pos += pageH;
-          if(pos < h) pdf.addPage();
-        }
-      }
-      pdf.save('거래명세서.pdf');
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    }).catch(function(err){
-      disabledSheets.forEach(function(ds){
-        try{ ds.sheet.insertRule(ds.rule.cssText, ds.index); }catch(e){}
-      });
-      alert('PDF 생성 실패: '+err.message);
-      if(btn){ btn.textContent='📥 PDF저장'; btn.disabled=false; }
-    });
-  }, 200);
-}
 </script>
 </body>
 </html>
