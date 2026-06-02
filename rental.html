@@ -365,6 +365,14 @@ body.locked { overflow:hidden; }
       📂 불러오기<input type="file" accept=".json" id="restore-input" style="display:none" onchange="restoreData(this)">
     </label>
     <span id="nav-admin-label" style="display:none;color:#bbdefb;font-size:12px;font-weight:600">🔓 관리자 모드</span>
+    <div id="online-users" title="현재 접속자" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 8px;cursor:pointer" onclick="toggleOnlinePanel()">
+      <span style="font-size:11px">👥</span>
+      <span id="online-count" style="font-size:11px;color:#fff;font-weight:600">0</span>
+    </div>
+    <div id="online-panel" style="display:none;position:fixed;top:46px;right:10px;background:#1e3a5f;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 14px;z-index:9999;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.3)">
+      <div style="font-size:12px;color:#93c5fd;font-weight:700;margin-bottom:6px">현재 접속자</div>
+      <div id="online-list" style="font-size:12px;color:#fff"></div>
+    </div>
     <button id="nav-admin-btn" onclick="openAdminLogin()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600">🔒 관리자</button>
     <button onclick="confirmLogout()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">🚪 로그아웃</button>
   </div>
@@ -2202,12 +2210,103 @@ function tryAdminLogin(){
     document.getElementById('admin-pw').focus();
   }
 }
+// ══ 접속자 현황 ══
+var _onlineInterval = null;
+var _onlineUnsubscribe = null;
+
+function initOnlinePresence(){
+  if(!window._db || !_currentUserId) return;
+  var db = window._db;
+  var userId = _currentUserId;
+  var userRef = db.collection('rental_online').doc(userId);
+
+  // 접속 등록
+  userRef.set({
+    id: userId,
+    role: window.isAdmin ? '관리자' : '사용자',
+    loginAt: new Date().toISOString(),
+    lastSeen: new Date().toISOString()
+  }).catch(function(){});
+
+  // 30초마다 lastSeen 갱신
+  _onlineInterval = setInterval(function(){
+    userRef.update({ lastSeen: new Date().toISOString() }).catch(function(){});
+  }, 30000);
+
+  // 실시간 접속자 목록 구독
+  _onlineUnsubscribe = db.collection('rental_online').onSnapshot(function(snap){
+    var now = Date.now();
+    var users = [];
+    snap.forEach(function(doc){
+      var d = doc.data();
+      // 2분 이내 lastSeen만 활성 접속자로 표시
+      var lastSeen = d.lastSeen ? new Date(d.lastSeen).getTime() : 0;
+      if(now - lastSeen < 120000){
+        users.push(d);
+      } else {
+        // 오래된 접속자 삭제
+        doc.ref.delete().catch(function(){});
+      }
+    });
+    updateOnlineUI(users);
+  }, function(){ });
+
+  // 페이지 닫을 때 접속 해제
+  window.addEventListener('beforeunload', function(){
+    userRef.delete().catch(function(){});
+    if(_onlineInterval) clearInterval(_onlineInterval);
+  });
+}
+
+function updateOnlineUI(users){
+  var countEl = document.getElementById('online-count');
+  var listEl = document.getElementById('online-list');
+  if(countEl) countEl.textContent = users.length;
+  if(listEl){
+    if(users.length === 0){
+      listEl.innerHTML = '<div style="color:#9ca3af;font-size:11px">접속자 없음</div>';
+    } else {
+      listEl.innerHTML = users.map(function(u){
+        var isMe = u.id === _currentUserId;
+        var roleColor = u.role === '관리자' ? '#fbbf24' : '#86efac';
+        return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+          '<span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block"></span>' +
+          '<span style="color:'+roleColor+';font-weight:600">'+esc(u.id)+'</span>' +
+          '<span style="color:#9ca3af;font-size:10px">('+u.role+')</span>' +
+          (isMe ? '<span style="color:#60a5fa;font-size:10px">나</span>' : '') +
+          '</div>';
+      }).join('');
+    }
+  }
+}
+
+function toggleOnlinePanel(){
+  var panel = document.getElementById('online-panel');
+  if(!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+// 패널 외부 클릭 시 닫기
+document.addEventListener('click', function(e){
+  var panel = document.getElementById('online-panel');
+  var btn = document.getElementById('online-users');
+  if(panel && btn && !panel.contains(e.target) && !btn.contains(e.target)){
+    panel.style.display = 'none';
+  }
+});
+
 function confirmLogout(){
   showConfirm('로그아웃 하시겠습니까?', function(){
     adminLogout();
   });
 }
 function adminLogout(){
+  // 접속자 현황 해제
+  if(window._db && _currentUserId){
+    window._db.collection('rental_online').doc(_currentUserId).delete().catch(function(){});
+  }
+  if(_onlineInterval){ clearInterval(_onlineInterval); _onlineInterval=null; }
+  if(_onlineUnsubscribe){ _onlineUnsubscribe(); _onlineUnsubscribe=null; }
   window.isAdmin=false;
   // 모든 모달 닫기
   document.querySelectorAll('.modal-bg').forEach(function(m){ m.classList.remove('open'); });
