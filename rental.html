@@ -1295,6 +1295,7 @@ function getStaffName(id){
 
 // ══ 네비게이션 ══
 function showPage(id){
+  if(!_currentUserId) return; // 로그인 안된 상태면 렌더링 차단
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!window.isAdmin) applyPermissions();
@@ -3356,8 +3357,8 @@ function applyPermissions(){
   if(payHint) payHint.style.display = perm.paymentWrite ? '' : 'none';
   if(payExtraBtn) payExtraBtn.style.display = perm.paymentWrite ? '' : 'none';
 
-  // 권한 적용 후 목록 다시 렌더링
-  if(typeof applyFilters === 'function') applyFilters();
+  // 권한 적용 후 목록 다시 렌더링 (로그인 상태일 때만)
+  if(typeof applyFilters === 'function' && _currentUserId) applyFilters();
 }
 function loadFromApi(callback) {
   if (window._fbReady && window._fbLoad) {
