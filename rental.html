@@ -2316,11 +2316,20 @@ function adminLogout(){
   document.getElementById('nav-tab-inventory').style.display='none';
   document.getElementById('stats-wrap').style.display='none';
   document.getElementById('stats-locked').style.display='flex';
-  // 현재 관리자 전용 탭이면 계약 목록으로 이동
-  const active=document.querySelector('.page.active');
-  if(active && (active.id==='page-stats'||active.id==='page-inventory')){
-    showPage('list');
-  }
+
+  // 모든 페이지 비활성화 → 계약목록으로 초기화
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+  var listPage = document.getElementById('page-list');
+  if(listPage) listPage.classList.add('active');
+  var listTab = document.getElementById('nav-tab-list');
+  if(listTab) listTab.classList.add('active');
+
+  // 신규등록 폼 초기화
+  editingNo = null;
+  if(typeof clearForm === 'function') clearForm();
+  var regTitle = document.getElementById('reg-title');
+  if(regTitle) regTitle.textContent = '신규 임대업체 등록';
 
   // ── 로그인 화면으로 전환 (아이디/비번은 그대로 유지) ──
   // 자동로그인 토큰 제거 (재입력 없이 바로 진입 방지)
