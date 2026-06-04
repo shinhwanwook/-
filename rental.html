@@ -2340,6 +2340,24 @@ function adminLogout(){
   INVENTORY = []; TAX_CLIENTS = []; TAX_ISSUES = {};
   filtered = [];
 
+  // 화면(DOM) 초기화 - 이전 데이터 노출 방지
+  ['svc-body','pay-body','extra-body','inv-body','tax-tbody',
+   'stat-device-body','stat-region-body','stat-pay-body','stat-pay-month-body'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
+  // 계약목록 초기화
+  var listBody = document.getElementById('list-body') || document.querySelector('#page-list tbody');
+  if(listBody) listBody.innerHTML = '';
+  // 합계 카드 초기화
+  ['pay-summary-cards','stats-summary-cards','tax-summary','stat-pay-summary'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
+  // 접속자 초기화
+  var onlineCount = document.getElementById('online-count');
+  if(onlineCount) onlineCount.textContent = '0';
+
   // 탭·아이디 복원, 비번칸 비우고 포커스
   setTimeout(function(){
     switchLoginTab(savedTab);
