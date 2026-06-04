@@ -3365,6 +3365,8 @@ function loadFromApi(callback) {
               if(callback) callback(true);
               // 자동 백업 체크
               checkAutoBackup();
+              // ✅ 로그인 후 접속자 현황 자동 초기화
+              if(typeof initOnlinePresence === 'function') initOnlinePresence();
             }, 400);
           }catch(e2){
             console.error('렌더링 오류:', e2);
