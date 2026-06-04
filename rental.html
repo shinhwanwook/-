@@ -2344,38 +2344,9 @@ function adminLogout(){
   document.getElementById('login-screen').style.display = 'flex';
   document.body.classList.add('locked');
 
-  // 데이터 초기화 (다른 계정 로그인 시 이전 데이터 노출 방지)
-  _currentUserId = '';
-  CONTRACTS = []; SERVICES = []; EXTRA_PAYS = [];
-  INVENTORY = []; TAX_CLIENTS = []; TAX_ISSUES = {};
-  filtered = [];
-
-  // 화면(DOM) 초기화 - 이전 데이터 노출 방지
-  ['tbl-body','svc-body','pay-body','extra-body','inv-body','inv-stock-body',
-   'tax-tbody','tax-client-list','stat-device-body','stat-region-body',
-   'stat-pay-body','stat-pay-month-body','stat-cms-body','stat-staff-body'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.innerHTML = '';
-  });
-  // 합계 카드 초기화
-  ['pay-summary-cards','stats-summary-cards','tax-summary',
-   'stat-pay-summary','stats-wrap'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el && id !== 'stats-wrap') el.innerHTML = '';
-  });
-  // 접속자 초기화
-  var onlineCount = document.getElementById('online-count');
-  if(onlineCount) onlineCount.textContent = '0';
-
-  // 탭·아이디 복원, 비번칸 비우고 포커스
-  setTimeout(function(){
-    switchLoginTab(savedTab);
-    const idEl = document.getElementById('login-id');
-    const pwEl = document.getElementById('login-pw');
-    if(idEl) idEl.value = savedId;
-    if(pwEl){ pwEl.value = ''; pwEl.focus(); }
-    document.getElementById('login-err').style.display = 'none';
-  }, 80);
+  // 완전 초기화 - 새로고침과 동일한 상태로
+  try{ localStorage.removeItem(AUTO_LOGIN_KEY); }catch(e){}
+  setTimeout(function(){ location.reload(); }, 100);
 }
 function changeAdminPw(){
   const p1=document.getElementById('new-pw1').value;
