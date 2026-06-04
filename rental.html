@@ -1967,13 +1967,13 @@ function saveContract(){
       deposit:parseInt(document.getElementById('f-deposit').value)||0,
       memo:document.getElementById('f-memo').value.trim(),
       tax:document.getElementById('f-tax').value,
-      quota_bw:getRawNum('f-quota-bw'),
-      quota_color:getRawNum('f-quota-color'),
+      quota_bw:parseInt(document.getElementById('f-quota-bw').value)||0,
+      quota_color:parseInt(document.getElementById('f-quota-color').value)||0,
       extra_bw:parseInt(document.getElementById('f-extra-bw').value)||0,
       extra_color:parseInt(document.getElementById('f-extra-color').value)||0,
       contract_period:document.getElementById('f-contract-period').value||'',
-      start_bw:getRawNum('f-start-bw'),
-      start_color:getRawNum('f-start-color'),
+      start_bw:parseInt(document.getElementById('f-start-bw').value)||0,
+      start_color:parseInt(document.getElementById('f-start-color').value)||0,
       gdrive:document.getElementById('f-gdrive').value.trim(),
       staff_ids:[...formStaffIds],
       files:pendingFiles.map(f=>({id:Date.now()+Math.random(),...f})),
@@ -2334,6 +2334,12 @@ function adminLogout(){
   document.getElementById('login-screen').style.display = 'flex';
   document.body.classList.add('locked');
 
+  // 데이터 초기화 (다른 계정 로그인 시 이전 데이터 노출 방지)
+  _currentUserId = '';
+  CONTRACTS = []; SERVICES = []; EXTRA_PAYS = [];
+  INVENTORY = []; TAX_CLIENTS = []; TAX_ISSUES = {};
+  filtered = [];
+
   // 탭·아이디 복원, 비번칸 비우고 포커스
   setTimeout(function(){
     switchLoginTab(savedTab);
@@ -2385,13 +2391,17 @@ function printContract(no){
 function fmtNum(el){
   var raw = el.value.replace(/[^0-9]/g,'');
   var num = parseInt(raw)||0;
-  el.value = num.toLocaleString();
-  el.dataset.raw = raw;
+  el.value = num > 0 ? num.toLocaleString() : '0';
+  el.dataset.raw = String(num);
 }
 function getRawNum(id){
   var el = document.getElementById(id);
   if(!el) return 0;
-  return parseInt((el.dataset.raw || el.value.replace(/[^0-9]/g,''))||'0')||0;
+  // dataset.raw가 있으면 우선 사용, 없으면 value에서 콤마 제거 후 파싱
+  var raw = el.dataset.raw !== undefined && el.dataset.raw !== '' 
+    ? el.dataset.raw 
+    : el.value.replace(/[^0-9]/g,'');
+  return parseInt(raw)||0;
 }
 
 function toggleCustomPeriod(){
@@ -3362,11 +3372,11 @@ function loadFromApi(callback) {
               window._isLoading = false; // 로딩 완료
               hideLoadingScreen();
               showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
+              // 접속자 현황 시작
+              setTimeout(function(){ initOnlinePresence(); }, 300);
               if(callback) callback(true);
               // 자동 백업 체크
               checkAutoBackup();
-              // ✅ 로그인 후 접속자 현황 자동 초기화
-              if(typeof initOnlinePresence === 'function') initOnlinePresence();
             }, 400);
           }catch(e2){
             console.error('렌더링 오류:', e2);
