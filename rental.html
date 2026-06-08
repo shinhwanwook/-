@@ -5092,6 +5092,7 @@ function renderTax() {
   document.getElementById('tax-thead').innerHTML =
     '<th id="tax-th-name" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">거래처</th>' +
     '<th id="tax-th-mgr"  class="resizable" style="white-space:nowrap;min-width:60px;width:80px">담당자</th>' +
+    '<th id="tax-th-qty"  class="resizable" style="white-space:nowrap;min-width:40px;width:50px">수량</th>' +
     '<th id="tax-th-email" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">이메일</th>' +
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
@@ -5139,6 +5140,7 @@ function renderTax() {
       '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')">'+
         esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
+      '<td style="font-size:12px;text-align:center">'+esc(String(t.qty||1))+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
       '<td style="font-size:12px;white-space:nowrap">'+t.rent.toLocaleString()+'원</td>'+
       cells+
