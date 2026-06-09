@@ -294,8 +294,412 @@ body.locked { overflow:hidden; }
 
 </head>
 <body>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- ══ PAGE: 기기 모니터링 ══ -->
+<div class="page" id="page-monitor">
+
+  <!-- 요약 카드 -->
+  <div id="monitor-summary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🖨️ 프린터 / 복합기 모니터링</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="monitor-last-update" style="font-size:12px;color:var(--text3)"></span>
+        <button class="btn btn-primary btn-sm" onclick="renderMonitor()">🔄 새로고침</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input class="inp inp-search" type="text" id="monitor-srch"
+        placeholder="🔍 거래처명, 기기명 검색..." oninput="renderMonitor()">
+      <select class="inp" id="monitor-status-filter" onchange="renderMonitor()">
+        <option value="">전체 상태</option>
+        <option value="online">온라인만</option>
+        <option value="offline">오프라인만</option>
+        <option value="warning">토너 경고만</option>
+      </select>
+      <select class="inp" id="monitor-view" onchange="renderMonitor()">
+        <option value="card">카드 보기</option>
+        <option value="table">테이블 보기</option>
+      </select>
+    </div>
+
+    <div class="info-row" id="monitor-info"></div>
+
+    <!-- 카드 보기 -->
+    <div id="monitor-card-view" style="padding:16px">
+      <div id="monitor-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+    </div>
+
+    <!-- 테이블 보기 -->
+    <div id="monitor-table-view" style="display:none">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>거래처</th>
+              <th>기기명</th>
+              <th>상태</th>
+              <th style="text-align:right">흑백카운터</th>
+              <th style="text-align:right">컬러카운터</th>
+              <th style="text-align:center">토너K</th>
+              <th style="text-align:center">토너C</th>
+              <th style="text-align:center">토너M</th>
+              <th style="text-align:center">토너Y</th>
+              <th>마지막수집</th>
+            </tr>
+          </thead>
+          <tbody id="monitor-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 히스토리 섹션 -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header">
+      <span class="card-title">📊 수집 히스토리</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="inp" id="hist-device" style="min-width:160px" onchange="renderHistory()">
+          <option value="">기기 선택...</option>
+        </select>
+        <input class="inp" type="month" id="hist-month" onchange="renderHistory()" style="width:130px">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>시간</th>
+            <th style="text-align:right">흑백카운터</th>
+            <th style="text-align:right">컬러카운터</th>
+            <th style="text-align:right">일 인쇄량</th>
+            <th style="text-align:center">토너K</th>
+            <th style="text-align:center">토너C</th>
+            <th style="text-align:center">토너M</th>
+            <th style="text-align:center">토너Y</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="hist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  기기 모니터링
+// ══════════════════════════════════════════
+
+// 토너 % → 색상 + 아이콘
+function tonerColor(pct){
+  if(pct < 0)  return {color:'#9ca3af', bg:'#f3f4f6', icon:'❓'};
+  if(pct <= 10) return {color:'#dc2626', bg:'#fee2e2', icon:'🔴'};
+  if(pct <= 25) return {color:'#d97706', bg:'#fef3c7', icon:'🟡'};
+  return {color:'#166534', bg:'#dcfce7', icon:'🟢'};
+}
+
+// 토너 바 HTML
+function tonerBar(pct, label){
+  if(pct < 0) return `<div style="font-size:11px;color:#9ca3af;text-align:center">${label}<br>-</div>`;
+  var tc = tonerColor(pct);
+  return `<div style="font-size:10px;color:var(--text3);margin-bottom:2px;text-align:center">${label}</div>
+    <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden">
+      <div style="width:${pct}%;height:100%;background:${tc.color};border-radius:4px;transition:width .3s"></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:${tc.color};text-align:center;margin-top:2px">${pct}%</div>`;
+}
+
+// 기기 카드 HTML
+function deviceCardHtml(d){
+  var isOnline = (d.is_online === 'true' || d.is_online === true);
+  var statusColor = isOnline ? '#166534' : '#dc2626';
+  var statusBg    = isOnline ? '#dcfce7' : '#fee2e2';
+  var statusIcon  = isOnline ? '🟢' : '🔴';
+
+  // 토너 경고 체크
+  var tonerWarn = false;
+  ['toner_k','toner_c','toner_m','toner_y'].forEach(function(k){
+    var v = parseInt(d[k]||'-1');
+    if(v >= 0 && v <= 10) tonerWarn = true;
+  });
+
+  var cardBorder = tonerWarn ? '2px solid #fca5a5' : '1px solid var(--border)';
+
+  return `<div style="border:${cardBorder};border-radius:10px;padding:14px;background:#fff;box-shadow:var(--shadow)">
+    <!-- 헤더 -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(d.name||'')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(d.model||'')} · ${esc(d.ip||'')}</div>
+      </div>
+      <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:8px;white-space:nowrap">
+        ${statusIcon} ${isOnline ? '온라인':'오프라인'}
+      </span>
+    </div>
+
+    <!-- 카운터 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#f8fafc;border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:10px;color:var(--text3)">흑백 카운터</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">
+          ${d.bw_count ? parseInt(d.bw_count).toLocaleString() : '-'}
+        </div>
+        <div style="font-size:10px;color:var(--text3)">매</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:10px;color:var(--text3)">컬러 카운터</div>
+        <div style="font-size:16px;font-weight:700;color:var(--blue)">
+          ${d.color_count ? parseInt(d.color_count).toLocaleString() : '-'}
+        </div>
+        <div style="font-size:10px;color:var(--text3)">매</div>
+      </div>
+    </div>
+
+    <!-- 토너 -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+      <div>${tonerBar(parseInt(d.toner_k||-1), 'K(검)')}</div>
+      <div>${tonerBar(parseInt(d.toner_c||-1), 'C(청)')}</div>
+      <div>${tonerBar(parseInt(d.toner_m||-1), 'M(홍)')}</div>
+      <div>${tonerBar(parseInt(d.toner_y||-1), 'Y(황)')}</div>
+    </div>
+
+    <!-- 경고 메시지 -->
+    ${tonerWarn ? '<div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:5px 8px;border-radius:5px;margin-bottom:8px;text-align:center">⚠️ 토너 교체 필요!</div>' : ''}
+
+    <!-- 마지막 수집 -->
+    <div style="font-size:11px;color:var(--text3);text-align:right;border-top:1px solid var(--border);padding-top:6px">
+      마지막 수집: ${esc(d.collected_at||'수집 안됨')}
+    </div>
+  </div>`;
+}
+
+// 메인 렌더 함수
+function renderMonitor(){
+  if(!window._fbReady || !window._db){
+    document.getElementById('monitor-grid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Firebase 연결 중...</div>';
+    return;
+  }
+
+  var srch   = (document.getElementById('monitor-srch').value||'').toLowerCase();
+  var filter = document.getElementById('monitor-status-filter').value;
+  var view   = document.getElementById('monitor-view').value;
+
+  // 보기 전환
+  document.getElementById('monitor-card-view').style.display  = view==='card'  ? '' : 'none';
+  document.getElementById('monitor-table-view').style.display = view==='table' ? '' : 'none';
+
+  document.getElementById('monitor-grid').innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">🔄 데이터 불러오는 중...</div>';
+
+  window._db.collection('device_status').get().then(function(snap){
+    var devices = [];
+    snap.forEach(function(doc){
+      var d = doc.data();
+      d._id = doc.id;
+      // hist_ 로 시작하는 히스토리 문서 제외
+      if(!doc.id.startsWith('hist_')) devices.push(d);
+    });
+
+    // 검색 필터
+    if(srch){
+      devices = devices.filter(function(d){
+        return (d.name||'').toLowerCase().includes(srch) ||
+               (d.model||'').toLowerCase().includes(srch);
+      });
+    }
+
+    // 상태 필터
+    if(filter === 'online'){
+      devices = devices.filter(function(d){ return d.is_online==='true'||d.is_online===true; });
+    } else if(filter === 'offline'){
+      devices = devices.filter(function(d){ return d.is_online==='false'||d.is_online===false; });
+    } else if(filter === 'warning'){
+      devices = devices.filter(function(d){
+        return ['toner_k','toner_c','toner_m','toner_y'].some(function(k){
+          var v = parseInt(d[k]||-1); return v >= 0 && v <= 10;
+        });
+      });
+    }
+
+    // 정렬: 온라인 먼저, 토너경고 먼저
+    devices.sort(function(a,b){
+      var aOnline = (a.is_online==='true'||a.is_online===true) ? 1 : 0;
+      var bOnline = (b.is_online==='true'||b.is_online===true) ? 1 : 0;
+      return bOnline - aOnline;
+    });
+
+    // 요약 카드 업데이트
+    var total   = devices.length;
+    var online  = devices.filter(function(d){ return d.is_online==='true'||d.is_online===true; }).length;
+    var offline = total - online;
+    var warns   = devices.filter(function(d){
+      return ['toner_k','toner_c','toner_m','toner_y'].some(function(k){
+        var v = parseInt(d[k]||-1); return v >= 0 && v <= 10;
+      });
+    }).length;
+
+    document.getElementById('monitor-summary').innerHTML = `
+      <div class="stat" style="background:#eff6ff;border:1px solid #93c5fd;min-width:120px">
+        <div class="stat-n" style="color:#1d4ed8">${total}</div>
+        <div class="stat-l">📋 전체 기기</div>
+      </div>
+      <div class="stat" style="background:#f0fdf4;border:1px solid #86efac;min-width:120px">
+        <div class="stat-n" style="color:#166534">${online}</div>
+        <div class="stat-l">🟢 온라인</div>
+      </div>
+      <div class="stat" style="background:#fee2e2;border:1px solid #fca5a5;min-width:120px">
+        <div class="stat-n" style="color:#dc2626">${offline}</div>
+        <div class="stat-l">🔴 오프라인</div>
+      </div>
+      <div class="stat" style="background:#fef3c7;border:1px solid #fcd34d;min-width:120px">
+        <div class="stat-n" style="color:#d97706">${warns}</div>
+        <div class="stat-l">⚠️ 토너 경고</div>
+      </div>`;
+
+    document.getElementById('monitor-info').textContent = '총 ' + total + '대';
+    document.getElementById('monitor-last-update').textContent =
+      '마지막 조회: ' + new Date().toLocaleTimeString('ko-KR');
+
+    // 히스토리 기기 선택 드롭다운 업데이트
+    var histSel = document.getElementById('hist-device');
+    var curVal  = histSel.value;
+    histSel.innerHTML = '<option value="">기기 선택...</option>' +
+      devices.map(function(d){
+        return '<option value="'+d._id+'"'+(d._id===curVal?' selected':'')+'>'+esc(d.name||d._id)+'</option>';
+      }).join('');
+
+    // 카드 뷰
+    if(!devices.length){
+      document.getElementById('monitor-grid').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">'+
+        '<div style="font-size:32px;margin-bottom:8px">🖨️</div>'+
+        '수집된 데이터가 없습니다<br><small>배치파일을 실행하면 데이터가 표시됩니다</small></div>';
+    } else {
+      document.getElementById('monitor-grid').innerHTML =
+        devices.map(function(d){ return deviceCardHtml(d); }).join('');
+    }
+
+    // 테이블 뷰
+    document.getElementById('monitor-tbody').innerHTML = devices.length ?
+      devices.map(function(d){
+        var isOnline = (d.is_online==='true'||d.is_online===true);
+        var statusHtml = isOnline
+          ? '<span class="badge b-ok">🟢 온라인</span>'
+          : '<span class="badge b-late">🔴 오프라인</span>';
+
+        function tonerCell(pct){
+          var v = parseInt(pct||-1);
+          if(v < 0) return '<td style="text-align:center;color:#9ca3af">-</td>';
+          var tc = tonerColor(v);
+          return '<td style="text-align:center;font-weight:700;color:'+tc.color+'">'+tc.icon+' '+v+'%</td>';
+        }
+
+        return '<tr>'+
+          '<td style="font-weight:600">'+esc(d.name||'')+'</td>'+
+          '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'')+'</td>'+
+          '<td>'+statusHtml+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+(d.bw_count?parseInt(d.bw_count).toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;color:var(--blue)">'+(d.color_count?parseInt(d.color_count).toLocaleString():'-')+'</td>'+
+          tonerCell(d.toner_k)+
+          tonerCell(d.toner_c)+
+          tonerCell(d.toner_m)+
+          tonerCell(d.toner_y)+
+          '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
+          '</tr>';
+      }).join('') :
+      '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">데이터 없음</td></tr>';
+
+  }).catch(function(e){
+    console.error('모니터링 데이터 로드 오류:', e);
+    document.getElementById('monitor-grid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626">데이터 로드 오류: '+e.message+'</div>';
+  });
+}
+
+// 히스토리 렌더
+function renderHistory(){
+  var devId = document.getElementById('hist-device').value;
+  var month = document.getElementById('hist-month').value;
+  if(!devId || !month){
+    document.getElementById('hist-tbody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;padding:16px;color:var(--text3)">기기와 월을 선택하세요</td></tr>';
+    return;
+  }
+
+  if(!window._fbReady || !window._db) return;
+
+  var devNo = devId.replace('device_','');
+  var monthStr = month.replace('-','');
+
+  document.getElementById('hist-tbody').innerHTML =
+    '<tr><td colspan="10" style="text-align:center;padding:16px;color:var(--text3)">🔄 로딩 중...</td></tr>';
+
+  // 해당 월의 히스토리 문서들 조회
+  window._db.collection('device_status')
+    .where('__name__', '>=', 'hist_'+devNo+'_'+monthStr+'01')
+    .where('__name__', '<=', 'hist_'+devNo+'_'+monthStr+'31')
+    .get().then(function(snap){
+      var rows = [];
+      snap.forEach(function(doc){ rows.push(doc.data()); });
+      rows.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+
+      if(!rows.length){
+        document.getElementById('hist-tbody').innerHTML =
+          '<tr><td colspan="10" style="text-align:center;padding:16px;color:var(--text3)">해당 월 데이터 없음</td></tr>';
+        return;
+      }
+
+      // 일별 인쇄량 계산 (전날 대비 차이)
+      var prevBw = null, prevColor = null;
+      document.getElementById('hist-tbody').innerHTML = rows.map(function(r, i){
+        var bw    = parseInt(r.bw_count||0);
+        var color = parseInt(r.color_count||0);
+        var dailyBw    = (prevBw !== null && bw >= prevBw) ? bw - prevBw : '-';
+        var dailyColor = (prevColor !== null && color >= prevColor) ? color - prevColor : '-';
+        var dailyTotal = (dailyBw !== '-' && dailyColor !== '-') ? dailyBw + dailyColor : '-';
+        prevBw = bw; prevColor = color;
+
+        function hTonerCell(pct){
+          var v = parseInt(pct||-1);
+          if(v < 0) return '<td style="text-align:center;color:#9ca3af">-</td>';
+          var tc = tonerColor(v);
+          return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+v+'%</td>';
+        }
+
+        return '<tr>'+
+          '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'')+'</td>'+
+          '<td style="white-space:nowrap;font-size:12px;color:var(--text3)">'+esc(r.time||'')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
+          '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
+          '<td style="text-align:right;font-weight:700;color:#7c3aed">'+(dailyTotal !== '-' ? dailyTotal.toLocaleString() : '-')+'</td>'+
+          hTonerCell(r.toner_k)+
+          hTonerCell(r.toner_c)+
+          hTonerCell(r.toner_m)+
+          hTonerCell(r.toner_y)+
+          '<td style="font-size:11px">'+esc(r.status||'-')+'</td>'+
+          '</tr>';
+      }).join('');
+    }).catch(function(e){
+      document.getElementById('hist-tbody').innerHTML =
+        '<tr><td colspan="10" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
+    });
+}
+
+// 히스토리 월 기본값: 이번달
+(function(){
+  var now = new Date();
+  var m = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var el = document.getElementById('hist-month');
+  if(el) el.value = m;
+})();
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <!-- ══ 로그인 화면 ══ -->
@@ -357,6 +761,7 @@ body.locked { overflow:hidden; }
   <div class="nav-tab" id="nav-tab-stats" onclick="showPage('stats')" style="display:none">📊 임대통계</div>
   <div class="nav-tab" id="nav-tab-inventory" onclick="showPage('inventory')" style="display:none">📦 장비/소모품</div>
   <div class="nav-tab" id="nav-tab-tax" onclick="showPage('tax')">🧾 세금계산서</div>
+  <div class="nav-tab" id="nav-tab-monitor" onclick="showPage('monitor')">🖨️ 기기모니터링</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
@@ -1300,7 +1705,7 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!window.isAdmin) applyPermissions();
   document.getElementById('page-'+id).classList.add('active');
-  const idx={list:0,register:1,payment:2,service:3,docs:4,stats:5,inventory:6,tax:7}[id];
+  const idx={list:0,register:1,payment:2,service:3,docs:4,stats:5,inventory:6,tax:7,monitor:8}[id];
   document.querySelectorAll('.nav-tab')[idx].classList.add('active');
   if(id==='list') renderList();
   if(id==='payment') renderPayment();
@@ -1309,6 +1714,7 @@ function showPage(id){
   if(id==='stats') renderStats();
   if(id==='inventory'){renderInvStock();renderInvList();}
   if(id==='tax') renderTax();
+  if(id==='monitor') renderMonitor();
   if(id==='register'&&!editingNo){clearForm();document.getElementById('reg-title').textContent='신규 임대업체 등록';}
 }
 
@@ -4685,27 +5091,6 @@ function hidePayTip(){
   </div>
 </div>
 
-<!-- MODAL: 세금계산서 셀 색상 선택 -->
-<div class="modal-bg" id="tax-color-modal">
-  <div class="modal" style="max-width:300px">
-    <div class="modal-head">
-      <h3 id="tax-color-title">색상 선택</h3>
-      <button class="modal-close" onclick="closeModal('tax-color-modal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex;gap:10px;justify-content:center;padding:10px">
-        <div onclick="setTaxColor('none')" style="width:48px;height:48px;border-radius:8px;border:2px solid #ccc;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px" title="기본">✕</div>
-        <div onclick="setTaxColor('#fef9c3')" style="width:48px;height:48px;border-radius:8px;border:2px solid #fbbf24;background:#fef9c3;cursor:pointer" title="노란색"></div>
-        <div onclick="setTaxColor('#dcfce7')" style="width:48px;height:48px;border-radius:8px;border:2px solid #86efac;background:#dcfce7;cursor:pointer" title="초록색"></div>
-        <div onclick="setTaxColor('#fee2e2')" style="width:48px;height:48px;border-radius:8px;border:2px solid #fca5a5;background:#fee2e2;cursor:pointer" title="빨간색"></div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal('tax-color-modal')">닫기</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: 세금계산서 거래처 상세 -->
 <div class="modal-bg" id="tax-client-detail-modal">
   <div class="modal" style="max-width:500px">
@@ -4925,32 +5310,6 @@ var _taxEditKey = null; // "seq-YYYY-MM"
 // issues 값에서 날짜 문자열 추출 (문자열 또는 {date:...} 객체 모두 처리)
 var _taxMemoSeq = null;
 var _tcdSeq = null;
-var _taxColorSeq = null;
-var _taxColorField = null;
-
-function openTaxColorPicker(e, seq, field){
-  e.preventDefault();
-  _taxColorSeq = seq;
-  _taxColorField = field;
-  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(seq); });
-  document.getElementById('tax-color-title').textContent = 
-    (field === 'name' ? '거래처명' : '임대료') + ' 색상 선택';
-  openModal('tax-color-modal');
-}
-
-function setTaxColor(color){
-  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_taxColorSeq); });
-  if(!t) return;
-  if(_taxColorField === 'name') t.nameColor = color;
-  else t.rentColor = color;
-  closeModal('tax-color-modal');
-  window._isLoading = false;
-  saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 색상 저장됨':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-  });
-  renderTax();
-}
 function openTaxClientDetail(seq){
   var seqNum = parseInt(seq);
   var t = TAX_CLIENTS.find(function(x){ return x.seq === seqNum; });
@@ -5139,7 +5498,6 @@ function renderTax() {
   document.getElementById('tax-thead').innerHTML =
     '<th id="tax-th-name" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">거래처</th>' +
     '<th id="tax-th-mgr"  class="resizable" style="white-space:nowrap;min-width:60px;width:80px">담당자</th>' +
-    '<th id="tax-th-qty"  class="resizable" style="white-space:nowrap;min-width:40px;width:50px">수량</th>' +
     '<th id="tax-th-email" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">이메일</th>' +
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
@@ -5184,12 +5542,11 @@ function renderTax() {
         '<div style="'+cellStyle+'">'+cellContent+'</div></td>';
     }).join('');
     return '<tr>'+
-      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;'+(t.nameColor&&t.nameColor!=='none'?'background:'+t.nameColor+';':'')+'" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')" oncontextmenu="openTaxColorPicker(event,'+t.seq+',\'name\');return false;">'+
+      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')">'+
         esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
-      '<td style="font-size:12px;text-align:center">'+esc(String(t.qty||1))+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap;cursor:context-menu;'+(t.rentColor&&t.rentColor!=='none'?'background:'+t.rentColor+';':'')+'" oncontextmenu="openTaxColorPicker(event,'+t.seq+',\'rent\');return false;">'+t.rent.toLocaleString()+'원</td>'+
+      '<td style="font-size:12px;white-space:nowrap">'+t.rent.toLocaleString()+'원</td>'+
       cells+
     '</tr>';
   }).join('') || '<tr><td colspan="16" class="empty">조회 결과가 없습니다</td></tr>';
@@ -5747,8 +6104,10 @@ function terminateTaxClient(seq) {
     closeModal('confirm-modal');
     renderTaxClientList();
     renderTax();
-    // tax_main 직접 업데이트
-    saveTaxClientsToFirebase('✅ 해지 처리됨');
+    // 즉시 Firebase 저장
+    saveToLocal();
+    if(typeof saveToApi === 'function') saveToApi(null);
+    showSaveStatus('✅ 해지 처리됨', '#86efac');
   }, '해지', false);
 }
 
@@ -5761,33 +6120,11 @@ function restoreTaxClient(seq) {
     closeModal('confirm-modal');
     renderTaxClientList();
     renderTax();
-    // tax_main 직접 업데이트
-    saveTaxClientsToFirebase('✅ 복원 완료');
+    // 즉시 Firebase 저장
+    saveToLocal();
+    if(typeof saveToApi === 'function') saveToApi(null);
+    showSaveStatus('✅ 복원 완료', '#86efac');
   }, '복원', true);
-}
-
-// TAX_CLIENTS를 tax_main에 직접 저장
-function saveTaxClientsToFirebase(successMsg){
-  saveToLocal();
-  if(!window._db){
-    showSaveStatus('⚠ DB 연결 없음', '#ef4444');
-    return;
-  }
-  showSaveStatus('⏳ 저장 중...', '#93c5fd');
-  // slim 변환 (issues 제거)
-  var taxSlim = TAX_CLIENTS.map(function(t){
-    var s = Object.assign({}, t);
-    s.issues = {};
-    return s;
-  });
-  window._db.collection('rental').doc('tax_main').update({TAX_CLIENTS: taxSlim})
-    .then(function(){
-      showSaveStatus(successMsg || '✅ 저장됨', '#86efac');
-    })
-    .catch(function(e){
-      console.error('tax_main 저장 오류:', e);
-      showSaveStatus('⚠ 저장 실패', '#ef4444');
-    });
 }
 </script>
 
@@ -5993,7 +6330,6 @@ function doLogin(){
 
     var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
     delete mainData.DOC_FILES; // DOC_FILES는 별도 청크로 저장
-    delete mainData.TAX_CLIENTS; // TAX_CLIENTS는 tax_main에만 저장
     // 저장 시간 기록
     mainData.savedAt = new Date().toISOString();
     mainData.savedBy = (typeof _currentUserId !== 'undefined' ? _currentUserId : 'unknown');
@@ -6039,14 +6375,12 @@ function doLogin(){
       result = snaps[0].data();
       console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
 
-      // tax_main에서 TAX_CLIENTS 로드 (항상 tax_main 우선)
+      // tax_main에서 TAX_CLIENTS 로드
       if(snaps[1].exists) {
         result.TAX_CLIENTS = snaps[1].data().TAX_CLIENTS || [];
         console.log('tax_main 로드 완료, TAX_CLIENTS:', result.TAX_CLIENTS.length);
       } else {
-        // tax_main 없으면 main의 TAX_CLIENTS 사용 (구버전 호환)
-        result.TAX_CLIENTS = result.TAX_CLIENTS || [];
-        console.log('tax_main 없음 - main TAX_CLIENTS 사용:', result.TAX_CLIENTS.length);
+        console.log('tax_main 없음');
       }
 
       // 2단계: 입금 청크 로드
