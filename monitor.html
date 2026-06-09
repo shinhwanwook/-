@@ -141,8 +141,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <body>
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
+  onerror="alert('Firebase 로딩 실패. 인터넷 연결을 확인하세요.')"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"
+  onerror="alert('Firebase Firestore 로딩 실패.')"></script>
 
 <!-- ══ 로그인 화면 ══ -->
 <div id="login-screen">
@@ -384,10 +386,28 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "1021274937799",
   appId: "1:1021274937799:web:022a4ba9496380216d21e2"
 };
-firebase.initializeApp(FIREBASE_CONFIG);
-var db = firebase.firestore();
-var _fbReady = true;
-console.log('✅ Firebase 연결 완료');
+var db = null;
+var _fbReady = false;
+
+// Firebase 준비될 때까지 대기
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      setTimeout(initFirebase, 300);
+      return;
+    }
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    db = firebase.firestore();
+    _fbReady = true;
+    console.log('✅ Firebase 연결 완료');
+  } catch(e) {
+    console.error('Firebase 초기화 오류:', e);
+    setTimeout(initFirebase, 500);
+  }
+}
+initFirebase();
 
 // ══════════════════════════════════════════
 //  계정 정보
@@ -470,7 +490,11 @@ function hasTonerWarn(d){
 //  데이터 로드
 // ══════════════════════════════════════════
 function loadAllDevices(silent){
-  if(!silent){
+  // Firebase 준비 안됐으면 대기
+  if(!_fbReady || !db){
+    setTimeout(function(){ loadAllDevices(silent); }, 400);
+    return;
+  }
     document.getElementById('device-grid').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text3)">'+
       '<div class="spinning" style="font-size:32px">🔄</div><br>데이터 불러오는 중...</div>';
