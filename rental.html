@@ -6134,8 +6134,10 @@ function restoreTaxClient(seq) {
 // ══ 로그인 설정 ══
 // ══ 계정 설정 ══
 const ACCOUNTS_DEFAULT = {
-  admin: { id:'admin', pw:'1234', role:'admin', label:'관리자' },
-  user:  { id:'user',  pw:'1234', role:'user',  label:'사용자' }
+  shin: { id:'shin', pw:'9649', role:'admin', label:'관리자' },
+  lee:  { id:'lee',  pw:'7190', role:'admin', label:'관리자' },
+  jang: { id:'jang', pw:'8888', role:'user',  label:'사용자' },
+  min:  { id:'min',  pw:'9999', role:'user',  label:'사용자' }
 };
 // localStorage에 저장된 계정 불러오기 (없으면 기본값)
 let ACCOUNTS = JSON.parse(JSON.stringify(ACCOUNTS_DEFAULT)); // 기본값으로 시작
