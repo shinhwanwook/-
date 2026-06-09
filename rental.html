@@ -5979,6 +5979,7 @@ function doLogin(){
 
     var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
     delete mainData.DOC_FILES; // DOC_FILES는 별도 청크로 저장
+    delete mainData.TAX_CLIENTS; // TAX_CLIENTS는 tax_main에만 저장
     // 저장 시간 기록
     mainData.savedAt = new Date().toISOString();
     mainData.savedBy = (typeof _currentUserId !== 'undefined' ? _currentUserId : 'unknown');
@@ -6024,12 +6025,14 @@ function doLogin(){
       result = snaps[0].data();
       console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
 
-      // tax_main에서 TAX_CLIENTS 로드
+      // tax_main에서 TAX_CLIENTS 로드 (항상 tax_main 우선)
       if(snaps[1].exists) {
         result.TAX_CLIENTS = snaps[1].data().TAX_CLIENTS || [];
         console.log('tax_main 로드 완료, TAX_CLIENTS:', result.TAX_CLIENTS.length);
       } else {
-        console.log('tax_main 없음');
+        // tax_main 없으면 main의 TAX_CLIENTS 사용 (구버전 호환)
+        result.TAX_CLIENTS = result.TAX_CLIENTS || [];
+        console.log('tax_main 없음 - main TAX_CLIENTS 사용:', result.TAX_CLIENTS.length);
       }
 
       // 2단계: 입금 청크 로드
