@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프린터 모니터링</title>
+<style>
+:root{
+  --blue:#1a56a0;--blue-light:#e8f0fb;
+  --green:#166534;--green-bg:#dcfce7;
+  --red:#991b1b;--red-bg:#fee2e2;
+  --orange:#854d0e;--orange-bg:#fef3c7;
+  --gray:#6b7280;--gray-bg:#f3f4f6;
+  --border:#e5e7eb;--border2:#d1d5db;
+  --text:#111827;--text2:#374151;--text3:#6b7280;
+  --white:#fff;--bg:#f1f5f9;
+  --radius:8px;--radius2:6px;
+  --shadow:0 1px 4px rgba(0,0,0,.08),0 2px 12px rgba(0,0,0,.05);
+  --shadow2:0 4px 24px rgba(0,0,0,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* NAV */
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap}
+.nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
+.nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
+.nav-tab.active{opacity:1;border-bottom-color:#fff}
+
+/* LAYOUT */
+.page{display:none;padding:20px;max-width:1440px;margin:0 auto}
+.page.active{display:block}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+.card-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-size:15px;font-weight:700;color:var(--text)}
+
+/* CONTROLS */
+.controls{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbfc}
+.inp{font-size:13px;padding:7px 11px;border:1px solid var(--border2);border-radius:var(--radius2);background:var(--white);outline:none;font-family:inherit;color:var(--text);transition:border .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,160,.1)}
+.inp-search{flex:1;min-width:180px}
+select.inp{cursor:pointer}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius2);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1547a0}
+.btn-success{background:#15803d;color:#fff}.btn-success:hover{background:#166534}
+.btn-ghost{background:var(--white);color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--gray-bg)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:4px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 280px)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:#f7f8fa;color:var(--text3);font-weight:600;padding:10px 12px;text-align:left;border-bottom:1.5px solid var(--border);white-space:nowrap;z-index:10}
+tbody tr{border-bottom:1px solid #d1d5db;transition:background .1s}
+tbody tr:hover{background:#f0f5ff}
+tbody td{padding:9px 12px;vertical-align:middle}
+
+/* BADGE */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--green-bg);color:var(--green)}
+.b-late{background:var(--red-bg);color:var(--red)}
+.b-warn{background:var(--orange-bg);color:var(--orange)}
+.b-gray{background:var(--gray-bg);color:var(--gray)}
+
+/* STAT */
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:10px 14px;flex:1;min-width:120px}
+.stat-n{font-size:22px;font-weight:700;color:var(--blue)}
+.stat-l{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* INFO ROW */
+.info-row{padding:7px 14px;font-size:12px;color:var(--text3);border-bottom:1px solid var(--border);background:#fafbfc}
+
+/* DEVICE CARD */
+.device-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:16px}
+.device-card{border:1px solid var(--border);border-radius:10px;padding:16px;background:#fff;box-shadow:var(--shadow);transition:box-shadow .15s}
+.device-card:hover{box-shadow:var(--shadow2)}
+.device-card.warn{border:2px solid #fca5a5}
+.device-card.offline{opacity:.7;border:1px solid #e5e7eb}
+
+/* TONER BAR */
+.toner-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.toner-item{text-align:center}
+.toner-label{font-size:10px;color:var(--text3);margin-bottom:3px}
+.toner-bar-bg{background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;margin-bottom:3px}
+.toner-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.toner-pct{font-size:11px;font-weight:700}
+
+/* COUNTER BOX */
+.counter-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.counter-box{background:#f8fafc;border-radius:6px;padding:8px;text-align:center}
+.counter-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.counter-val{font-size:16px;font-weight:700}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:10px;width:100%;max-width:660px;box-shadow:var(--shadow2);animation:fadeIn .18s ease;flex-shrink:0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.modal-head{padding:16px 22px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:16px;font-weight:700;color:var(--blue)}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:13px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#fafbfc;border-radius:0 0 10px 10px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1;padding:0 4px}
+.modal-close:hover{background:var(--gray-bg)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:10px}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%);display:flex;align-items:center;justify-content:center;z-index:99999}
+#login-box{background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+#login-box .logo{font-size:40px;margin-bottom:8px}
+#login-box h2{font-size:20px;font-weight:700;color:#1e3a5f;margin:0 0 4px}
+#login-box p{font-size:13px;color:#6b7280;margin:0 0 20px}
+#login-box input{width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;font-family:inherit}
+#login-box input:focus{border-color:#2d6a9f}
+#login-box .login-btn{width:100%;padding:13px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+#login-box .login-btn:hover{background:#2d6a9f}
+#login-box .login-err{color:#dc2626;font-size:13px;margin-top:8px;display:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .device-grid{grid-template-columns:1fr}
+  .nav{padding:0 10px}
+  .page{padding:10px}
+}
+
+/* REFRESH ANIMATION */
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.spinning{animation:spin .8s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- ══ 로그인 화면 ══ -->
+<div id="login-screen">
+  <div id="login-box">
+    <div class="logo">🖨️</div>
+    <h2>프린터 모니터링</h2>
+    <p>아이디와 비밀번호를 입력하세요</p>
+    <input type="text" id="login-id" placeholder="아이디"
+      onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    <input type="password" id="login-pw" placeholder="비밀번호"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-err" id="login-err">아이디 또는 비밀번호가 틀립니다.</div>
+  </div>
+</div>
+
+<!-- ══ 앱 본체 ══ -->
+<div id="app-wrapper" style="display:none">
+
+<nav class="nav">
+  <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
+  <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
+  <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
+  <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
+  <div style="flex:1"></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
+    <button onclick="refreshAll()" id="refresh-btn"
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🔄 새로고침
+    </button>
+    <a href="렌탈.html"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
+      📋 임대관리
+    </a>
+    <button onclick="doLogout()"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🚪 로그아웃
+    </button>
+  </div>
+</nav>
+
+<!-- ══ PAGE: 현황판 ══ -->
+<div class="page active" id="page-monitor">
+
+  <!-- 요약 통계 -->
+  <div class="stats" id="summary-stats">
+    <div class="stat" style="background:#eff6ff;border-color:#93c5fd">
+      <div class="stat-n" style="color:#1d4ed8" id="st-total">-</div>
+      <div class="stat-l">📋 전체 기기</div>
+    </div>
+    <div class="stat" style="background:#f0fdf4;border-color:#86efac">
+      <div class="stat-n" style="color:#166534" id="st-online">-</div>
+      <div class="stat-l">🟢 온라인</div>
+    </div>
+    <div class="stat" style="background:#fee2e2;border-color:#fca5a5">
+      <div class="stat-n" style="color:#dc2626" id="st-offline">-</div>
+      <div class="stat-l">🔴 오프라인</div>
+    </div>
+    <div class="stat" style="background:#fef3c7;border-color:#fcd34d">
+      <div class="stat-n" style="color:#d97706" id="st-warn">-</div>
+      <div class="stat-l">⚠️ 토너 경고</div>
+    </div>
+    <div class="stat" style="background:#f5f3ff;border-color:#c4b5fd">
+      <div class="stat-n" style="color:#6d28d9" id="st-today">-</div>
+      <div class="stat-l">📄 오늘 총 출력</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🖨️ 전체 기기 현황</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="inp" id="view-mode" style="font-size:12px;padding:5px 8px" onchange="renderDevices()">
+          <option value="card">카드 보기</option>
+          <option value="table">테이블 보기</option>
+        </select>
+      </div>
+    </div>
+    <div class="controls">
+      <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDevices()">
+      <select class="inp" id="dev-filter" onchange="renderDevices()">
+        <option value="">전체 상태</option>
+        <option value="online">🟢 온라인만</option>
+        <option value="offline">🔴 오프라인만</option>
+        <option value="warn">⚠️ 토너 경고만</option>
+      </select>
+    </div>
+    <div class="info-row" id="dev-info"></div>
+
+    <!-- 카드 뷰 -->
+    <div id="card-view">
+      <div class="device-grid" id="device-grid"></div>
+    </div>
+
+    <!-- 테이블 뷰 -->
+    <div id="table-view" style="display:none">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>거래처 / 기기명</th>
+              <th>IP</th>
+              <th>상태</th>
+              <th style="text-align:right">흑백</th>
+              <th style="text-align:right">컬러</th>
+              <th style="text-align:center">K</th>
+              <th style="text-align:center">C</th>
+              <th style="text-align:center">M</th>
+              <th style="text-align:center">Y</th>
+              <th>수집일시</th>
+            </tr>
+          </thead>
+          <tbody id="device-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 히스토리 ══ -->
+<div class="page" id="page-history">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📅 수집 히스토리</span>
+    </div>
+    <div class="controls">
+      <select class="inp" id="hist-device" style="min-width:200px" onchange="renderHistory()">
+        <option value="">기기 선택...</option>
+      </select>
+      <input class="inp" type="month" id="hist-month" onchange="renderHistory()" style="width:130px">
+      <select class="inp" id="hist-period" onchange="renderHistory()">
+        <option value="daily">일별</option>
+        <option value="all">전체</option>
+      </select>
+    </div>
+    <div class="info-row" id="hist-info"></div>
+    <div class="tbl-wrap" style="max-height:calc(100vh - 260px)">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>시간</th>
+            <th style="text-align:right">흑백카운터</th>
+            <th style="text-align:right">컬러카운터</th>
+            <th style="text-align:right">일출력(흑백)</th>
+            <th style="text-align:right">일출력(컬러)</th>
+            <th style="text-align:right">일출력(합계)</th>
+            <th style="text-align:center">토너K</th>
+            <th style="text-align:center">토너C</th>
+            <th style="text-align:center">토너M</th>
+            <th style="text-align:center">토너Y</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="hist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 설치 안내 ══ -->
+<div class="page" id="page-guide">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📋 고객사 에이전트 설치 안내</span>
+      <button class="btn btn-primary btn-sm" onclick="downloadAgent()">⬇ 배치파일 다운로드</button>
+    </div>
+    <div style="padding:20px">
+
+      <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (3단계)</div>
+        <div style="font-size:13px;line-height:2;color:#1e3a5f">
+          <b>1단계.</b> 위 "배치파일 다운로드" 버튼 클릭 → 파일 2개 다운로드<br>
+          <b>2단계.</b> 고객사 PC 바탕화면에 파일 2개 복사<br>
+          <b>3단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> 더블클릭 → 작업 스케줄러 자동 등록
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#166534;margin-bottom:8px">✅ 설치 후 동작</div>
+        <div style="font-size:13px;line-height:2;color:#166534">
+          • PC 켜지면 자동으로 프린터 정보 수집 (하루 3회: 9시/13시/18시)<br>
+          • 수집된 데이터는 이 모니터링 화면에 자동 표시<br>
+          • 고객사는 한 번 설치 후 아무것도 안 해도 됨
+        </div>
+      </div>
+
+      <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">⚠️ 주의사항</div>
+        <div style="font-size:13px;line-height:2;color:#92400e">
+          • 고객사 PC가 켜져 있어야 수집 가능<br>
+          • 프린터와 PC가 같은 네트워크(와이파이/유선)에 연결되어 있어야 함<br>
+          • Windows Defender 경고 시 → "추가 정보" → "실행" 클릭
+        </div>
+      </div>
+
+      <!-- 등록된 기기 목록 -->
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">📋 현재 등록된 기기</div>
+      <div class="tbl-wrap" style="max-height:400px">
+        <table>
+          <thead>
+            <tr>
+              <th>NO</th><th>거래처명</th><th>기기모델</th><th>IP주소</th><th>마지막수집</th><th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="guide-device-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-wrapper -->
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h3 id="detail-title">기기 상세</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  Firebase 초기화
+// ══════════════════════════════════════════
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk",
+  authDomain: "rental-management-8c377.firebaseapp.com",
+  projectId: "rental-management-8c377",
+  storageBucket: "rental-management-8c377.firebasestorage.app",
+  messagingSenderId: "1021274937799",
+  appId: "1:1021274937799:web:022a4ba9496380216d21e2"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+var db = firebase.firestore();
+var _fbReady = true;
+console.log('✅ Firebase 연결 완료');
+
+// ══════════════════════════════════════════
+//  계정 정보
+// ══════════════════════════════════════════
+var ACCOUNTS = {
+  shin: { id:'shin', pw:'9649', role:'admin' },
+  lee:  { id:'lee',  pw:'7190', role:'admin' },
+  jang: { id:'jang', pw:'8888', role:'user'  },
+  min:  { id:'min',  pw:'9999', role:'user'  }
+};
+var _currentUser = null;
+
+// ══════════════════════════════════════════
+//  로그인
+// ══════════════════════════════════════════
+function doLogin(){
+  var id = document.getElementById('login-id').value.trim();
+  var pw = document.getElementById('login-pw').value;
+  var matched = Object.values(ACCOUNTS).find(function(a){ return a.id===id && a.pw===pw; });
+  if(matched){
+    _currentUser = matched;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-wrapper').style.display  = 'block';
+    loadAllDevices();
+    // 자동 새로고침 5분마다
+    setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-pw').focus();
+  }
+}
+function doLogout(){
+  _currentUser = null;
+  document.getElementById('app-wrapper').style.display  = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+// ══════════════════════════════════════════
+//  전역 데이터
+// ══════════════════════════════════════════
+var _devices = []; // 현재 기기 목록
+
+// ══════════════════════════════════════════
+//  유틸
+// ══════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function tonerColor(pct){
+  var v = parseInt(pct);
+  if(isNaN(v)||v<0) return {color:'#9ca3af',bg:'#f3f4f6',icon:'❓'};
+  if(v<=10) return {color:'#dc2626',bg:'#fee2e2',icon:'🔴'};
+  if(v<=25) return {color:'#d97706',bg:'#fef3c7',icon:'🟡'};
+  return {color:'#166534',bg:'#dcfce7',icon:'🟢'};
+}
+
+function tonerBarHtml(pct, label){
+  var v = parseInt(pct);
+  var tc = tonerColor(v);
+  var pctShow = (isNaN(v)||v<0) ? '-' : v+'%';
+  var width   = (isNaN(v)||v<0) ? 0 : v;
+  return '<div class="toner-item">'+
+    '<div class="toner-label">'+label+'</div>'+
+    '<div class="toner-bar-bg"><div class="toner-bar-fill" style="width:'+width+'%;background:'+tc.color+'"></div></div>'+
+    '<div class="toner-pct" style="color:'+tc.color+'">'+pctShow+'</div>'+
+    '</div>';
+}
+
+function isOnline(d){ return d.is_online==='true'||d.is_online===true; }
+function hasTonerWarn(d){
+  return ['toner_k','toner_c','toner_m','toner_y'].some(function(k){
+    var v=parseInt(d[k]); return !isNaN(v)&&v>=0&&v<=10;
+  });
+}
+
+// ══════════════════════════════════════════
+//  데이터 로드
+// ══════════════════════════════════════════
+function loadAllDevices(silent){
+  if(!silent){
+    document.getElementById('device-grid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text3)">'+
+      '<div class="spinning" style="font-size:32px">🔄</div><br>데이터 불러오는 중...</div>';
+  }
+  var btn = document.getElementById('refresh-btn');
+  if(btn) btn.innerHTML = '<span class="spinning">🔄</span> 새로고침';
+
+  db.collection('device_status').get().then(function(snap){
+    _devices = [];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d = doc.data();
+        d._id = doc.id;
+        _devices.push(d);
+      }
+    });
+
+    // 히스토리 기기 드롭다운 업데이트
+    var sel = document.getElementById('hist-device');
+    var cur = sel ? sel.value : '';
+    if(sel){
+      sel.innerHTML = '<option value="">기기 선택...</option>' +
+        _devices.map(function(d){
+          return '<option value="'+d._id+'"'+(d._id===cur?' selected':'')+'>'+esc(d.name||d._id)+'</option>';
+        }).join('');
+    }
+
+    // 마지막 업데이트 시간
+    var now = new Date().toLocaleTimeString('ko-KR');
+    document.getElementById('last-update').textContent = '최근: '+now;
+    if(btn) btn.innerHTML = '🔄 새로고침';
+
+    renderDevices();
+    renderGuideList();
+    updateSummary();
+
+  }).catch(function(e){
+    if(btn) btn.innerHTML = '🔄 새로고침';
+    document.getElementById('device-grid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#dc2626">'+
+      '오류: '+e.message+'<br><small>Firebase 연결을 확인하세요</small></div>';
+  });
+}
+
+function refreshAll(){
+  loadAllDevices(false);
+}
+
+// ══════════════════════════════════════════
+//  요약 통계 업데이트
+// ══════════════════════════════════════════
+function updateSummary(){
+  var total   = _devices.length;
+  var online  = _devices.filter(isOnline).length;
+  var offline = total - online;
+  var warns   = _devices.filter(hasTonerWarn).length;
+
+  // 오늘 총 출력 (bw+color 합계)
+  var today = new Date().toISOString().slice(0,10);
+  var todayTotal = 0;
+  _devices.forEach(function(d){
+    if(d.date === today){
+      todayTotal += (parseInt(d.bw_count)||0) + (parseInt(d.color_count)||0);
+    }
+  });
+
+  document.getElementById('st-total').textContent   = total;
+  document.getElementById('st-online').textContent  = online;
+  document.getElementById('st-offline').textContent = offline;
+  document.getElementById('st-warn').textContent    = warns;
+  document.getElementById('st-today').textContent   = todayTotal > 0 ? todayTotal.toLocaleString() : '-';
+}
+
+// ══════════════════════════════════════════
+//  기기 카드 렌더
+// ══════════════════════════════════════════
+function renderDevices(){
+  var srch   = (document.getElementById('dev-srch').value||'').toLowerCase();
+  var filter = document.getElementById('dev-filter').value;
+  var view   = document.getElementById('view-mode').value;
+
+  // 뷰 전환
+  document.getElementById('card-view').style.display  = view==='card'  ? '' : 'none';
+  document.getElementById('table-view').style.display = view==='table' ? '' : 'none';
+
+  // 필터링
+  var list = _devices.filter(function(d){
+    if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
+    if(filter==='online'  && !isOnline(d))    return false;
+    if(filter==='offline' && isOnline(d))     return false;
+    if(filter==='warn'    && !hasTonerWarn(d)) return false;
+    return true;
+  });
+
+  // 정렬: 토너경고 → 온라인 → 오프라인
+  list.sort(function(a,b){
+    var aw = hasTonerWarn(a)?2:0, bw = hasTonerWarn(b)?2:0;
+    var ao = isOnline(a)?1:0,     bo = isOnline(b)?1:0;
+    return (bw+bo)-(aw+ao);
+  });
+
+  document.getElementById('dev-info').textContent = '총 '+list.length+'대 표시 중 (전체 '+_devices.length+'대)';
+
+  // ── 카드 뷰 ──
+  if(!list.length){
+    document.getElementById('device-grid').innerHTML =
+      '<div style="grid-column:1/-1"><div class="empty">'+
+      '<div class="empty-icon">🖨️</div>'+
+      '표시할 기기가 없습니다<br>'+
+      '<small>배치파일을 실행하면 데이터가 나타납니다</small></div></div>';
+  } else {
+    document.getElementById('device-grid').innerHTML = list.map(function(d){
+      var online = isOnline(d);
+      var warn   = hasTonerWarn(d);
+      var cardCls = 'device-card' + (warn?' warn':!online?' offline':'');
+      var statusBg    = online ? '#dcfce7' : '#fee2e2';
+      var statusColor = online ? '#166534' : '#dc2626';
+      var statusIcon  = online ? '🟢' : '🔴';
+      var statusText  = online ? '온라인' : '오프라인';
+
+      return '<div class="'+cardCls+'" onclick="openDetail(\''+d._id+'\')">'+
+        // 헤더
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
+          '<div>'+
+            '<div style="font-size:14px;font-weight:700">'+esc(d.name||'-')+'</div>'+
+            '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(d.model||'-')+' · '+esc(d.ip||'-')+'</div>'+
+          '</div>'+
+          '<span style="background:'+statusBg+';color:'+statusColor+';font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">'+
+            statusIcon+' '+statusText+
+          '</span>'+
+        '</div>'+
+        // 카운터
+        '<div class="counter-wrap">'+
+          '<div class="counter-box">'+
+            '<div class="counter-label">흑백 카운터</div>'+
+            '<div class="counter-val">'+((d.bw_count&&parseInt(d.bw_count)>0)?parseInt(d.bw_count).toLocaleString():'-')+'</div>'+
+          '</div>'+
+          '<div class="counter-box">'+
+            '<div class="counter-label">컬러 카운터</div>'+
+            '<div class="counter-val" style="color:var(--blue)">'+((d.color_count&&parseInt(d.color_count)>0)?parseInt(d.color_count).toLocaleString():'-')+'</div>'+
+          '</div>'+
+        '</div>'+
+        // 토너
+        '<div class="toner-wrap">'+
+          tonerBarHtml(d.toner_k,'K(검)')+
+          tonerBarHtml(d.toner_c,'C(청)')+
+          tonerBarHtml(d.toner_m,'M(홍)')+
+          tonerBarHtml(d.toner_y,'Y(황)')+
+        '</div>'+
+        // 토너 경고
+        (warn?'<div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:5px 8px;border-radius:5px;margin-bottom:6px;text-align:center">⚠️ 토너 교체 필요!</div>':'')+
+        // 마지막 수집
+        '<div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">'+
+          '📅 '+esc(d.collected_at||'수집 없음')+
+        '</div>'+
+        '</div>';
+    }).join('');
+  }
+
+  // ── 테이블 뷰 ──
+  function tonerTd(pct){
+    var v=parseInt(pct); var tc=tonerColor(v);
+    return '<td style="text-align:center;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':tc.icon+' '+v+'%')+'</td>';
+  }
+  document.getElementById('device-tbody').innerHTML = list.length ?
+    list.map(function(d){
+      var online = isOnline(d);
+      var badge  = online
+        ? '<span class="badge b-ok">🟢 온라인</span>'
+        : '<span class="badge b-late">🔴 오프라인</span>';
+      return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
+        '<td><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
+            '<div style="font-size:11px;color:var(--text3)">'+esc(d.model||'-')+'</div></td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+esc(d.ip||'-')+'</td>'+
+        '<td>'+badge+'</td>'+
+        '<td style="text-align:right;font-weight:600">'+((d.bw_count&&parseInt(d.bw_count)>0)?parseInt(d.bw_count).toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right;color:var(--blue)">'+((d.color_count&&parseInt(d.color_count)>0)?parseInt(d.color_count).toLocaleString():'-')+'</td>'+
+        tonerTd(d.toner_k)+tonerTd(d.toner_c)+tonerTd(d.toner_m)+tonerTd(d.toner_y)+
+        '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
+        '</tr>';
+    }).join('') :
+    '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
+}
+
+// ══════════════════════════════════════════
+//  기기 상세 모달
+// ══════════════════════════════════════════
+function openDetail(id){
+  var d = _devices.find(function(x){ return x._id===id; });
+  if(!d) return;
+  var online = isOnline(d);
+  var warn   = hasTonerWarn(d);
+
+  document.getElementById('detail-title').textContent = (d.name||'-') + ' 상세 정보';
+  document.getElementById('detail-body').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
+      '<div><span style="color:var(--text3)">기기명</span><br><b>'+esc(d.name||'-')+'</b></div>'+
+      '<div><span style="color:var(--text3)">모델</span><br><b>'+esc(d.model||'-')+'</b></div>'+
+      '<div><span style="color:var(--text3)">IP주소</span><br><b>'+esc(d.ip||'-')+'</b></div>'+
+      '<div><span style="color:var(--text3)">상태</span><br><b>'+(online?'🟢 온라인':'🔴 오프라인')+'</b></div>'+
+      '<div><span style="color:var(--text3)">흑백 카운터</span><br><b style="font-size:16px">'+((d.bw_count&&parseInt(d.bw_count)>0)?parseInt(d.bw_count).toLocaleString():'-')+'</b> 매</div>'+
+      '<div><span style="color:var(--text3)">컬러 카운터</span><br><b style="font-size:16px;color:var(--blue)">'+((d.color_count&&parseInt(d.color_count)>0)?parseInt(d.color_count).toLocaleString():'-')+'</b> 매</div>'+
+    '</div>'+
+    '<div style="font-size:13px;font-weight:600;margin-bottom:8px">토너 잔량</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">'+
+      tonerBarHtml(d.toner_k,'K(검)')+
+      tonerBarHtml(d.toner_c,'C(청)')+
+      tonerBarHtml(d.toner_m,'M(홍)')+
+      tonerBarHtml(d.toner_y,'Y(황)')+
+    '</div>'+
+    (warn?'<div style="background:#fee2e2;color:#dc2626;font-weight:700;padding:10px;border-radius:6px;text-align:center;margin-bottom:10px">⚠️ 토너 교체가 필요합니다!</div>':'')+
+    '<div style="font-size:12px;color:var(--text3);text-align:right">마지막 수집: '+esc(d.collected_at||'-')+'</div>';
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('detail-modal').classList.remove('open');
+}
+document.getElementById('detail-modal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+
+// ══════════════════════════════════════════
+//  히스토리
+// ══════════════════════════════════════════
+function renderHistory(){
+  var devId  = document.getElementById('hist-device').value;
+  var month  = document.getElementById('hist-month').value;
+  if(!devId||!month){
+    document.getElementById('hist-tbody').innerHTML =
+      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">기기와 월을 선택하세요</td></tr>';
+    return;
+  }
+  var devNo    = devId.replace('device_','');
+  var monthStr = month.replace('-','');
+
+  document.getElementById('hist-info').textContent = '불러오는 중...';
+  document.getElementById('hist-tbody').innerHTML =
+    '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+
+  db.collection('device_status')
+    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+devNo+'_'+monthStr+'01')
+    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+devNo+'_'+monthStr+'31')
+    .get().then(function(snap){
+      var rows=[];
+      snap.forEach(function(doc){ rows.push(doc.data()); });
+      rows.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+
+      document.getElementById('hist-info').textContent = '총 '+rows.length+'건';
+
+      if(!rows.length){
+        document.getElementById('hist-tbody').innerHTML =
+          '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">해당 월 데이터 없음</td></tr>';
+        return;
+      }
+
+      var prevBw=null, prevColor=null;
+      document.getElementById('hist-tbody').innerHTML = rows.map(function(r){
+        var bw    = parseInt(r.bw_count)||0;
+        var color = parseInt(r.color_count)||0;
+        var dBw    = (prevBw!==null&&bw>=prevBw)?bw-prevBw:null;
+        var dColor = (prevColor!==null&&color>=prevColor)?color-prevColor:null;
+        var dTotal = (dBw!==null&&dColor!==null)?dBw+dColor:null;
+        prevBw=bw; prevColor=color;
+
+        function htd(pct){
+          var v=parseInt(pct); var tc=tonerColor(v);
+          return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':v+'%')+'</td>';
+        }
+        return '<tr>'+
+          '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
+          '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
+          '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
+          '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;color:#0891b2">'+(dColor!==null?dColor.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;font-weight:700;color:#1e3a5f">'+(dTotal!==null?dTotal.toLocaleString():'-')+'</td>'+
+          htd(r.toner_k)+htd(r.toner_c)+htd(r.toner_m)+htd(r.toner_y)+
+          '<td style="font-size:11px">'+esc(r.status||'-')+'</td>'+
+          '</tr>';
+      }).join('');
+    }).catch(function(e){
+      document.getElementById('hist-tbody').innerHTML =
+        '<tr><td colspan="12" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
+    });
+}
+
+// ══════════════════════════════════════════
+//  설치안내 기기 목록
+// ══════════════════════════════════════════
+function renderGuideList(){
+  var tbody = document.getElementById('guide-device-list');
+  if(!tbody) return;
+  if(!_devices.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text3)">등록된 기기 없음</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _devices.map(function(d,i){
+    var online = isOnline(d);
+    return '<tr>'+
+      '<td>'+( i+1)+'</td>'+
+      '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+      '<td style="color:var(--text3)">'+esc(d.model||'-')+'</td>'+
+      '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
+      '<td style="font-size:12px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
+      '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  배치파일 다운로드 생성
+// ══════════════════════════════════════════
+function downloadAgent(){
+  // monitor.ps1 내용
+  var ps1 = '# ================================================\r\n'+
+    '#  프린터 모니터링 에이전트 v1.0\r\n'+
+    '#  Firebase REST API 직접 전송\r\n'+
+    '# ================================================\r\n\r\n'+
+    '# Firebase 설정\r\n'+
+    '$FIREBASE_PROJECT = "rental-management-8c377"\r\n'+
+    '$FIREBASE_API_KEY = "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk"\r\n'+
+    '$FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status"\r\n\r\n'+
+    '# ── 수집할 프린터 목록 (IP는 고객사마다 수정) ──\r\n'+
+    '$PRINTERS = @(\r\n'+
+    '    @{ no=1; name="장비1"; ip="192.168.1.100"; model="HP8210" }\r\n'+
+    '    # 기기 추가 시 위 형식으로 추가\r\n'+
+    ')\r\n\r\n'+
+    '# SNMP OID\r\n'+
+    '$OID_BW    = "1.3.6.1.2.1.43.10.2.1.4.1.1"\r\n'+
+    '$OID_COLOR = "1.3.6.1.2.1.43.10.2.1.4.1.2"\r\n'+
+    '$OID_TK_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.1"\r\n'+
+    '$OID_TK_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.1"\r\n'+
+    '$OID_TC_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.2"\r\n'+
+    '$OID_TC_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.2"\r\n'+
+    '$OID_TM_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.3"\r\n'+
+    '$OID_TM_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.3"\r\n'+
+    '$OID_TY_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.4"\r\n'+
+    '$OID_TY_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.4"\r\n\r\n'+
+    'function Get-SNMP($ip,$oid){\r\n'+
+    '  try{\r\n'+
+    '    $r=& snmpget -v1 -c public -t 3 -r 1 $ip $oid 2>$null\r\n'+
+    '    if($r -match "INTEGER:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
+    '    if($r -match "Counter32:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
+    '    if($r -match "Gauge32:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
+    '    return $null\r\n'+
+    '  }catch{return $null}\r\n'+
+    '}\r\n\r\n'+
+    'function TonerPct($cur,$max){\r\n'+
+    '  if($max -and $max -gt 0 -and $cur -ne $null){\r\n'+
+    '    $p=[math]::Round(($cur/$max)*100)\r\n'+
+    '    return [math]::Max(0,[math]::Min(100,$p))\r\n'+
+    '  }\r\n'+
+    '  return -1\r\n'+
+    '}\r\n\r\n'+
+    'function Save-Firebase($docId,$data){\r\n'+
+    '  $url="$FIREBASE_URL/$docId`?key=$FIREBASE_API_KEY"\r\n'+
+    '  $fields=@{}\r\n'+
+    '  foreach($k in $data.Keys){\r\n'+
+    '    $v=$data[$k]\r\n'+
+    '    if($v -is [int]-or $v -is [long]){$fields[$k]=@{integerValue=$v.ToString()}}\r\n'+
+    '    else{$fields[$k]=@{stringValue=$v.ToString()}}\r\n'+
+    '  }\r\n'+
+    '  $body=@{fields=$fields}|ConvertTo-Json -Depth 5\r\n'+
+    '  try{Invoke-RestMethod -Uri $url -Method Patch -Body $body -ContentType "application/json; charset=utf-8"|Out-Null;return $true}\r\n'+
+    '  catch{Write-Host "저장오류: $_";return $false}\r\n'+
+    '}\r\n\r\n'+
+    '$ts=Get-Date -Format "yyyy-MM-dd HH:mm:ss"\r\n'+
+    '$dt=Get-Date -Format "yyyy-MM-dd"\r\n'+
+    '$tm=Get-Date -Format "HH:mm"\r\n'+
+    'Write-Host "수집시작: $ts"\r\n\r\n'+
+    'foreach($p in $PRINTERS){\r\n'+
+    '  Write-Host "[$($p.name)] 수집중..."\r\n'+
+    '  $bw=Get-SNMP $p.ip $OID_BW\r\n'+
+    '  $cl=Get-SNMP $p.ip $OID_COLOR\r\n'+
+    '  $tkmax=Get-SNMP $p.ip $OID_TK_MAX; $tkcur=Get-SNMP $p.ip $OID_TK_CUR\r\n'+
+    '  $tcmax=Get-SNMP $p.ip $OID_TC_MAX; $tccur=Get-SNMP $p.ip $OID_TC_CUR\r\n'+
+    '  $tmmax=Get-SNMP $p.ip $OID_TM_MAX; $tmcur=Get-SNMP $p.ip $OID_TM_CUR\r\n'+
+    '  $tymax=Get-SNMP $p.ip $OID_TY_MAX; $tycur=Get-SNMP $p.ip $OID_TY_CUR\r\n'+
+    '  $online=($bw -ne $null -or $cl -ne $null)\r\n'+
+    '  $data=@{\r\n'+
+    '    name=$p.name; model=$p.model; ip=$p.ip\r\n'+
+    '    is_online=$online.ToString()\r\n'+
+    '    bw_count=if($bw){$bw}else{0}\r\n'+
+    '    color_count=if($cl){$cl}else{0}\r\n'+
+    '    toner_k=TonerPct $tkcur $tkmax\r\n'+
+    '    toner_c=TonerPct $tccur $tcmax\r\n'+
+    '    toner_m=TonerPct $tmcur $tmmax\r\n'+
+    '    toner_y=TonerPct $tycur $tymax\r\n'+
+    '    status=if($online){"정상"}else{"오프라인"}\r\n'+
+    '    collected_at=$ts; date=$dt; time=$tm\r\n'+
+    '  }\r\n'+
+    '  Save-Firebase "device_$($p.no)" $data | Out-Null\r\n'+
+    '  Save-Firebase "hist_$($p.no)_$($dt -replace \"-\",\"\")_$($tm -replace \":\",\"\")" $data | Out-Null\r\n'+
+    '  Write-Host "완료"\r\n'+
+    '}\r\n'+
+    'Write-Host "전체완료: $ts"\r\n';
+
+  // 설치 bat 내용
+  var bat = '@echo off\r\n'+
+    'chcp 65001 >nul\r\n'+
+    'title 프린터모니터링 설치\r\n'+
+    'echo.\r\n'+
+    'echo  ====================================\r\n'+
+    'echo   프린터 모니터링 에이전트 설치\r\n'+
+    'echo  ====================================\r\n'+
+    'echo.\r\n'+
+    'echo  작업 스케줄러에 등록합니다...\r\n'+
+    'echo  (하루 3회 자동 실행: 9시 / 13시 / 18시)\r\n'+
+    'echo.\r\n'+
+    'set SCRIPT_PATH=%~dp0monitor.ps1\r\n'+
+    'schtasks /create /tn "PrinterMonitor_9" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 09:00 /f >nul 2>&1\r\n'+
+    'schtasks /create /tn "PrinterMonitor_13" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 13:00 /f >nul 2>&1\r\n'+
+    'schtasks /create /tn "PrinterMonitor_18" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 18:00 /f >nul 2>&1\r\n'+
+    'echo  ✅ 작업 스케줄러 등록 완료!\r\n'+
+    'echo.\r\n'+
+    'echo  지금 바로 한 번 실행합니다...\r\n'+
+    'powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"\r\n'+
+    'echo.\r\n'+
+    'echo  ✅ 설치 완료! 이 창을 닫으셔도 됩니다.\r\n'+
+    'pause\r\n';
+
+  // 다운로드
+  var a = document.createElement('a');
+  var blob1 = new Blob([ps1],{type:'text/plain;charset=utf-8'});
+  a.href = URL.createObjectURL(blob1);
+  a.download = 'monitor.ps1';
+  a.click();
+  setTimeout(function(){
+    var blob2 = new Blob([bat],{type:'text/plain;charset=utf-8'});
+    a.href = URL.createObjectURL(blob2);
+    a.download = '프린터모니터링_설치.bat';
+    a.click();
+  }, 500);
+  alert('파일 2개가 다운로드됩니다:\n1. monitor.ps1\n2. 프린터모니터링_설치.bat\n\n두 파일을 같은 폴더에 놓고\n프린터모니터링_설치.bat를 실행하세요!');
+}
+
+// ══════════════════════════════════════════
+//  페이지 전환
+// ══════════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('page-'+id).classList.add('active');
+  var tabs = document.querySelectorAll('.nav-tab');
+  var idx = {monitor:0,history:1,guide:2}[id];
+  if(tabs[idx]) tabs[idx].classList.add('active');
+  if(id==='history') renderHistory();
+}
+
+// ══════════════════════════════════════════
+//  히스토리 월 기본값
+// ══════════════════════════════════════════
+(function(){
+  var now = new Date();
+  var m   = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var el  = document.getElementById('hist-month');
+  if(el) el.value = m;
+})();
+</script>
+</body>
+</html>
