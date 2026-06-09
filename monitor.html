@@ -424,20 +424,47 @@ var _currentUser = null;
 //  로그인
 // ══════════════════════════════════════════
 function doLogin(){
-  var id = document.getElementById('login-id').value.trim();
-  var pw = document.getElementById('login-pw').value;
-  var matched = Object.values(ACCOUNTS).find(function(a){ return a.id===id && a.pw===pw; });
-  if(matched){
-    _currentUser = matched;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-wrapper').style.display  = 'block';
-    loadAllDevices();
-    // 자동 새로고침 5분마다
-    setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
-  } else {
-    document.getElementById('login-err').style.display = 'block';
-    document.getElementById('login-pw').value = '';
-    document.getElementById('login-pw').focus();
+  try {
+    var id = document.getElementById('login-id').value.trim();
+    var pw = document.getElementById('login-pw').value;
+    var errEl = document.getElementById('login-err');
+
+    // 입력값 확인
+    if(!id || !pw){
+      errEl.textContent = '아이디와 비밀번호를 입력하세요.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // 계정 확인 (Firebase 불필요 - 로컬 ACCOUNTS만 사용)
+    var matched = null;
+    var keys = Object.keys(ACCOUNTS);
+    for(var i=0; i<keys.length; i++){
+      var a = ACCOUNTS[keys[i]];
+      if(a.id === id && a.pw === pw){
+        matched = a;
+        break;
+      }
+    }
+
+    if(matched){
+      _currentUser = matched;
+      errEl.style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-wrapper').style.display  = 'block';
+      // Firebase 준비되면 데이터 로드
+      loadAllDevices();
+      // 자동 새로고침 5분마다
+      setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
+    } else {
+      errEl.textContent = '아이디 또는 비밀번호가 틀립니다.';
+      errEl.style.display = 'block';
+      document.getElementById('login-pw').value = '';
+      document.getElementById('login-pw').focus();
+    }
+  } catch(e) {
+    console.error('로그인 오류:', e);
+    alert('로그인 중 오류가 발생했습니다: ' + e.message);
   }
 }
 function doLogout(){
@@ -495,6 +522,7 @@ function loadAllDevices(silent){
     setTimeout(function(){ loadAllDevices(silent); }, 400);
     return;
   }
+  if(!silent){
     document.getElementById('device-grid').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text3)">'+
       '<div class="spinning" style="font-size:32px">🔄</div><br>데이터 불러오는 중...</div>';
