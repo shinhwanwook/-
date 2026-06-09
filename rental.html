@@ -6236,19 +6236,39 @@ function showApp(role){
     if(navBtn)   navBtn.style.display   = 'none'; // 사용자는 관리자 버튼 숨김
   }
 
-  // Firebase에서 데이터 불러오기
-  setTimeout(function(){
-    loadFromApi(function(ok){
-      if(!ok){
-        // Firebase 실패시 localStorage로 복원
-        if(loadFromLocal()){
-          renderList(); renderPayment(); renderService();
-          renderStats(); renderInvList(); renderTax();
-        }
-        hideLoadingScreen();
+  // Firebase 준비될 때까지 대기 후 데이터 불러오기
+  function tryLoad(attempts){
+    if(attempts > 20){
+      // 20회(10초) 초과 → localStorage로 대체
+      console.warn('Firebase 준비 타임아웃 - localStorage로 대체');
+      setLoadingProgress(50, 'localStorage에서 복원 중...');
+      if(loadFromLocal()){
+        renderList(); renderPayment(); renderService();
+        renderStats(); renderInvList(); renderTax();
       }
-    });
-  }, 100);
+      hideLoadingScreen();
+      return;
+    }
+    if(window._fbReady && window._fbLoad){
+      // Firebase 준비 완료 → 로드 시작
+      loadFromApi(function(ok){
+        if(!ok){
+          // Firebase 실패시 localStorage로 복원
+          setLoadingProgress(50, 'localStorage에서 복원 중...');
+          if(loadFromLocal()){
+            renderList(); renderPayment(); renderService();
+            renderStats(); renderInvList(); renderTax();
+          }
+          hideLoadingScreen();
+        }
+      });
+    } else {
+      // Firebase 아직 준비 안됨 → 500ms 후 재시도
+      setLoadingProgress(5, 'Firebase 연결 중... ('+attempts+')');
+      setTimeout(function(){ tryLoad(attempts+1); }, 500);
+    }
+  }
+  setTimeout(function(){ tryLoad(0); }, 200);
 }
 
 function doLogin(){
