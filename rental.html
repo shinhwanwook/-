@@ -4685,6 +4685,27 @@ function hidePayTip(){
   </div>
 </div>
 
+<!-- MODAL: 세금계산서 셀 색상 선택 -->
+<div class="modal-bg" id="tax-color-modal">
+  <div class="modal" style="max-width:300px">
+    <div class="modal-head">
+      <h3 id="tax-color-title">색상 선택</h3>
+      <button class="modal-close" onclick="closeModal('tax-color-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;justify-content:center;padding:10px">
+        <div onclick="setTaxColor('none')" style="width:48px;height:48px;border-radius:8px;border:2px solid #ccc;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px" title="기본">✕</div>
+        <div onclick="setTaxColor('#fef9c3')" style="width:48px;height:48px;border-radius:8px;border:2px solid #fbbf24;background:#fef9c3;cursor:pointer" title="노란색"></div>
+        <div onclick="setTaxColor('#dcfce7')" style="width:48px;height:48px;border-radius:8px;border:2px solid #86efac;background:#dcfce7;cursor:pointer" title="초록색"></div>
+        <div onclick="setTaxColor('#fee2e2')" style="width:48px;height:48px;border-radius:8px;border:2px solid #fca5a5;background:#fee2e2;cursor:pointer" title="빨간색"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('tax-color-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: 세금계산서 거래처 상세 -->
 <div class="modal-bg" id="tax-client-detail-modal">
   <div class="modal" style="max-width:500px">
@@ -4904,6 +4925,32 @@ var _taxEditKey = null; // "seq-YYYY-MM"
 // issues 값에서 날짜 문자열 추출 (문자열 또는 {date:...} 객체 모두 처리)
 var _taxMemoSeq = null;
 var _tcdSeq = null;
+var _taxColorSeq = null;
+var _taxColorField = null;
+
+function openTaxColorPicker(e, seq, field){
+  e.preventDefault();
+  _taxColorSeq = seq;
+  _taxColorField = field;
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(seq); });
+  document.getElementById('tax-color-title').textContent = 
+    (field === 'name' ? '거래처명' : '임대료') + ' 색상 선택';
+  openModal('tax-color-modal');
+}
+
+function setTaxColor(color){
+  var t = TAX_CLIENTS.find(function(x){ return x.seq === parseInt(_taxColorSeq); });
+  if(!t) return;
+  if(_taxColorField === 'name') t.nameColor = color;
+  else t.rentColor = color;
+  closeModal('tax-color-modal');
+  window._isLoading = false;
+  saveToLocal();
+  saveToApi(function(ok){
+    showSaveStatus(ok?'✅ 색상 저장됨':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
+  });
+  renderTax();
+}
 function openTaxClientDetail(seq){
   var seqNum = parseInt(seq);
   var t = TAX_CLIENTS.find(function(x){ return x.seq === seqNum; });
@@ -5092,6 +5139,7 @@ function renderTax() {
   document.getElementById('tax-thead').innerHTML =
     '<th id="tax-th-name" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">거래처</th>' +
     '<th id="tax-th-mgr"  class="resizable" style="white-space:nowrap;min-width:60px;width:80px">담당자</th>' +
+    '<th id="tax-th-qty"  class="resizable" style="white-space:nowrap;min-width:40px;width:50px">수량</th>' +
     '<th id="tax-th-email" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">이메일</th>' +
     '<th id="tax-th-rent" class="resizable" style="white-space:nowrap;min-width:60px;width:90px">임대료</th>' +
     mlabels.map(function(l,i) {
@@ -5136,11 +5184,12 @@ function renderTax() {
         '<div style="'+cellStyle+'">'+cellContent+'</div></td>';
     }).join('');
     return '<tr>'+
-      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')">'+
+      '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;'+(t.nameColor&&t.nameColor!=='none'?'background:'+t.nameColor+';':'')+'" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')" oncontextmenu="openTaxColorPicker(event,'+t.seq+',\'name\');return false;">'+
         esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
+      '<td style="font-size:12px;text-align:center">'+esc(String(t.qty||1))+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap">'+t.rent.toLocaleString()+'원</td>'+
+      '<td style="font-size:12px;white-space:nowrap;cursor:context-menu;'+(t.rentColor&&t.rentColor!=='none'?'background:'+t.rentColor+';':'')+'" oncontextmenu="openTaxColorPicker(event,'+t.seq+',\'rent\');return false;">'+t.rent.toLocaleString()+'원</td>'+
       cells+
     '</tr>';
   }).join('') || '<tr><td colspan="16" class="empty">조회 결과가 없습니다</td></tr>';
@@ -5698,10 +5747,8 @@ function terminateTaxClient(seq) {
     closeModal('confirm-modal');
     renderTaxClientList();
     renderTax();
-    // 즉시 Firebase 저장
-    saveToLocal();
-    if(typeof saveToApi === 'function') saveToApi(null);
-    showSaveStatus('✅ 해지 처리됨', '#86efac');
+    // tax_main 직접 업데이트
+    saveTaxClientsToFirebase('✅ 해지 처리됨');
   }, '해지', false);
 }
 
@@ -5714,11 +5761,33 @@ function restoreTaxClient(seq) {
     closeModal('confirm-modal');
     renderTaxClientList();
     renderTax();
-    // 즉시 Firebase 저장
-    saveToLocal();
-    if(typeof saveToApi === 'function') saveToApi(null);
-    showSaveStatus('✅ 복원 완료', '#86efac');
+    // tax_main 직접 업데이트
+    saveTaxClientsToFirebase('✅ 복원 완료');
   }, '복원', true);
+}
+
+// TAX_CLIENTS를 tax_main에 직접 저장
+function saveTaxClientsToFirebase(successMsg){
+  saveToLocal();
+  if(!window._db){
+    showSaveStatus('⚠ DB 연결 없음', '#ef4444');
+    return;
+  }
+  showSaveStatus('⏳ 저장 중...', '#93c5fd');
+  // slim 변환 (issues 제거)
+  var taxSlim = TAX_CLIENTS.map(function(t){
+    var s = Object.assign({}, t);
+    s.issues = {};
+    return s;
+  });
+  window._db.collection('rental').doc('tax_main').update({TAX_CLIENTS: taxSlim})
+    .then(function(){
+      showSaveStatus(successMsg || '✅ 저장됨', '#86efac');
+    })
+    .catch(function(e){
+      console.error('tax_main 저장 오류:', e);
+      showSaveStatus('⚠ 저장 실패', '#ef4444');
+    });
 }
 </script>
 
@@ -5728,10 +5797,8 @@ function restoreTaxClient(seq) {
 // ══ 로그인 설정 ══
 // ══ 계정 설정 ══
 const ACCOUNTS_DEFAULT = {
-  shin: { id:'shin', pw:'9649', role:'admin', label:'관리자' },
-  lee:  { id:'lee',  pw:'7190', role:'admin', label:'관리자' },
-  jang: { id:'jang', pw:'8888', role:'user',  label:'사용자' },
-  min:  { id:'min',  pw:'9999', role:'user',  label:'사용자' }
+  admin: { id:'admin', pw:'1234', role:'admin', label:'관리자' },
+  user:  { id:'user',  pw:'1234', role:'user',  label:'사용자' }
 };
 // localStorage에 저장된 계정 불러오기 (없으면 기본값)
 let ACCOUNTS = JSON.parse(JSON.stringify(ACCOUNTS_DEFAULT)); // 기본값으로 시작
@@ -5926,6 +5993,7 @@ function doLogin(){
 
     var mainData = Object.assign({}, data, {CONTRACTS: contractsSlim, TAX_CLIENTS: taxSlim});
     delete mainData.DOC_FILES; // DOC_FILES는 별도 청크로 저장
+    delete mainData.TAX_CLIENTS; // TAX_CLIENTS는 tax_main에만 저장
     // 저장 시간 기록
     mainData.savedAt = new Date().toISOString();
     mainData.savedBy = (typeof _currentUserId !== 'undefined' ? _currentUserId : 'unknown');
@@ -5971,12 +6039,14 @@ function doLogin(){
       result = snaps[0].data();
       console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
 
-      // tax_main에서 TAX_CLIENTS 로드
+      // tax_main에서 TAX_CLIENTS 로드 (항상 tax_main 우선)
       if(snaps[1].exists) {
         result.TAX_CLIENTS = snaps[1].data().TAX_CLIENTS || [];
         console.log('tax_main 로드 완료, TAX_CLIENTS:', result.TAX_CLIENTS.length);
       } else {
-        console.log('tax_main 없음');
+        // tax_main 없으면 main의 TAX_CLIENTS 사용 (구버전 호환)
+        result.TAX_CLIENTS = result.TAX_CLIENTS || [];
+        console.log('tax_main 없음 - main TAX_CLIENTS 사용:', result.TAX_CLIENTS.length);
       }
 
       // 2단계: 입금 청크 로드
