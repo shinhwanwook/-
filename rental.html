@@ -2922,6 +2922,7 @@ function saveService(){
   const no=parseInt(document.getElementById('sm-no').value);
   const date=document.getElementById('sm-date').value;
   const content=document.getElementById('sm-content').value.trim();
+  if(!no){alert('거래처를 선택하세요.');return;}
   if(!date||!content){alert('날짜와 내용을 입력하세요.');return;}
   const rec={no,date,type:document.getElementById('sm-type').value,content,
     result:document.getElementById('sm-result').value.trim(),
@@ -2931,15 +2932,17 @@ function saveService(){
   closeModal('svc-modal');
   if(currentNo===no&&document.getElementById('detail-modal').classList.contains('open')) renderLogList(no);
   renderService();
-  // 즉시 Firebase 저장 (autoSave 대신 직접 저장)
+  // 저장 중 다른 저장 차단
   window._isLoading = false;
+  clearTimeout(window._saveTimer); // autoSave 타이머 취소
   saveToLocal();
+  // 저장 완료 후 콜백 실행 (저장 전 콜백 실행 방지)
   saveToApi(function(ok){
     showSaveStatus(ok?'✅ 이력 저장됨':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
     if(!ok) setTimeout(function(){ saveToApi(null); }, 2000);
+    // 저장 완료 후 팝업 복귀
+    if(window._afterSvcSave){ window._afterSvcSave(); window._afterSvcSave=null; }
   });
-  // 이력 상세 팝업 콜백
-  if(window._afterSvcSave){ window._afterSvcSave(); window._afterSvcSave=null; }
 }
 function confirmDeleteSvc(id){
   showConfirm('이 이력을 삭제하시겠습니까?',()=>{
@@ -3206,9 +3209,11 @@ function saveToApi(callback) {
   var data = collectData();
   // Firebase 저장
   if (window._fbReady && window._fbSave) {
+    window._isSaving = true; // 저장 진행 중 플래그
     showSaveStatus('⏳ 저장 중...', '#93c5fd');
     var plain = JSON.parse(JSON.stringify(data));
     window._fbSave(plain).then(function(ok) {
+      window._isSaving = false;
       if (ok) {
         showSaveStatus('☁ 클라우드 저장됨', '#86efac');
         if(callback) callback(true);
@@ -3217,6 +3222,7 @@ function saveToApi(callback) {
         if(callback) callback(false);
       }
     }).catch(function(e){
+      window._isSaving = false;
       console.error('saveToApi 오류:', e);
       showSaveStatus('⚠ 저장 오류', '#fbbf24');
       if(callback) callback(false);
@@ -3232,12 +3238,14 @@ function saveToApi(callback) {
 function autoSave() {
   if(window._colDragging) return; // 컬럼 드래그 중엔 저장 안 함
   if(window._isLoading) return;   // 데이터 로딩 중엔 저장 안 함
+  if(window._isSaving) return;    // 저장 진행 중엔 저장 안 함
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function(){
     if(window._isLoading) return; // 재확인
-    saveToLocal();          // 항상 localStorage에 저장
-    if(isApiEnabled()) saveToApi(null); // API도 저장
-  }, 2000); // 2초 디바운스 - 동시 저장 충돌 방지
+    if(window._isSaving) return;  // 재확인
+    saveToLocal();
+    if(isApiEnabled()) saveToApi(null);
+  }, 2000);
 }
 
 // ── localStorage 복원 ──
