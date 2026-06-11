@@ -169,6 +169,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
+  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
+  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
+  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
+  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
@@ -357,6 +361,511 @@ tbody td{padding:9px 12px;vertical-align:middle}
     </div>
   </div>
 </div>
+
+
+<!-- ══ PAGE: 기기관리 ══ -->
+<div class="page" id="page-devices">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚙️ 기기 관리</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="importFromRental()">📥 임대관리에서 가져오기</button>
+        <button class="btn btn-success btn-sm" onclick="openAddDevice()">➕ 직접 추가</button>
+      </div>
+    </div>
+    <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
+            <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>상태</th><th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="device-mgr-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 사용량 조회 ══ -->
+<div class="page" id="page-usage">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📈 기간별 사용량 조회</span>
+    </div>
+    <div class="controls">
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">시작일</label>
+        <input class="inp" type="date" id="usage-start" style="width:140px">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">조회일</label>
+        <input class="inp" type="date" id="usage-end" style="width:140px">
+      </div>
+      <button class="btn btn-primary" onclick="renderUsageReport()">🔍 조회</button>
+      <select class="inp" id="usage-filter" onchange="renderUsageReport()">
+        <option value="">전체</option>
+        <option value="over">초과만</option>
+        <option value="safe">여유만</option>
+      </select>
+    </div>
+    <div class="info-row" id="usage-info"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>거래처명</th>
+            <th>기기명</th>
+            <th style="text-align:right">약정(흑백)</th>
+            <th style="text-align:right">사용(흑백)</th>
+            <th style="text-align:right">초과(흑백)</th>
+            <th style="text-align:right">약정(컬러)</th>
+            <th style="text-align:right">사용(컬러)</th>
+            <th style="text-align:right">초과(컬러)</th>
+            <th style="text-align:center">상태</th>
+            <th>시작일 카운터</th>
+            <th>조회일 카운터</th>
+          </tr>
+        </thead>
+        <tbody id="usage-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 기기 추가/수정 모달 -->
+<div class="modal-bg" id="device-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3 id="device-modal-title">기기 추가</h3>
+      <button class="modal-close" onclick="closeDeviceModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">거래처명 *</label>
+          <input class="inp" id="dm-name" placeholder="홍길동사무소" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">기기명</label>
+          <input class="inp" id="dm-model" placeholder="RICOH MP C2004ex" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">IP 주소 *</label>
+          <input class="inp" id="dm-ip" placeholder="192.168.1.100" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">제조사 *</label>
+          <select class="inp" id="dm-type" style="width:100%">
+            <option value="ricoh">리코 (RICOH)</option>
+            <option value="kyocera">교세라 (Kyocera)</option>
+            <option value="hp">HP</option>
+            <option value="samsung">삼성 (Samsung)</option>
+            <option value="canon">캐논 (Canon)</option>
+          </select>
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 흑백 (매/월)</label>
+          <input class="inp" id="dm-quota-bw" type="number" value="0" min="0" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 컬러 (매/월)</label>
+          <input class="inp" id="dm-quota-color" type="number" value="0" min="0" style="width:100%">
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">
+        💡 임대관리에서 가져오기 시 약정매수는 자동으로 입력됩니다.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeDeviceModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveDeviceModal()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  기기 관리
+// ══════════════════════════════════════════
+var _editDeviceNo = null;
+
+function renderDeviceManager(){
+  if(!_fbReady||!db){ setTimeout(renderDeviceManager,400); return; }
+  document.getElementById('device-mgr-tbody').innerHTML =
+    '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+
+  db.collection('device_status').get().then(function(snap){
+    var devices=[];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d=doc.data(); d._id=doc.id; devices.push(d);
+      }
+    });
+    devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    document.getElementById('device-mgr-info').textContent='총 '+devices.length+'대 등록';
+
+    if(!devices.length){
+      document.getElementById('device-mgr-tbody').innerHTML=
+        '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
+      return;
+    }
+
+    document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
+      var online = (d.is_online||'').toLowerCase()==='true';
+      return '<tr>'+
+        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
+        '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
+        '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
+        '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
+        '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
+        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(''+d._id+'')">✏️</button> '+
+            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(''+d._id+'',''+esc(d.name||'')+'')">🗑️</button></td>'+
+        '</tr>';
+    }).join('');
+  }).catch(function(e){
+    document.getElementById('device-mgr-tbody').innerHTML=
+      '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
+  });
+}
+
+// 임대관리에서 가져오기
+function importFromRental(){
+  if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
+
+  document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
+
+  // rental.html과 같은 Firebase에서 contracts 컬렉션 읽기
+  db.collection('contracts').get().then(function(snap){
+    var contracts=[];
+    snap.forEach(function(doc){
+      var d=doc.data();
+      // IP가 있는 거래처만 가져오기
+      if(d.printer_ip && d.printer_ip.trim()!==''){
+        contracts.push({ id:doc.id, data:d });
+      }
+    });
+
+    if(!contracts.length){
+      alert('임대관리시스템에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 신규등록/수정에서 IP를 먼저 입력해 주세요.');
+      document.getElementById('device-mgr-info').textContent='IP 등록된 거래처 없음';
+      return;
+    }
+
+    // 기존 device_status 가져오기
+    db.collection('device_status').get().then(function(devSnap){
+      var existing={};
+      devSnap.forEach(function(doc){
+        if(!doc.id.startsWith('hist_')){
+          var d=doc.data();
+          if(d.ip) existing[d.ip]=doc.id;
+        }
+      });
+
+      // 최대 번호 찾기
+      var maxNo=0;
+      devSnap.forEach(function(doc){
+        if(!doc.id.startsWith('hist_')){
+          var n=parseInt(doc.id.replace('device_',''))||0;
+          if(n>maxNo) maxNo=n;
+        }
+      });
+
+      var batch=db.batch();
+      var added=0; var updated=0;
+
+      contracts.forEach(function(c){
+        var d=c.data;
+        var ip=d.printer_ip.trim();
+        var docId=existing[ip]||('device_'+(++maxNo));
+        var isNew=!existing[ip];
+
+        var deviceData={
+          name: d.name||'',
+          model: d.etc||'',
+          ip: ip,
+          printer_type: d.printer_type||'ricoh',
+          quota_bw: parseInt(d.quota_bw)||0,
+          quota_color: parseInt(d.quota_color)||0,
+          contract_id: c.id,
+          imported_at: new Date().toISOString().slice(0,10)
+        };
+
+        // 기존 모니터링 데이터는 유지
+        if(isNew){
+          deviceData.is_online='False';
+          deviceData.bw_count=0;
+          deviceData.color_count=0;
+          deviceData.toner_k=-1;
+          deviceData.toner_c=-1;
+          deviceData.toner_m=-1;
+          deviceData.toner_y=-1;
+          deviceData.collected_at='';
+          deviceData.status='Offline';
+          added++;
+        } else {
+          updated++;
+        }
+
+        batch.set(db.collection('device_status').doc(docId), deviceData, {merge:true});
+      });
+
+      batch.commit().then(function(){
+        document.getElementById('device-mgr-info').textContent=
+          '가져오기 완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
+        renderDeviceManager();
+        // 현황판 데이터도 갱신
+        loadAllDevices(true);
+      });
+    });
+  }).catch(function(e){
+    alert('임대관리 데이터 읽기 오류: '+e.message);
+    document.getElementById('device-mgr-info').textContent='오류 발생';
+  });
+}
+
+function openAddDevice(){
+  _editDeviceNo=null;
+  document.getElementById('device-modal-title').textContent='기기 추가';
+  document.getElementById('dm-name').value='';
+  document.getElementById('dm-model').value='';
+  document.getElementById('dm-ip').value='';
+  document.getElementById('dm-type').value='ricoh';
+  document.getElementById('dm-quota-bw').value='0';
+  document.getElementById('dm-quota-color').value='0';
+  document.getElementById('device-modal').classList.add('open');
+}
+
+function editDevice(id){
+  var d=_devices.find(function(x){ return x._id===id; });
+  if(!d) return;
+  _editDeviceNo=id;
+  document.getElementById('device-modal-title').textContent='기기 수정';
+  document.getElementById('dm-name').value=d.name||'';
+  document.getElementById('dm-model').value=d.model||'';
+  document.getElementById('dm-ip').value=d.ip||'';
+  document.getElementById('dm-type').value=d.printer_type||d.type||'ricoh';
+  document.getElementById('dm-quota-bw').value=d.quota_bw||0;
+  document.getElementById('dm-quota-color').value=d.quota_color||0;
+  document.getElementById('device-modal').classList.add('open');
+}
+
+function closeDeviceModal(){
+  document.getElementById('device-modal').classList.remove('open');
+}
+
+function saveDeviceModal(){
+  var name=document.getElementById('dm-name').value.trim();
+  var ip=document.getElementById('dm-ip').value.trim();
+  if(!name||!ip){ alert('거래처명과 IP를 입력해 주세요.'); return; }
+
+  var docId=_editDeviceNo;
+  if(!docId){
+    // 새 번호 찾기
+    var maxNo=0;
+    _devices.forEach(function(d){
+      var n=parseInt((d._id||'').replace('device_',''))||0;
+      if(n>maxNo) maxNo=n;
+    });
+    docId='device_'+(maxNo+1);
+  }
+
+  var data={
+    name:name,
+    model:document.getElementById('dm-model').value.trim(),
+    ip:ip,
+    printer_type:document.getElementById('dm-type').value,
+    quota_bw:parseInt(document.getElementById('dm-quota-bw').value)||0,
+    quota_color:parseInt(document.getElementById('dm-quota-color').value)||0
+  };
+  if(!_editDeviceNo){
+    data.is_online='False'; data.bw_count=0; data.color_count=0;
+    data.toner_k=-1; data.toner_c=-1; data.toner_m=-1; data.toner_y=-1;
+    data.collected_at=''; data.status='Offline';
+  }
+
+  db.collection('device_status').doc(docId).set(data,{merge:true}).then(function(){
+    closeDeviceModal();
+    loadAllDevices(true);
+    renderDeviceManager();
+  });
+}
+
+function deleteDevice(id, name){
+  if(!confirm(name+' 기기를 삭제하시겠습니까?')) return;
+  db.collection('device_status').doc(id).delete().then(function(){
+    loadAllDevices(true);
+    renderDeviceManager();
+  });
+}
+
+// ══════════════════════════════════════════
+//  사용량 조회
+// ══════════════════════════════════════════
+function renderUsagePage(){
+  // 날짜 기본값: 이번달 1일 ~ 오늘
+  var now=new Date();
+  var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
+  var d=String(now.getDate()).padStart(2,'0');
+  if(!document.getElementById('usage-start').value){
+    document.getElementById('usage-start').value=y+'-'+m+'-01';
+  }
+  if(!document.getElementById('usage-end').value){
+    document.getElementById('usage-end').value=y+'-'+m+'-'+d;
+  }
+}
+
+function renderUsageReport(){
+  var startDate=document.getElementById('usage-start').value;
+  var endDate=document.getElementById('usage-end').value;
+  var filter=document.getElementById('usage-filter').value;
+
+  if(!startDate||!endDate){ alert('시작일과 조회일을 선택해 주세요.'); return; }
+  if(startDate>endDate){ alert('시작일이 조회일보다 늦을 수 없습니다.'); return; }
+
+  if(!_fbReady||!db){ setTimeout(renderUsageReport,400); return; }
+
+  document.getElementById('usage-info').textContent='조회 중...';
+  document.getElementById('usage-tbody').innerHTML=
+    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 조회 중...</td></tr>';
+
+  var startStr=startDate.replace(/-/g,'');
+  var endStr=endDate.replace(/-/g,'');
+
+  // 모든 기기 히스토리 가져오기
+  db.collection('device_status').get().then(function(snap){
+    var devices=[];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d=doc.data(); d._id=doc.id;
+        devices.push(d);
+      }
+    });
+
+    if(!devices.length){
+      document.getElementById('usage-tbody').innerHTML=
+        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음</td></tr>';
+      return;
+    }
+
+    // 각 기기별 시작일/종료일 히스토리 가져오기
+    var promises=devices.map(function(dev){
+      var no=dev._id.replace('device_','');
+
+      // 시작일 가장 가까운 레코드
+      var startPromise=db.collection('device_status')
+        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
+        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359')
+        .get();
+
+      // 종료일 가장 가까운 레코드
+      var endPromise=db.collection('device_status')
+        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
+        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359')
+        .get();
+
+      return Promise.all([startPromise, endPromise]).then(function(results){
+        var startRows=[], endRows=[];
+        results[0].forEach(function(doc){ startRows.push(doc.data()); });
+        results[1].forEach(function(doc){ endRows.push(doc.data()); });
+        startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+        endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+
+        return {
+          device: dev,
+          startData: startRows[0]||null,
+          endData: endRows[0]||null
+        };
+      });
+    });
+
+    Promise.all(promises).then(function(results){
+      var rows=results.filter(function(r){
+        // 시작일 또는 종료일 데이터가 있는 것만
+        return r.startData||r.endData;
+      });
+
+      // 필터 적용
+      var filtered=rows.filter(function(r){
+        if(!filter) return true;
+        var dev=r.device;
+        var startBw=parseInt((r.startData||{}).bw_count)||0;
+        var endBw=parseInt((r.endData||{}).bw_count)||0;
+        var useBw=endBw-startBw;
+        var quotaBw=parseInt(dev.quota_bw)||0;
+        var overBw=quotaBw>0?useBw-quotaBw:0;
+        if(filter==='over') return overBw>0;
+        if(filter==='safe') return overBw<=0;
+        return true;
+      });
+
+      document.getElementById('usage-info').textContent=
+        startDate+' ~ '+endDate+' | 총 '+filtered.length+'대';
+
+      if(!filtered.length){
+        document.getElementById('usage-tbody').innerHTML=
+          '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
+        return;
+      }
+
+      document.getElementById('usage-tbody').innerHTML=filtered.map(function(r){
+        var dev=r.device;
+        var sd=r.startData||{};
+        var ed=r.endData||{};
+
+        var startBw=parseInt(sd.bw_count)||0;
+        var startColor=parseInt(sd.color_count)||0;
+        var endBw=parseInt(ed.bw_count)||0;
+        var endColor=parseInt(ed.color_count)||0;
+
+        var useBw=Math.max(0,endBw-startBw);
+        var useColor=Math.max(0,endColor-startColor);
+        var quotaBw=parseInt(dev.quota_bw)||0;
+        var quotaColor=parseInt(dev.quota_color)||0;
+
+        var overBw=quotaBw>0?useBw-quotaBw:0;
+        var overColor=quotaColor>0?useColor-quotaColor:0;
+
+        var isOver=(overBw>0)||(overColor>0);
+
+        function overCell(over,quota){
+          if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
+          if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
+          return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
+        }
+
+        return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
+          '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
+          '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
+          '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
+          overCell(overBw,quotaBw)+
+          '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
+          overCell(overColor,quotaColor)+
+          '<td style="text-align:center">'+(isOver?
+            '<span class="badge b-late">🔴 초과</span>':
+            '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
+          '<td style="font-size:11px;color:var(--text3)">'+
+            (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>'+
+            'BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
+          '<td style="font-size:11px;color:var(--text3)">'+
+            (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>'+
+            'BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
+          '</tr>';
+      }).join('');
+    });
+  });
+}
+
+document.getElementById('device-modal').addEventListener('click',function(e){
+  if(e.target===this) closeDeviceModal();
+});
+</script>
 
 </div><!-- /app-wrapper -->
 
@@ -973,9 +1482,11 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('page-'+id).classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var idx = {monitor:0,history:1,guide:2}[id];
+  var idx = {monitor:0,history:1,guide:2,devices:3,usage:4}[id];
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
+  if(id==='devices') renderDeviceManager();
+  if(id==='usage')   renderUsagePage();
 }
 
 // ══════════════════════════════════════════
