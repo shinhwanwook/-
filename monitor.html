@@ -506,7 +506,12 @@ function tonerBarHtml(pct, label){
     '</div>';
 }
 
-function isOnline(d){ return d.is_online==='true'||d.is_online===true; }
+function isOnline(d){
+  var v = d.is_online;
+  if(v===true) return true;
+  if(typeof v==='string') return v.toLowerCase()==='true';
+  return false;
+}
 function hasTonerWarn(d){
   return ['toner_k','toner_c','toner_m','toner_y'].some(function(k){
     var v=parseInt(d[k]); return !isNaN(v)&&v>=0&&v<=10;
