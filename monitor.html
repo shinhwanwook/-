@@ -1119,6 +1119,7 @@ function showPage(id){
 })();
 </script>
 
+
 <script>
 // ══════════════════════════════════════════
 //  기기 관리
@@ -1161,8 +1162,8 @@ function renderDeviceManager(){
         '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
         '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
-        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(''+d._id+'')">✏️</button> '+
-            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(''+d._id+'',''+esc(d.name||'')+'')">🗑️</button></td>'+
+        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'">✏️</button> '+
+            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'">🗑️</button></td>'+
         '</tr>';
     }).join('');
   }).catch(function(e){
@@ -1258,7 +1259,8 @@ function openAddDevice(){
   document.getElementById('device-modal').classList.add('open');
 }
 
-function editDevice(id){
+function editDevice(btn){
+  var id = btn.getAttribute('data-id');
   var d=_devices.find(function(x){ return x._id===id; });
   if(!d) return;
   _editDeviceNo=id;
@@ -1312,7 +1314,9 @@ function saveDeviceModal(){
   });
 }
 
-function deleteDevice(id, name){
+function deleteDevice(btn){
+  var id = btn.getAttribute('data-id');
+  var name = btn.getAttribute('data-name');
   if(!confirm(name+' 기기를 삭제하시겠습니까?')) return;
   db.collection('device_status').doc(id).delete().then(function(){
     loadAllDevices(true);
