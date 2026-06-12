@@ -168,11 +168,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
   <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
+  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
+  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
-  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
-  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
-  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
-  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
@@ -534,43 +532,40 @@ function renderDeviceManager(){
 }
 
 // 임대관리에서 가져오기
+// rental.html은 'rental' 컬렉션의 doc_chunk_XX 에 CONTRACTS 배열로 저장
 function importFromRental(){
-  if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
-
+  if(!_fbReady||!db){
+    alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.');
+    return;
+  }
   document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
 
-  // rental.html과 같은 Firebase에서 contracts 컬렉션 읽기
-  db.collection('contracts').get().then(function(snap){
-    var contracts=[];
-    snap.forEach(function(doc){
-      var d=doc.data();
-      // IP가 있는 거래처만 가져오기
-      if(d.printer_ip && d.printer_ip.trim()!==''){
-        contracts.push({ id:doc.id, data:d });
-      }
+  // rental.html은 rental 컬렉션의 main 문서에 CONTRACTS 배열로 저장
+  db.collection('rental').doc('main').get().then(function(doc){
+    if(!doc.exists){
+      alert('임대관리 데이터를 찾을 수 없습니다.');
+      document.getElementById('device-mgr-info').textContent='데이터 없음';
+      return;
+    }
+    var allContracts = (doc.data().CONTRACTS)||[];
+    var contracts = allContracts.filter(function(c){
+      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
     });
 
     if(!contracts.length){
-      alert('임대관리시스템에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 신규등록/수정에서 IP를 먼저 입력해 주세요.');
-      document.getElementById('device-mgr-info').textContent='IP 등록된 거래처 없음';
+      alert('임대관리에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 계약목록에서 거래처를 수정하여 IP를 먼저 입력해 주세요.');
+      document.getElementById('device-mgr-info').textContent='IP 등록 거래처 없음 (전체 '+allContracts.length+'개)';
       return;
     }
 
-    // 기존 device_status 가져오기
     db.collection('device_status').get().then(function(devSnap){
-      var existing={};
-      devSnap.forEach(function(doc){
-        if(!doc.id.startsWith('hist_')){
-          var d=doc.data();
-          if(d.ip) existing[d.ip]=doc.id;
-        }
-      });
-
-      // 최대 번호 찾기
+      var existingByIp={};
       var maxNo=0;
-      devSnap.forEach(function(doc){
-        if(!doc.id.startsWith('hist_')){
-          var n=parseInt(doc.id.replace('device_',''))||0;
+      devSnap.forEach(function(d){
+        if(!d.id.startsWith('hist_')){
+          var dd=d.data();
+          if(dd.ip) existingByIp[dd.ip]=d.id;
+          var n=parseInt(d.id.replace('device_',''))||0;
           if(n>maxNo) maxNo=n;
         }
       });
@@ -579,56 +574,40 @@ function importFromRental(){
       var added=0; var updated=0;
 
       contracts.forEach(function(c){
-        var d=c.data;
-        var ip=d.printer_ip.trim();
-        var docId=existing[ip]||('device_'+(++maxNo));
-        var isNew=!existing[ip];
-
+        var ip=c.printer_ip.trim();
+        var isNew=!existingByIp[ip];
+        var docId=existingByIp[ip]||('device_'+(++maxNo));
         var deviceData={
-          name: d.name||'',
-          model: d.etc||'',
-          ip: ip,
-          printer_type: d.printer_type||'ricoh',
-          quota_bw: parseInt(d.quota_bw)||0,
-          quota_color: parseInt(d.quota_color)||0,
-          contract_id: c.id,
-          imported_at: new Date().toISOString().slice(0,10)
+          name:c.name||'', model:c.etc||'', ip:ip,
+          printer_type:c.printer_type||'ricoh',
+          quota_bw:parseInt(c.quota_bw)||0,
+          quota_color:parseInt(c.quota_color)||0,
+          contract_no:c.no||0,
+          imported_at:new Date().toISOString().slice(0,10)
         };
-
-        // 기존 모니터링 데이터는 유지
         if(isNew){
-          deviceData.is_online='False';
-          deviceData.bw_count=0;
-          deviceData.color_count=0;
-          deviceData.toner_k=-1;
-          deviceData.toner_c=-1;
-          deviceData.toner_m=-1;
-          deviceData.toner_y=-1;
-          deviceData.collected_at='';
-          deviceData.status='Offline';
+          deviceData.is_online='False'; deviceData.bw_count=0; deviceData.color_count=0;
+          deviceData.toner_k=-1; deviceData.toner_c=-1; deviceData.toner_m=-1; deviceData.toner_y=-1;
+          deviceData.collected_at=''; deviceData.status='Offline';
           added++;
-        } else {
-          updated++;
-        }
-
+        } else { updated++; }
         batch.set(db.collection('device_status').doc(docId), deviceData, {merge:true});
       });
 
       batch.commit().then(function(){
         document.getElementById('device-mgr-info').textContent=
-          '가져오기 완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
+          '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트 (전체 '+allContracts.length+'개 중 IP등록 '+contracts.length+'개)';
         renderDeviceManager();
-        // 현황판 데이터도 갱신
         loadAllDevices(true);
-      });
+      }).catch(function(e){ alert('저장 오류: '+e.message); });
     });
   }).catch(function(e){
-    alert('임대관리 데이터 읽기 오류: '+e.message);
+    alert('데이터 읽기 오류: '+e.message);
     document.getElementById('device-mgr-info').textContent='오류 발생';
   });
 }
-
 function openAddDevice(){
+  if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
   _editDeviceNo=null;
   document.getElementById('device-modal-title').textContent='기기 추가';
   document.getElementById('dm-name').value='';
@@ -665,9 +644,8 @@ function saveDeviceModal(){
 
   var docId=_editDeviceNo;
   if(!docId){
-    // 새 번호 찾기
     var maxNo=0;
-    _devices.forEach(function(d){
+    (_devices||[]).forEach(function(d){
       var n=parseInt((d._id||'').replace('device_',''))||0;
       if(n>maxNo) maxNo=n;
     });
@@ -1482,7 +1460,7 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('page-'+id).classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var idx = {monitor:0,history:1,guide:2,devices:3,usage:4}[id];
+  var idx = {monitor:0,history:1,devices:2,usage:3,guide:4}[id];
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
   if(id==='devices') renderDeviceManager();
