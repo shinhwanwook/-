@@ -178,6 +178,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
       style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       🔄 새로고침
     </button>
+    <button onclick="importFromRental()"
+      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      📥 임대관리 가져오기
+    </button>
     <a href="rental.html"
       style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
       📋 임대관리
@@ -1243,13 +1247,14 @@ function importFromRental(){
     alert('Firebase가 연결되지 않았습니다. 페이지를 새로고침 후 다시 시도해 주세요.');
     return;
   }
-  document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
+  var infoEl = document.getElementById('device-mgr-info');
+  if(infoEl) infoEl.textContent='임대관리 데이터 불러오는 중...';
 
   // rental.html은 rental 컬렉션의 main 문서에 CONTRACTS 배열로 저장
   db.collection('rental').doc('main').get().then(function(doc){
     if(!doc.exists){
       alert('임대관리 데이터를 찾을 수 없습니다.');
-      document.getElementById('device-mgr-info').textContent='데이터 없음';
+      if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent='데이터 없음';
       return;
     }
     var allContracts = (doc.data().CONTRACTS)||[];
@@ -1259,7 +1264,7 @@ function importFromRental(){
 
     if(!contracts.length){
       alert('임대관리에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 계약목록에서 거래처를 수정하여 IP를 먼저 입력해 주세요.');
-      document.getElementById('device-mgr-info').textContent='IP 등록 거래처 없음 (전체 '+allContracts.length+'개)';
+      if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent='IP 등록 거래처 없음 (전체 '+allContracts.length+'개)';
       return;
     }
 
@@ -1302,8 +1307,9 @@ function importFromRental(){
       });
 
       batch.commit().then(function(){
-        document.getElementById('device-mgr-info').textContent=
-          '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트 (전체 '+allContracts.length+'개 중 IP등록 '+contracts.length+'개)';
+        var msg = '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
+        if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent=msg;
+        alert(msg);
         renderDeviceManager();
         loadAllDevices(true);
       }).catch(function(e){ alert('저장 오류: '+e.message); });
