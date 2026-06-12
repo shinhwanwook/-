@@ -531,6 +531,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 </div>
 
 <script>
+
 // ══════════════════════════════════════════
 //  Firebase 초기화
 // ══════════════════════════════════════════
@@ -1145,10 +1146,8 @@ function showPage(id){
   var el  = document.getElementById('hist-month');
   if(el) el.value = m;
 })();
-</script>
 
 
-<script>
 // ══════════════════════════════════════════
 //  기기 관리
 // ══════════════════════════════════════════
@@ -1617,5 +1616,21 @@ function filterUsageTable(){
       '</tr>';
   }).join('');
 }
+</script>
 
+<!-- 사용량 상세 모달 -->
+<div class="modal-bg" id="usage-detail-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3>📋 카운터 상세</h3>
+      <button class="modal-close" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body" id="usage-detail-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">닫기</button>
+    </div>
+  </div>
+</div>
 
+</body>
+</html>
