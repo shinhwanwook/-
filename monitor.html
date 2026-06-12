@@ -443,15 +443,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <tr>
             <th>거래처명</th>
             <th>기기명</th>
-            <th style="text-align:right">약정(흑백)</th>
-            <th style="text-align:right">사용(흑백)</th>
-            <th style="text-align:right">초과(흑백)</th>
-            <th style="text-align:right">약정(컬러)</th>
-            <th style="text-align:right">사용(컬러)</th>
-            <th style="text-align:right">초과(컬러)</th>
+            <th style="text-align:right">흑백 사용</th>
+            <th style="text-align:right">흑백 약정</th>
+            <th style="text-align:right">흑백 초과</th>
+            <th style="text-align:right">컬러 사용</th>
+            <th style="text-align:right">컬러 약정</th>
+            <th style="text-align:right">컬러 초과</th>
             <th style="text-align:center">상태</th>
-            <th>시작일 카운터</th>
-            <th>조회일 카운터</th>
+            <th style="text-align:center">상세</th>
           </tr>
         </thead>
         <tbody id="usage-tbody"></tbody>
@@ -1476,6 +1475,39 @@ document.getElementById('device-modal').addEventListener('click',function(e){
   if(e.target===this) closeDeviceModal();
 });
 
+// 사용량 상세 모달
+function showUsageDetail(btn){
+  var sdate = btn.getAttribute('data-sdate');
+  var stime = btn.getAttribute('data-stime');
+  var edate = btn.getAttribute('data-edate');
+  var etime = btn.getAttribute('data-etime');
+  var sbw   = parseInt(btn.getAttribute('data-sbw'))||0;
+  var sc    = parseInt(btn.getAttribute('data-sc'))||0;
+  var ebw   = parseInt(btn.getAttribute('data-ebw'))||0;
+  var ec    = parseInt(btn.getAttribute('data-ec'))||0;
+  var ubw   = parseInt(btn.getAttribute('data-ubw'))||0;
+  var uc    = parseInt(btn.getAttribute('data-uc'))||0;
+
+  var html =
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">구분</th>'+
+    '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">흑백</th>'+
+    '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">컬러</th></tr>'+
+    '<tr><td style="padding:8px;color:var(--text3)">시작일 ('+sdate+' '+stime+')</td>'+
+    '<td style="padding:8px;text-align:right">'+sbw.toLocaleString()+'</td>'+
+    '<td style="padding:8px;text-align:right;color:var(--blue)">'+sc.toLocaleString()+'</td></tr>'+
+    '<tr style="background:#f8fafc"><td style="padding:8px;color:var(--text3)">조회일 ('+edate+' '+etime+')</td>'+
+    '<td style="padding:8px;text-align:right">'+ebw.toLocaleString()+'</td>'+
+    '<td style="padding:8px;text-align:right;color:var(--blue)">'+ec.toLocaleString()+'</td></tr>'+
+    '<tr style="border-top:2px solid #e5e7eb"><td style="padding:8px;font-weight:700">사용량 (끝-시작)</td>'+
+    '<td style="padding:8px;text-align:right;font-weight:700;font-size:16px">'+ubw.toLocaleString()+'</td>'+
+    '<td style="padding:8px;text-align:right;font-weight:700;font-size:16px;color:var(--blue)">'+uc.toLocaleString()+'</td></tr>'+
+    '</table>';
+
+  document.getElementById('usage-detail-body').innerHTML = html;
+  document.getElementById('usage-detail-modal').classList.add('open');
+}
+
 // 사용량 테이블 필터 (조회 후 실시간 검색)
 var _usageRows = [];
 
@@ -1535,25 +1567,58 @@ function filterUsageTable(){
       return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
     }
 
+    // 초과 셀
+    function overCell2(over, quota){
+      if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
+      if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626;background:#fff0f0">+'+over.toLocaleString()+'</td>';
+      return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
+    }
+
+    // 상세 툴팁 내용
+    var detailHtml =
+      '시작('+esc(sd.date||'-')+') BW:'+startBw.toLocaleString()+' / C:'+startColor.toLocaleString()+'&#10;'+
+      '조회('+esc(ed.date||'-')+') BW:'+endBw.toLocaleString()+' / C:'+endColor.toLocaleString()+'&#10;'+
+      '흑백: '+endBw.toLocaleString()+' - '+startBw.toLocaleString()+' = '+useBw.toLocaleString()+'&#10;'+
+      '컬러: '+endColor.toLocaleString()+' - '+startColor.toLocaleString()+' = '+useColor.toLocaleString();
+
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
       '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
-      '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
       '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
-      overCell(overBw,quotaBw)+
-      '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
-      '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
-      overCell(overColor,quotaColor)+
+      '<td style="text-align:right;color:var(--text3)">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
+      overCell2(overBw,quotaBw)+
+      '<td style="text-align:right;font-weight:600;color:var(--blue)">'+useColor.toLocaleString()+'</td>'+
+      '<td style="text-align:right;color:var(--text3)">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
+      overCell2(overColor,quotaColor)+
       '<td style="text-align:center">'+(isOver?
         '<span class="badge b-late">🔴 초과</span>':
         '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
-      '<td style="font-size:11px;color:var(--text3)">'+
-        (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
-      '<td style="font-size:11px;color:var(--text3)">'+
-        (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
+      '<td style="text-align:center">'+
+        '<button class="btn btn-ghost btn-xs" title="'+detailHtml+'" '+
+        'onclick="showUsageDetail(this)" '+
+        'data-sdate="'+(sd.date||'-')+'" data-stime="'+(sd.time||'')+'" '+
+        'data-edate="'+(ed.date||'-')+'" data-etime="'+(ed.time||'')+'" '+
+        'data-sbw="'+startBw+'" data-sc="'+startColor+'" '+
+        'data-ebw="'+endBw+'" data-ec="'+endColor+'" '+
+        'data-ubw="'+useBw+'" data-uc="'+useColor+'">'+
+        '📋</button></td>'+
       '</tr>';
   }).join('');
 }
 </script>
+<!-- 사용량 상세 모달 -->
+<div class="modal-bg" id="usage-detail-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3>📋 카운터 상세</h3>
+      <button class="modal-close" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body" id="usage-detail-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">닫기</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
