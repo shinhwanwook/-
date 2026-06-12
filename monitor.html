@@ -483,370 +483,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
   </div>
 </div>
 
-<script>
-// ══════════════════════════════════════════
-//  기기 관리
-// ══════════════════════════════════════════
-var _editDeviceNo = null;
-
-function renderDeviceManager(){
-  if(!_fbReady||!db){
-    document.getElementById('device-mgr-info').textContent='Firebase 연결 중...';
-    setTimeout(renderDeviceManager,500);
-    return;
-  }
-  document.getElementById('device-mgr-tbody').innerHTML =
-    '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
-
-  db.collection('device_status').get().then(function(snap){
-    var devices=[];
-    snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
-        var d=doc.data(); d._id=doc.id; devices.push(d);
-      }
-    });
-    devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-    document.getElementById('device-mgr-info').textContent='총 '+devices.length+'대 등록';
-
-    if(!devices.length){
-      document.getElementById('device-mgr-tbody').innerHTML=
-        '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
-      return;
-    }
-
-    document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
-      var online = (d.is_online||'').toLowerCase()==='true';
-      return '<tr>'+
-        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
-        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
-        '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
-        '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
-        '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
-        '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
-        '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
-        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(''+d._id+'')">✏️</button> '+
-            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(''+d._id+'',''+esc(d.name||'')+'')">🗑️</button></td>'+
-        '</tr>';
-    }).join('');
-  }).catch(function(e){
-    document.getElementById('device-mgr-tbody').innerHTML=
-      '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
-  });
-}
-
-// 임대관리에서 가져오기
-// rental.html은 'rental' 컬렉션의 doc_chunk_XX 에 CONTRACTS 배열로 저장
-function importFromRental(){
-  if(!db){
-    alert('Firebase가 연결되지 않았습니다. 페이지를 새로고침 후 다시 시도해 주세요.');
-    return;
-  }
-  document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
-
-  // rental.html은 rental 컬렉션의 main 문서에 CONTRACTS 배열로 저장
-  db.collection('rental').doc('main').get().then(function(doc){
-    if(!doc.exists){
-      alert('임대관리 데이터를 찾을 수 없습니다.');
-      document.getElementById('device-mgr-info').textContent='데이터 없음';
-      return;
-    }
-    var allContracts = (doc.data().CONTRACTS)||[];
-    var contracts = allContracts.filter(function(c){
-      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
-    });
-
-    if(!contracts.length){
-      alert('임대관리에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 계약목록에서 거래처를 수정하여 IP를 먼저 입력해 주세요.');
-      document.getElementById('device-mgr-info').textContent='IP 등록 거래처 없음 (전체 '+allContracts.length+'개)';
-      return;
-    }
-
-    db.collection('device_status').get().then(function(devSnap){
-      var existingByIp={};
-      var maxNo=0;
-      devSnap.forEach(function(d){
-        if(!d.id.startsWith('hist_')){
-          var dd=d.data();
-          if(dd.ip) existingByIp[dd.ip]=d.id;
-          var n=parseInt(d.id.replace('device_',''))||0;
-          if(n>maxNo) maxNo=n;
-        }
-      });
-
-      var batch=db.batch();
-      var added=0; var updated=0;
-
-      contracts.forEach(function(c){
-        var ip=c.printer_ip.trim();
-        var isNew=!existingByIp[ip];
-        var docId=existingByIp[ip]||('device_'+(++maxNo));
-        var deviceData={
-          name:c.name||'', model:c.etc||'', ip:ip,
-          printer_type:c.printer_type||'ricoh',
-          quota_bw:parseInt(c.quota_bw)||0,
-          quota_color:parseInt(c.quota_color)||0,
-          contract_no:c.no||0,
-          imported_at:new Date().toISOString().slice(0,10)
-        };
-        if(isNew){
-          deviceData.is_online='False'; deviceData.bw_count=0; deviceData.color_count=0;
-          deviceData.toner_k=-1; deviceData.toner_c=-1; deviceData.toner_m=-1; deviceData.toner_y=-1;
-          deviceData.collected_at=''; deviceData.status='Offline';
-          added++;
-        } else { updated++; }
-        batch.set(db.collection('device_status').doc(docId), deviceData, {merge:true});
-      });
-
-      batch.commit().then(function(){
-        document.getElementById('device-mgr-info').textContent=
-          '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트 (전체 '+allContracts.length+'개 중 IP등록 '+contracts.length+'개)';
-        renderDeviceManager();
-        loadAllDevices(true);
-      }).catch(function(e){ alert('저장 오류: '+e.message); });
-    });
-  }).catch(function(e){
-    alert('데이터 읽기 오류: '+e.message);
-    document.getElementById('device-mgr-info').textContent='오류 발생';
-  });
-}
-function openAddDevice(){
-  _editDeviceNo=null;
-  document.getElementById('device-modal-title').textContent='기기 추가';
-  document.getElementById('dm-name').value='';
-  document.getElementById('dm-model').value='';
-  document.getElementById('dm-ip').value='';
-  document.getElementById('dm-type').value='ricoh';
-  document.getElementById('dm-quota-bw').value='0';
-  document.getElementById('dm-quota-color').value='0';
-  document.getElementById('device-modal').classList.add('open');
-}
-
-function editDevice(id){
-  var d=_devices.find(function(x){ return x._id===id; });
-  if(!d) return;
-  _editDeviceNo=id;
-  document.getElementById('device-modal-title').textContent='기기 수정';
-  document.getElementById('dm-name').value=d.name||'';
-  document.getElementById('dm-model').value=d.model||'';
-  document.getElementById('dm-ip').value=d.ip||'';
-  document.getElementById('dm-type').value=d.printer_type||d.type||'ricoh';
-  document.getElementById('dm-quota-bw').value=d.quota_bw||0;
-  document.getElementById('dm-quota-color').value=d.quota_color||0;
-  document.getElementById('device-modal').classList.add('open');
-}
-
-function closeDeviceModal(){
-  document.getElementById('device-modal').classList.remove('open');
-}
-
-function saveDeviceModal(){
-  var name=document.getElementById('dm-name').value.trim();
-  var ip=document.getElementById('dm-ip').value.trim();
-  if(!name||!ip){ alert('거래처명과 IP를 입력해 주세요.'); return; }
-
-  var docId=_editDeviceNo;
-  if(!docId){
-    var maxNo=0;
-    (_devices||[]).forEach(function(d){
-      var n=parseInt((d._id||'').replace('device_',''))||0;
-      if(n>maxNo) maxNo=n;
-    });
-    docId='device_'+(maxNo+1);
-  }
-
-  var data={
-    name:name,
-    model:document.getElementById('dm-model').value.trim(),
-    ip:ip,
-    printer_type:document.getElementById('dm-type').value,
-    quota_bw:parseInt(document.getElementById('dm-quota-bw').value)||0,
-    quota_color:parseInt(document.getElementById('dm-quota-color').value)||0
-  };
-  if(!_editDeviceNo){
-    data.is_online='False'; data.bw_count=0; data.color_count=0;
-    data.toner_k=-1; data.toner_c=-1; data.toner_m=-1; data.toner_y=-1;
-    data.collected_at=''; data.status='Offline';
-  }
-
-  db.collection('device_status').doc(docId).set(data,{merge:true}).then(function(){
-    closeDeviceModal();
-    loadAllDevices(true);
-    renderDeviceManager();
-  });
-}
-
-function deleteDevice(id, name){
-  if(!confirm(name+' 기기를 삭제하시겠습니까?')) return;
-  db.collection('device_status').doc(id).delete().then(function(){
-    loadAllDevices(true);
-    renderDeviceManager();
-  });
-}
-
-// ══════════════════════════════════════════
-//  사용량 조회
-// ══════════════════════════════════════════
-function renderUsagePage(){
-  // 날짜 기본값: 이번달 1일 ~ 오늘
-  var now=new Date();
-  var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
-  var d=String(now.getDate()).padStart(2,'0');
-  if(!document.getElementById('usage-start').value){
-    document.getElementById('usage-start').value=y+'-'+m+'-01';
-  }
-  if(!document.getElementById('usage-end').value){
-    document.getElementById('usage-end').value=y+'-'+m+'-'+d;
-  }
-}
-
-function renderUsageReport(){
-  var startDate=document.getElementById('usage-start').value;
-  var endDate=document.getElementById('usage-end').value;
-  var filter=document.getElementById('usage-filter').value;
-
-  if(!startDate||!endDate){ alert('시작일과 조회일을 선택해 주세요.'); return; }
-  if(startDate>endDate){ alert('시작일이 조회일보다 늦을 수 없습니다.'); return; }
-
-  if(!_fbReady||!db){ setTimeout(renderUsageReport,400); return; }
-
-  document.getElementById('usage-info').textContent='조회 중...';
-  document.getElementById('usage-tbody').innerHTML=
-    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 조회 중...</td></tr>';
-
-  var startStr=startDate.replace(/-/g,'');
-  var endStr=endDate.replace(/-/g,'');
-
-  // 모든 기기 히스토리 가져오기
-  db.collection('device_status').get().then(function(snap){
-    var devices=[];
-    snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
-        var d=doc.data(); d._id=doc.id;
-        devices.push(d);
-      }
-    });
-
-    if(!devices.length){
-      document.getElementById('usage-tbody').innerHTML=
-        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음</td></tr>';
-      return;
-    }
-
-    // 각 기기별 시작일/종료일 히스토리 가져오기
-    var promises=devices.map(function(dev){
-      var no=dev._id.replace('device_','');
-
-      // 시작일 가장 가까운 레코드
-      var startPromise=db.collection('device_status')
-        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
-        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359')
-        .get();
-
-      // 종료일 가장 가까운 레코드
-      var endPromise=db.collection('device_status')
-        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
-        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359')
-        .get();
-
-      return Promise.all([startPromise, endPromise]).then(function(results){
-        var startRows=[], endRows=[];
-        results[0].forEach(function(doc){ startRows.push(doc.data()); });
-        results[1].forEach(function(doc){ endRows.push(doc.data()); });
-        startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
-        endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
-
-        return {
-          device: dev,
-          startData: startRows[0]||null,
-          endData: endRows[0]||null
-        };
-      });
-    });
-
-    Promise.all(promises).then(function(results){
-      var rows=results.filter(function(r){
-        // 시작일 또는 종료일 데이터가 있는 것만
-        return r.startData||r.endData;
-      });
-
-      // 필터 적용
-      var filtered=rows.filter(function(r){
-        if(!filter) return true;
-        var dev=r.device;
-        var startBw=parseInt((r.startData||{}).bw_count)||0;
-        var endBw=parseInt((r.endData||{}).bw_count)||0;
-        var useBw=endBw-startBw;
-        var quotaBw=parseInt(dev.quota_bw)||0;
-        var overBw=quotaBw>0?useBw-quotaBw:0;
-        if(filter==='over') return overBw>0;
-        if(filter==='safe') return overBw<=0;
-        return true;
-      });
-
-      document.getElementById('usage-info').textContent=
-        startDate+' ~ '+endDate+' | 총 '+filtered.length+'대';
-
-      if(!filtered.length){
-        document.getElementById('usage-tbody').innerHTML=
-          '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
-        return;
-      }
-
-      document.getElementById('usage-tbody').innerHTML=filtered.map(function(r){
-        var dev=r.device;
-        var sd=r.startData||{};
-        var ed=r.endData||{};
-
-        var startBw=parseInt(sd.bw_count)||0;
-        var startColor=parseInt(sd.color_count)||0;
-        var endBw=parseInt(ed.bw_count)||0;
-        var endColor=parseInt(ed.color_count)||0;
-
-        var useBw=Math.max(0,endBw-startBw);
-        var useColor=Math.max(0,endColor-startColor);
-        var quotaBw=parseInt(dev.quota_bw)||0;
-        var quotaColor=parseInt(dev.quota_color)||0;
-
-        var overBw=quotaBw>0?useBw-quotaBw:0;
-        var overColor=quotaColor>0?useColor-quotaColor:0;
-
-        var isOver=(overBw>0)||(overColor>0);
-
-        function overCell(over,quota){
-          if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
-          if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
-          return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
-        }
-
-        return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
-          '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
-          '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
-          '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
-          overCell(overBw,quotaBw)+
-          '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
-          overCell(overColor,quotaColor)+
-          '<td style="text-align:center">'+(isOver?
-            '<span class="badge b-late">🔴 초과</span>':
-            '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
-          '<td style="font-size:11px;color:var(--text3)">'+
-            (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>'+
-            'BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
-          '<td style="font-size:11px;color:var(--text3)">'+
-            (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>'+
-            'BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
-          '</tr>';
-      }).join('');
-    });
-  });
-}
-
-document.getElementById('device-modal').addEventListener('click',function(e){
-  if(e.target===this) closeDeviceModal();
-});
-</script>
 
 </div><!-- /app-wrapper -->
 
@@ -1479,6 +1115,371 @@ function showPage(id){
   var el  = document.getElementById('hist-month');
   if(el) el.value = m;
 })();
+</script>
+
+<script>
+// ══════════════════════════════════════════
+//  기기 관리
+// ══════════════════════════════════════════
+var _editDeviceNo = null;
+
+function renderDeviceManager(){
+  if(!_fbReady||!db){
+    document.getElementById('device-mgr-info').textContent='Firebase 연결 중...';
+    setTimeout(renderDeviceManager,500);
+    return;
+  }
+  document.getElementById('device-mgr-tbody').innerHTML =
+    '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+
+  db.collection('device_status').get().then(function(snap){
+    var devices=[];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d=doc.data(); d._id=doc.id; devices.push(d);
+      }
+    });
+    devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    document.getElementById('device-mgr-info').textContent='총 '+devices.length+'대 등록';
+
+    if(!devices.length){
+      document.getElementById('device-mgr-tbody').innerHTML=
+        '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
+      return;
+    }
+
+    document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
+      var online = (d.is_online||'').toLowerCase()==='true';
+      return '<tr>'+
+        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
+        '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
+        '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
+        '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
+        '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
+        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(''+d._id+'')">✏️</button> '+
+            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(''+d._id+'',''+esc(d.name||'')+'')">🗑️</button></td>'+
+        '</tr>';
+    }).join('');
+  }).catch(function(e){
+    document.getElementById('device-mgr-tbody').innerHTML=
+      '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
+  });
+}
+
+// 임대관리에서 가져오기
+// rental.html은 'rental' 컬렉션의 doc_chunk_XX 에 CONTRACTS 배열로 저장
+function importFromRental(){
+  if(!db){
+    alert('Firebase가 연결되지 않았습니다. 페이지를 새로고침 후 다시 시도해 주세요.');
+    return;
+  }
+  document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
+
+  // rental.html은 rental 컬렉션의 main 문서에 CONTRACTS 배열로 저장
+  db.collection('rental').doc('main').get().then(function(doc){
+    if(!doc.exists){
+      alert('임대관리 데이터를 찾을 수 없습니다.');
+      document.getElementById('device-mgr-info').textContent='데이터 없음';
+      return;
+    }
+    var allContracts = (doc.data().CONTRACTS)||[];
+    var contracts = allContracts.filter(function(c){
+      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
+    });
+
+    if(!contracts.length){
+      alert('임대관리에 IP가 등록된 거래처가 없습니다.\n\n임대관리 > 계약목록에서 거래처를 수정하여 IP를 먼저 입력해 주세요.');
+      document.getElementById('device-mgr-info').textContent='IP 등록 거래처 없음 (전체 '+allContracts.length+'개)';
+      return;
+    }
+
+    db.collection('device_status').get().then(function(devSnap){
+      var existingByIp={};
+      var maxNo=0;
+      devSnap.forEach(function(d){
+        if(!d.id.startsWith('hist_')){
+          var dd=d.data();
+          if(dd.ip) existingByIp[dd.ip]=d.id;
+          var n=parseInt(d.id.replace('device_',''))||0;
+          if(n>maxNo) maxNo=n;
+        }
+      });
+
+      var batch=db.batch();
+      var added=0; var updated=0;
+
+      contracts.forEach(function(c){
+        var ip=c.printer_ip.trim();
+        var isNew=!existingByIp[ip];
+        var docId=existingByIp[ip]||('device_'+(++maxNo));
+        var deviceData={
+          name:c.name||'', model:c.etc||'', ip:ip,
+          printer_type:c.printer_type||'ricoh',
+          quota_bw:parseInt(c.quota_bw)||0,
+          quota_color:parseInt(c.quota_color)||0,
+          contract_no:c.no||0,
+          imported_at:new Date().toISOString().slice(0,10)
+        };
+        if(isNew){
+          deviceData.is_online='False'; deviceData.bw_count=0; deviceData.color_count=0;
+          deviceData.toner_k=-1; deviceData.toner_c=-1; deviceData.toner_m=-1; deviceData.toner_y=-1;
+          deviceData.collected_at=''; deviceData.status='Offline';
+          added++;
+        } else { updated++; }
+        batch.set(db.collection('device_status').doc(docId), deviceData, {merge:true});
+      });
+
+      batch.commit().then(function(){
+        document.getElementById('device-mgr-info').textContent=
+          '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트 (전체 '+allContracts.length+'개 중 IP등록 '+contracts.length+'개)';
+        renderDeviceManager();
+        loadAllDevices(true);
+      }).catch(function(e){ alert('저장 오류: '+e.message); });
+    });
+  }).catch(function(e){
+    alert('데이터 읽기 오류: '+e.message);
+    document.getElementById('device-mgr-info').textContent='오류 발생';
+  });
+}
+function openAddDevice(){
+  _editDeviceNo=null;
+  document.getElementById('device-modal-title').textContent='기기 추가';
+  document.getElementById('dm-name').value='';
+  document.getElementById('dm-model').value='';
+  document.getElementById('dm-ip').value='';
+  document.getElementById('dm-type').value='ricoh';
+  document.getElementById('dm-quota-bw').value='0';
+  document.getElementById('dm-quota-color').value='0';
+  document.getElementById('device-modal').classList.add('open');
+}
+
+function editDevice(id){
+  var d=_devices.find(function(x){ return x._id===id; });
+  if(!d) return;
+  _editDeviceNo=id;
+  document.getElementById('device-modal-title').textContent='기기 수정';
+  document.getElementById('dm-name').value=d.name||'';
+  document.getElementById('dm-model').value=d.model||'';
+  document.getElementById('dm-ip').value=d.ip||'';
+  document.getElementById('dm-type').value=d.printer_type||d.type||'ricoh';
+  document.getElementById('dm-quota-bw').value=d.quota_bw||0;
+  document.getElementById('dm-quota-color').value=d.quota_color||0;
+  document.getElementById('device-modal').classList.add('open');
+}
+
+function closeDeviceModal(){
+  document.getElementById('device-modal').classList.remove('open');
+}
+
+function saveDeviceModal(){
+  var name=document.getElementById('dm-name').value.trim();
+  var ip=document.getElementById('dm-ip').value.trim();
+  if(!name||!ip){ alert('거래처명과 IP를 입력해 주세요.'); return; }
+
+  var docId=_editDeviceNo;
+  if(!docId){
+    var maxNo=0;
+    (_devices||[]).forEach(function(d){
+      var n=parseInt((d._id||'').replace('device_',''))||0;
+      if(n>maxNo) maxNo=n;
+    });
+    docId='device_'+(maxNo+1);
+  }
+
+  var data={
+    name:name,
+    model:document.getElementById('dm-model').value.trim(),
+    ip:ip,
+    printer_type:document.getElementById('dm-type').value,
+    quota_bw:parseInt(document.getElementById('dm-quota-bw').value)||0,
+    quota_color:parseInt(document.getElementById('dm-quota-color').value)||0
+  };
+  if(!_editDeviceNo){
+    data.is_online='False'; data.bw_count=0; data.color_count=0;
+    data.toner_k=-1; data.toner_c=-1; data.toner_m=-1; data.toner_y=-1;
+    data.collected_at=''; data.status='Offline';
+  }
+
+  db.collection('device_status').doc(docId).set(data,{merge:true}).then(function(){
+    closeDeviceModal();
+    loadAllDevices(true);
+    renderDeviceManager();
+  });
+}
+
+function deleteDevice(id, name){
+  if(!confirm(name+' 기기를 삭제하시겠습니까?')) return;
+  db.collection('device_status').doc(id).delete().then(function(){
+    loadAllDevices(true);
+    renderDeviceManager();
+  });
+}
+
+// ══════════════════════════════════════════
+//  사용량 조회
+// ══════════════════════════════════════════
+function renderUsagePage(){
+  // 날짜 기본값: 이번달 1일 ~ 오늘
+  var now=new Date();
+  var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
+  var d=String(now.getDate()).padStart(2,'0');
+  if(!document.getElementById('usage-start').value){
+    document.getElementById('usage-start').value=y+'-'+m+'-01';
+  }
+  if(!document.getElementById('usage-end').value){
+    document.getElementById('usage-end').value=y+'-'+m+'-'+d;
+  }
+}
+
+function renderUsageReport(){
+  var startDate=document.getElementById('usage-start').value;
+  var endDate=document.getElementById('usage-end').value;
+  var filter=document.getElementById('usage-filter').value;
+
+  if(!startDate||!endDate){ alert('시작일과 조회일을 선택해 주세요.'); return; }
+  if(startDate>endDate){ alert('시작일이 조회일보다 늦을 수 없습니다.'); return; }
+
+  if(!_fbReady||!db){ setTimeout(renderUsageReport,400); return; }
+
+  document.getElementById('usage-info').textContent='조회 중...';
+  document.getElementById('usage-tbody').innerHTML=
+    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 조회 중...</td></tr>';
+
+  var startStr=startDate.replace(/-/g,'');
+  var endStr=endDate.replace(/-/g,'');
+
+  // 모든 기기 히스토리 가져오기
+  db.collection('device_status').get().then(function(snap){
+    var devices=[];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d=doc.data(); d._id=doc.id;
+        devices.push(d);
+      }
+    });
+
+    if(!devices.length){
+      document.getElementById('usage-tbody').innerHTML=
+        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음</td></tr>';
+      return;
+    }
+
+    // 각 기기별 시작일/종료일 히스토리 가져오기
+    var promises=devices.map(function(dev){
+      var no=dev._id.replace('device_','');
+
+      // 시작일 가장 가까운 레코드
+      var startPromise=db.collection('device_status')
+        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
+        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359')
+        .get();
+
+      // 종료일 가장 가까운 레코드
+      var endPromise=db.collection('device_status')
+        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
+        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359')
+        .get();
+
+      return Promise.all([startPromise, endPromise]).then(function(results){
+        var startRows=[], endRows=[];
+        results[0].forEach(function(doc){ startRows.push(doc.data()); });
+        results[1].forEach(function(doc){ endRows.push(doc.data()); });
+        startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+        endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+
+        return {
+          device: dev,
+          startData: startRows[0]||null,
+          endData: endRows[0]||null
+        };
+      });
+    });
+
+    Promise.all(promises).then(function(results){
+      var rows=results.filter(function(r){
+        // 시작일 또는 종료일 데이터가 있는 것만
+        return r.startData||r.endData;
+      });
+
+      // 필터 적용
+      var filtered=rows.filter(function(r){
+        if(!filter) return true;
+        var dev=r.device;
+        var startBw=parseInt((r.startData||{}).bw_count)||0;
+        var endBw=parseInt((r.endData||{}).bw_count)||0;
+        var useBw=endBw-startBw;
+        var quotaBw=parseInt(dev.quota_bw)||0;
+        var overBw=quotaBw>0?useBw-quotaBw:0;
+        if(filter==='over') return overBw>0;
+        if(filter==='safe') return overBw<=0;
+        return true;
+      });
+
+      document.getElementById('usage-info').textContent=
+        startDate+' ~ '+endDate+' | 총 '+filtered.length+'대';
+
+      if(!filtered.length){
+        document.getElementById('usage-tbody').innerHTML=
+          '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
+        return;
+      }
+
+      document.getElementById('usage-tbody').innerHTML=filtered.map(function(r){
+        var dev=r.device;
+        var sd=r.startData||{};
+        var ed=r.endData||{};
+
+        var startBw=parseInt(sd.bw_count)||0;
+        var startColor=parseInt(sd.color_count)||0;
+        var endBw=parseInt(ed.bw_count)||0;
+        var endColor=parseInt(ed.color_count)||0;
+
+        var useBw=Math.max(0,endBw-startBw);
+        var useColor=Math.max(0,endColor-startColor);
+        var quotaBw=parseInt(dev.quota_bw)||0;
+        var quotaColor=parseInt(dev.quota_color)||0;
+
+        var overBw=quotaBw>0?useBw-quotaBw:0;
+        var overColor=quotaColor>0?useColor-quotaColor:0;
+
+        var isOver=(overBw>0)||(overColor>0);
+
+        function overCell(over,quota){
+          if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
+          if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
+          return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
+        }
+
+        return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
+          '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
+          '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
+          '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
+          overCell(overBw,quotaBw)+
+          '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
+          '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
+          overCell(overColor,quotaColor)+
+          '<td style="text-align:center">'+(isOver?
+            '<span class="badge b-late">🔴 초과</span>':
+            '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
+          '<td style="font-size:11px;color:var(--text3)">'+
+            (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>'+
+            'BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
+          '<td style="font-size:11px;color:var(--text3)">'+
+            (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>'+
+            'BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
+          '</tr>';
+      }).join('');
+    });
+  });
+}
+
+document.getElementById('device-modal').addEventListener('click',function(e){
+  if(e.target===this) closeDeviceModal();
+});
 </script>
 </body>
 </html>
