@@ -178,7 +178,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       🔄 새로고침
     </button>
-    <a href="렌탈.html"
+    <a href="rental.html"
       style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
       📋 임대관리
     </a>
@@ -490,7 +490,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
 var _editDeviceNo = null;
 
 function renderDeviceManager(){
-  if(!_fbReady||!db){ setTimeout(renderDeviceManager,400); return; }
+  if(!_fbReady||!db){
+    document.getElementById('device-mgr-info').textContent='Firebase 연결 중...';
+    setTimeout(renderDeviceManager,500);
+    return;
+  }
   document.getElementById('device-mgr-tbody').innerHTML =
     '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
@@ -534,8 +538,8 @@ function renderDeviceManager(){
 // 임대관리에서 가져오기
 // rental.html은 'rental' 컬렉션의 doc_chunk_XX 에 CONTRACTS 배열로 저장
 function importFromRental(){
-  if(!_fbReady||!db){
-    alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.');
+  if(!db){
+    alert('Firebase가 연결되지 않았습니다. 페이지를 새로고침 후 다시 시도해 주세요.');
     return;
   }
   document.getElementById('device-mgr-info').textContent='임대관리 데이터 불러오는 중...';
@@ -607,7 +611,6 @@ function importFromRental(){
   });
 }
 function openAddDevice(){
-  if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
   _editDeviceNo=null;
   document.getElementById('device-modal-title').textContent='기기 추가';
   document.getElementById('dm-name').value='';
