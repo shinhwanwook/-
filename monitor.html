@@ -443,12 +443,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <tr>
             <th>거래처명</th>
             <th>기기명</th>
-            <th style="text-align:right">흑백 사용</th>
-            <th style="text-align:right">흑백 약정</th>
-            <th style="text-align:right">흑백 초과</th>
-            <th style="text-align:right">컬러 사용</th>
-            <th style="text-align:right">컬러 약정</th>
-            <th style="text-align:right">컬러 초과</th>
+            <th style="text-align:right">흑백(시작)</th>
+            <th style="text-align:right">흑백(현재)</th>
+            <th style="text-align:right">흑백약정</th>
+            <th style="text-align:right">흑백사용량</th>
+            <th style="text-align:right">컬러(시작)</th>
+            <th style="text-align:right">컬러(현재)</th>
+            <th style="text-align:right">컬러약정</th>
+            <th style="text-align:right">컬러사용량</th>
             <th style="text-align:center">상태</th>
             <th style="text-align:center">상세</th>
           </tr>
@@ -1490,18 +1492,26 @@ function showUsageDetail(btn){
 
   var html =
     '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
-    '<tr style="background:#f8fafc"><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">구분</th>'+
-    '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">흑백</th>'+
-    '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">컬러</th></tr>'+
-    '<tr><td style="padding:8px;color:var(--text3)">시작일 ('+sdate+' '+stime+')</td>'+
-    '<td style="padding:8px;text-align:right">'+sbw.toLocaleString()+'</td>'+
-    '<td style="padding:8px;text-align:right;color:var(--blue)">'+sc.toLocaleString()+'</td></tr>'+
-    '<tr style="background:#f8fafc"><td style="padding:8px;color:var(--text3)">조회일 ('+edate+' '+etime+')</td>'+
-    '<td style="padding:8px;text-align:right">'+ebw.toLocaleString()+'</td>'+
-    '<td style="padding:8px;text-align:right;color:var(--blue)">'+ec.toLocaleString()+'</td></tr>'+
-    '<tr style="border-top:2px solid #e5e7eb"><td style="padding:8px;font-weight:700">사용량 (끝-시작)</td>'+
-    '<td style="padding:8px;text-align:right;font-weight:700;font-size:16px">'+ubw.toLocaleString()+'</td>'+
-    '<td style="padding:8px;text-align:right;font-weight:700;font-size:16px;color:var(--blue)">'+uc.toLocaleString()+'</td></tr>'+
+    '<tr style="background:#f8fafc">'+
+      '<th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">구분</th>'+
+      '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">흑백</th>'+
+      '<th style="padding:8px;text-align:right;border-bottom:1px solid #e5e7eb">컬러</th>'+
+    '</tr>'+
+    '<tr>'+
+      '<td style="padding:8px;color:var(--text3)">시작일<br><small>'+sdate+' '+stime+'</small></td>'+
+      '<td style="padding:8px;text-align:right;font-size:15px">'+sbw.toLocaleString()+'</td>'+
+      '<td style="padding:8px;text-align:right;font-size:15px;color:var(--blue)">'+sc.toLocaleString()+'</td>'+
+    '</tr>'+
+    '<tr style="background:#f8fafc">'+
+      '<td style="padding:8px;color:var(--text3)">조회일<br><small>'+edate+' '+etime+'</small></td>'+
+      '<td style="padding:8px;text-align:right;font-size:15px">'+ebw.toLocaleString()+'</td>'+
+      '<td style="padding:8px;text-align:right;font-size:15px;color:var(--blue)">'+ec.toLocaleString()+'</td>'+
+    '</tr>'+
+    '<tr style="border-top:2px solid #1a56a0;background:#eff6ff">'+
+      '<td style="padding:10px;font-weight:700;color:#1a56a0">사용량<br><small style="font-weight:400;font-size:11px">조회일 - 시작일</small></td>'+
+      '<td style="padding:10px;text-align:right;font-weight:700;font-size:20px;color:#1e293b">'+ubw.toLocaleString()+'<br><small style="font-size:11px;color:var(--text3)">'+ebw.toLocaleString()+' - '+sbw.toLocaleString()+'</small></td>'+
+      '<td style="padding:10px;text-align:right;font-weight:700;font-size:20px;color:var(--blue)">'+uc.toLocaleString()+'<br><small style="font-size:11px;color:var(--text3)">'+ec.toLocaleString()+' - '+sc.toLocaleString()+'</small></td>'+
+    '</tr>'+
     '</table>';
 
   document.getElementById('usage-detail-body').innerHTML = html;
@@ -1523,102 +1533,89 @@ function filterUsageTable(){
     if(statF){
       var sd = r.startData||{};
       var ed = r.endData||{};
-      var useBw   = Math.max(0,(parseInt(ed.bw_count)||0)-(parseInt(sd.bw_count)||0));
-      var useColor= Math.max(0,(parseInt(ed.color_count)||0)-(parseInt(sd.color_count)||0));
-      var quotaBw = parseInt(dev.quota_bw)||0;
+      var startBw    = parseInt(sd.bw_count)||0;
+      var startColor = parseInt(sd.color_count)||0;
+      var endBw      = parseInt(ed.bw_count)||0;
+      var endColor   = parseInt(ed.color_count)||0;
+      var realUseBw    = Math.max(0, endBw - startBw);
+      var realUseColor = Math.max(0, endColor - startColor);
+      var quotaBw    = parseInt(dev.quota_bw)||0;
       var quotaColor = parseInt(dev.quota_color)||0;
-      var overBw  = quotaBw>0 ? useBw-quotaBw : 0;
-      var overColor = quotaColor>0 ? useColor-quotaColor : 0;
-      var isOver  = overBw>0 || overColor>0;
+      var overBw     = quotaBw>0    ? realUseBw - quotaBw       : 0;
+      var overColor  = quotaColor>0 ? realUseColor - quotaColor : 0;
+      var isOver = overBw>0 || overColor>0;
       if(statF==='over' && !isOver) return false;
-      if(statF==='safe' && isOver) return false;
+      if(statF==='safe' &&  isOver) return false;
     }
     return true;
   });
 
-  document.getElementById('usage-info').textContent=
+  document.getElementById('usage-info').textContent =
     '총 '+_usageRows.length+'대 / '+filtered.length+'대 표시';
 
   if(!filtered.length){
     document.getElementById('usage-tbody').innerHTML=
-      '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
+      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
     return;
   }
 
   document.getElementById('usage-tbody').innerHTML = filtered.map(function(r){
-    var dev=r.device;
-    var sd=r.startData||{};
-    var ed=r.endData||{};
-    var startBw=parseInt(sd.bw_count)||0;
-    var startColor=parseInt(sd.color_count)||0;
-    var endBw=parseInt(ed.bw_count)||0;
-    var endColor=parseInt(ed.color_count)||0;
-    var useBw=Math.max(0,endBw-startBw);
-    var useColor=Math.max(0,endColor-startColor);
-    var quotaBw=parseInt(dev.quota_bw)||0;
-    var quotaColor=parseInt(dev.quota_color)||0;
-    var overBw=quotaBw>0?useBw-quotaBw:0;
-    var overColor=quotaColor>0?useColor-quotaColor:0;
-    var isOver=(overBw>0)||(overColor>0);
+    var dev        = r.device;
+    var sd         = r.startData||{};
+    var ed         = r.endData||{};
 
-    function overCell(over,quota){
-      if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
-      if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
-      return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
+    var startBw    = parseInt(sd.bw_count)||0;
+    var startColor = parseInt(sd.color_count)||0;
+    var endBw      = parseInt(ed.bw_count)||0;
+    var endColor   = parseInt(ed.color_count)||0;
+
+    // 실제 사용량 = 조회끝 - 시작
+    var realUseBw    = Math.max(0, endBw - startBw);
+    var realUseColor = Math.max(0, endColor - startColor);
+
+    var quotaBw    = parseInt(dev.quota_bw)||0;
+    var quotaColor = parseInt(dev.quota_color)||0;
+
+    // 초과 = 실제사용량 - 약정
+    var overBw     = quotaBw>0    ? realUseBw - quotaBw       : 0;
+    var overColor  = quotaColor>0 ? realUseColor - quotaColor : 0;
+    var isOver     = overBw>0 || overColor>0;
+
+    // 사용량 셀
+    function useCell(use, quota, over){
+      if(quota<=0) return '<td style="text-align:right;font-weight:600">'+use.toLocaleString()+'</td>';
+      if(over>0)   return '<td style="text-align:right;font-weight:700;color:#dc2626;background:#fff0f0">'+use.toLocaleString()+'<br><small style=\"font-size:10px\">(+'+over.toLocaleString()+')</small></td>';
+      return '<td style="text-align:right;font-weight:600;color:#166534">'+use.toLocaleString()+'</td>';
     }
 
-    // 초과 셀
-    function overCell2(over, quota){
-      if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
-      if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626;background:#fff0f0">+'+over.toLocaleString()+'</td>';
-      return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
-    }
-
-    // 상세 툴팁 내용
-    var detailHtml =
-      '시작('+esc(sd.date||'-')+') BW:'+startBw.toLocaleString()+' / C:'+startColor.toLocaleString()+'&#10;'+
-      '조회('+esc(ed.date||'-')+') BW:'+endBw.toLocaleString()+' / C:'+endColor.toLocaleString()+'&#10;'+
-      '흑백: '+endBw.toLocaleString()+' - '+startBw.toLocaleString()+' = '+useBw.toLocaleString()+'&#10;'+
-      '컬러: '+endColor.toLocaleString()+' - '+startColor.toLocaleString()+' = '+useColor.toLocaleString();
-
-    return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
+    return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
       '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
-      '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
+      // 흑백
+      '<td style="text-align:right;color:var(--text3)">'+startBw.toLocaleString()+'</td>'+
+      '<td style="text-align:right;font-weight:600">'+endBw.toLocaleString()+'</td>'+
       '<td style="text-align:right;color:var(--text3)">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
-      overCell2(overBw,quotaBw)+
-      '<td style="text-align:right;font-weight:600;color:var(--blue)">'+useColor.toLocaleString()+'</td>'+
+      useCell(realUseBw, quotaBw, overBw)+
+      // 컬러
+      '<td style="text-align:right;color:var(--text3)">'+startColor.toLocaleString()+'</td>'+
+      '<td style="text-align:right;font-weight:600;color:var(--blue)">'+endColor.toLocaleString()+'</td>'+
       '<td style="text-align:right;color:var(--text3)">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
-      overCell2(overColor,quotaColor)+
+      useCell(realUseColor, quotaColor, overColor)+
+      // 상태
       '<td style="text-align:center">'+(isOver?
         '<span class="badge b-late">🔴 초과</span>':
         '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
+      // 상세버튼
       '<td style="text-align:center">'+
-        '<button class="btn btn-ghost btn-xs" title="'+detailHtml+'" '+
-        'onclick="showUsageDetail(this)" '+
+        '<button class="btn btn-ghost btn-xs" onclick="showUsageDetail(this)" '+
         'data-sdate="'+(sd.date||'-')+'" data-stime="'+(sd.time||'')+'" '+
         'data-edate="'+(ed.date||'-')+'" data-etime="'+(ed.time||'')+'" '+
         'data-sbw="'+startBw+'" data-sc="'+startColor+'" '+
         'data-ebw="'+endBw+'" data-ec="'+endColor+'" '+
-        'data-ubw="'+useBw+'" data-uc="'+useColor+'">'+
+        'data-ubw="'+realUseBw+'" data-uc="'+realUseColor+'">'+
         '📋</button></td>'+
       '</tr>';
   }).join('');
 }
-</script>
-<!-- 사용량 상세 모달 -->
-<div class="modal-bg" id="usage-detail-modal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-head">
-      <h3>📋 카운터 상세</h3>
-      <button class="modal-close" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">×</button>
-    </div>
-    <div class="modal-body" id="usage-detail-body"></div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">닫기</button>
-    </div>
-  </div>
-</div>
 
-</body>
-</html>
+
