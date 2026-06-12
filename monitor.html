@@ -394,7 +394,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <thead>
           <tr>
             <th>No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
-            <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>상태</th><th>관리</th>
+            <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>시작(흑백)</th><th>시작(컬러)</th><th>상태</th><th>관리</th>
           </tr>
         </thead>
         <tbody id="device-mgr-tbody"></tbody>
@@ -499,6 +499,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 컬러 (매/월)</label>
           <input class="inp" id="dm-quota-color" type="number" value="0" min="0" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">시작매수 흑백</label>
+          <input class="inp" id="dm-start-bw" type="number" value="0" min="0" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">시작매수 컬러</label>
+          <input class="inp" id="dm-start-color" type="number" value="0" min="0" style="width:100%">
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">
@@ -1165,7 +1173,7 @@ function renderDeviceManager(){
   var statF  = (document.getElementById('device-mgr-status')? document.getElementById('device-mgr-status').value: '');
 
   document.getElementById('device-mgr-tbody').innerHTML =
-    '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
   db.collection('device_status').get().then(function(snap){
     var devices=[];
@@ -1201,7 +1209,7 @@ function renderDeviceManager(){
 
     if(!devices.length){
       document.getElementById('device-mgr-tbody').innerHTML=
-        '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
+        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
       return;
     }
 
@@ -1215,6 +1223,8 @@ function renderDeviceManager(){
         '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
         '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right;color:var(--text3)">'+(d.start_bw?parseInt(d.start_bw).toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right;color:var(--text3)">'+(d.start_color?parseInt(d.start_color).toLocaleString():'-')+'</td>'+
         '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
         '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'">✏️</button> '+
             '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'">🗑️</button></td>'+
@@ -1277,6 +1287,8 @@ function importFromRental(){
           printer_type:c.printer_type||'ricoh',
           quota_bw:parseInt(c.quota_bw)||0,
           quota_color:parseInt(c.quota_color)||0,
+          start_bw:parseInt(c.start_bw)||0,
+          start_color:parseInt(c.start_color)||0,
           contract_no:c.no||0,
           imported_at:new Date().toISOString().slice(0,10)
         };
@@ -1310,6 +1322,8 @@ function openAddDevice(){
   document.getElementById('dm-type').value='ricoh';
   document.getElementById('dm-quota-bw').value='0';
   document.getElementById('dm-quota-color').value='0';
+  document.getElementById('dm-start-bw').value='0';
+  document.getElementById('dm-start-color').value='0';
   document.getElementById('device-modal').classList.add('open');
 }
 
@@ -1325,6 +1339,8 @@ function editDevice(btn){
   document.getElementById('dm-type').value=d.printer_type||d.type||'ricoh';
   document.getElementById('dm-quota-bw').value=d.quota_bw||0;
   document.getElementById('dm-quota-color').value=d.quota_color||0;
+  document.getElementById('dm-start-bw').value=d.start_bw||0;
+  document.getElementById('dm-start-color').value=d.start_color||0;
   document.getElementById('device-modal').classList.add('open');
 }
 
@@ -1353,7 +1369,9 @@ function saveDeviceModal(){
     ip:ip,
     printer_type:document.getElementById('dm-type').value,
     quota_bw:parseInt(document.getElementById('dm-quota-bw').value)||0,
-    quota_color:parseInt(document.getElementById('dm-quota-color').value)||0
+    quota_color:parseInt(document.getElementById('dm-quota-color').value)||0,
+    start_bw:parseInt(document.getElementById('dm-start-bw').value)||0,
+    start_color:parseInt(document.getElementById('dm-start-color').value)||0
   };
   if(!_editDeviceNo){
     data.is_online='False'; data.bw_count=0; data.color_count=0;
@@ -1532,8 +1550,8 @@ function filterUsageTable(){
     if(statF){
       var sd = r.startData||{};
       var ed = r.endData||{};
-      var startBw    = parseInt(sd.bw_count)||0;
-      var startColor = parseInt(sd.color_count)||0;
+      var startBw    = sd.bw_count!==undefined    ? parseInt(sd.bw_count)||0    : parseInt(dev.start_bw)||0;
+      var startColor = sd.color_count!==undefined ? parseInt(sd.color_count)||0 : parseInt(dev.start_color)||0;
       var endBw      = parseInt(ed.bw_count)||0;
       var endColor   = parseInt(ed.color_count)||0;
       var realUseBw    = Math.max(0, endBw - startBw);
@@ -1563,19 +1581,20 @@ function filterUsageTable(){
     var sd         = r.startData||{};
     var ed         = r.endData||{};
 
-    var startBw    = parseInt(sd.bw_count)||0;
-    var startColor = parseInt(sd.color_count)||0;
+    // 시작 카운터: 히스토리 있으면 히스토리, 없으면 임대관리 시작매수
+    var startBw    = sd.bw_count!==undefined    ? parseInt(sd.bw_count)||0    : parseInt(dev.start_bw)||0;
+    var startColor = sd.color_count!==undefined ? parseInt(sd.color_count)||0 : parseInt(dev.start_color)||0;
     var endBw      = parseInt(ed.bw_count)||0;
     var endColor   = parseInt(ed.color_count)||0;
 
-    // 실제 사용량 = 조회끝 - 시작
+    // 실제 사용량 = 조회일 카운터 - 시작 카운터
     var realUseBw    = Math.max(0, endBw - startBw);
     var realUseColor = Math.max(0, endColor - startColor);
 
     var quotaBw    = parseInt(dev.quota_bw)||0;
     var quotaColor = parseInt(dev.quota_color)||0;
 
-    // 초과 = 실제사용량 - 약정
+    // 초과 = 실제사용량 - 약정 (약정 있을때만)
     var overBw     = quotaBw>0    ? realUseBw - quotaBw       : 0;
     var overColor  = quotaColor>0 ? realUseColor - quotaColor : 0;
     var isOver     = overBw>0 || overColor>0;
