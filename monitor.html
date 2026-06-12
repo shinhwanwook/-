@@ -372,6 +372,22 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <button class="btn btn-success btn-sm" onclick="openAddDevice()">➕ 직접 추가</button>
       </div>
     </div>
+    <div class="controls">
+      <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDeviceManager()" style="flex:1;min-width:200px">
+      <select class="inp" id="device-mgr-type" onchange="renderDeviceManager()" style="min-width:130px">
+        <option value="">전체 제조사</option>
+        <option value="ricoh">리코</option>
+        <option value="kyocera">교세라</option>
+        <option value="hp">HP</option>
+        <option value="samsung">삼성</option>
+        <option value="canon">캐논</option>
+      </select>
+      <select class="inp" id="device-mgr-status" onchange="renderDeviceManager()" style="min-width:110px">
+        <option value="">전체 상태</option>
+        <option value="online">🟢 온라인</option>
+        <option value="offline">🔴 오프라인</option>
+      </select>
+    </div>
     <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
     <div class="tbl-wrap">
       <table>
@@ -403,10 +419,21 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <input class="inp" type="date" id="usage-end" style="width:140px">
       </div>
       <button class="btn btn-primary" onclick="renderUsageReport()">🔍 조회</button>
-      <select class="inp" id="usage-filter" onchange="renderUsageReport()">
+    </div>
+    <div class="controls">
+      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable()" style="flex:1;min-width:180px">
+      <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
+        <option value="">전체 제조사</option>
+        <option value="ricoh">리코</option>
+        <option value="kyocera">교세라</option>
+        <option value="hp">HP</option>
+        <option value="samsung">삼성</option>
+        <option value="canon">캐논</option>
+      </select>
+      <select class="inp" id="usage-filter" onchange="filterUsageTable()" style="min-width:110px">
         <option value="">전체</option>
-        <option value="over">초과만</option>
-        <option value="safe">여유만</option>
+        <option value="over">🔴 초과만</option>
+        <option value="safe">🟢 여유만</option>
       </select>
     </div>
     <div class="info-row" id="usage-info"></div>
@@ -1132,6 +1159,11 @@ function renderDeviceManager(){
     setTimeout(renderDeviceManager,500);
     return;
   }
+
+  var srch   = (document.getElementById('device-mgr-srch')  ? document.getElementById('device-mgr-srch').value  : '').toLowerCase();
+  var typeF  = (document.getElementById('device-mgr-type')  ? document.getElementById('device-mgr-type').value  : '');
+  var statF  = (document.getElementById('device-mgr-status')? document.getElementById('device-mgr-status').value: '');
+
   document.getElementById('device-mgr-tbody').innerHTML =
     '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
@@ -1143,7 +1175,29 @@ function renderDeviceManager(){
       }
     });
     devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-    document.getElementById('device-mgr-info').textContent='총 '+devices.length+'대 등록';
+
+    var total = devices.length;
+
+    // 검색 필터 적용
+    if(srch){
+      devices = devices.filter(function(d){
+        return ((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch);
+      });
+    }
+    if(typeF){
+      devices = devices.filter(function(d){
+        return (d.printer_type||d.type||'') === typeF;
+      });
+    }
+    if(statF){
+      devices = devices.filter(function(d){
+        var on = (d.is_online||'').toLowerCase()==='true';
+        return statF==='online' ? on : !on;
+      });
+    }
+
+    document.getElementById('device-mgr-info').textContent=
+      '총 '+total+'대 등록 / '+devices.length+'대 표시';
 
     if(!devices.length){
       document.getElementById('device-mgr-tbody').innerHTML=
@@ -1405,80 +1459,15 @@ function renderUsageReport(){
     });
 
     Promise.all(promises).then(function(results){
-      var rows=results.filter(function(r){
-        // 시작일 또는 종료일 데이터가 있는 것만
-        return r.startData||r.endData;
-      });
-
-      // 필터 적용
-      var filtered=rows.filter(function(r){
-        if(!filter) return true;
-        var dev=r.device;
-        var startBw=parseInt((r.startData||{}).bw_count)||0;
-        var endBw=parseInt((r.endData||{}).bw_count)||0;
-        var useBw=endBw-startBw;
-        var quotaBw=parseInt(dev.quota_bw)||0;
-        var overBw=quotaBw>0?useBw-quotaBw:0;
-        if(filter==='over') return overBw>0;
-        if(filter==='safe') return overBw<=0;
-        return true;
-      });
-
+      // 시작일 또는 종료일 데이터가 있는 것만
+      _usageRows = results.filter(function(r){ return r.startData||r.endData; });
       document.getElementById('usage-info').textContent=
-        startDate+' ~ '+endDate+' | 총 '+filtered.length+'대';
-
-      if(!filtered.length){
-        document.getElementById('usage-tbody').innerHTML=
-          '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
-        return;
-      }
-
-      document.getElementById('usage-tbody').innerHTML=filtered.map(function(r){
-        var dev=r.device;
-        var sd=r.startData||{};
-        var ed=r.endData||{};
-
-        var startBw=parseInt(sd.bw_count)||0;
-        var startColor=parseInt(sd.color_count)||0;
-        var endBw=parseInt(ed.bw_count)||0;
-        var endColor=parseInt(ed.color_count)||0;
-
-        var useBw=Math.max(0,endBw-startBw);
-        var useColor=Math.max(0,endColor-startColor);
-        var quotaBw=parseInt(dev.quota_bw)||0;
-        var quotaColor=parseInt(dev.quota_color)||0;
-
-        var overBw=quotaBw>0?useBw-quotaBw:0;
-        var overColor=quotaColor>0?useColor-quotaColor:0;
-
-        var isOver=(overBw>0)||(overColor>0);
-
-        function overCell(over,quota){
-          if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
-          if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
-          return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
-        }
-
-        return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
-          '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
-          '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
-          '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
-          overCell(overBw,quotaBw)+
-          '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
-          overCell(overColor,quotaColor)+
-          '<td style="text-align:center">'+(isOver?
-            '<span class="badge b-late">🔴 초과</span>':
-            '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
-          '<td style="font-size:11px;color:var(--text3)">'+
-            (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>'+
-            'BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
-          '<td style="font-size:11px;color:var(--text3)">'+
-            (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>'+
-            'BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
-          '</tr>';
-      }).join('');
+        startDate+' ~ '+endDate+' | 총 '+_usageRows.length+'대';
+      // 검색 필터 초기화 후 표시
+      if(document.getElementById('usage-srch')) document.getElementById('usage-srch').value='';
+      if(document.getElementById('usage-type-filter')) document.getElementById('usage-type-filter').value='';
+      if(document.getElementById('usage-filter')) document.getElementById('usage-filter').value='';
+      filterUsageTable();
     });
   });
 }
@@ -1486,6 +1475,85 @@ function renderUsageReport(){
 document.getElementById('device-modal').addEventListener('click',function(e){
   if(e.target===this) closeDeviceModal();
 });
+
+// 사용량 테이블 필터 (조회 후 실시간 검색)
+var _usageRows = [];
+
+function filterUsageTable(){
+  var srch  = (document.getElementById('usage-srch')        ? document.getElementById('usage-srch').value        : '').toLowerCase();
+  var typeF = (document.getElementById('usage-type-filter') ? document.getElementById('usage-type-filter').value : '');
+  var statF = (document.getElementById('usage-filter')      ? document.getElementById('usage-filter').value       : '');
+
+  var filtered = _usageRows.filter(function(r){
+    var dev = r.device;
+    if(srch && !((dev.name||'')+(dev.model||'')).toLowerCase().includes(srch)) return false;
+    if(typeF && (dev.printer_type||dev.type||'') !== typeF) return false;
+    if(statF){
+      var sd = r.startData||{};
+      var ed = r.endData||{};
+      var useBw   = Math.max(0,(parseInt(ed.bw_count)||0)-(parseInt(sd.bw_count)||0));
+      var useColor= Math.max(0,(parseInt(ed.color_count)||0)-(parseInt(sd.color_count)||0));
+      var quotaBw = parseInt(dev.quota_bw)||0;
+      var quotaColor = parseInt(dev.quota_color)||0;
+      var overBw  = quotaBw>0 ? useBw-quotaBw : 0;
+      var overColor = quotaColor>0 ? useColor-quotaColor : 0;
+      var isOver  = overBw>0 || overColor>0;
+      if(statF==='over' && !isOver) return false;
+      if(statF==='safe' && isOver) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('usage-info').textContent=
+    '총 '+_usageRows.length+'대 / '+filtered.length+'대 표시';
+
+  if(!filtered.length){
+    document.getElementById('usage-tbody').innerHTML=
+      '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
+    return;
+  }
+
+  document.getElementById('usage-tbody').innerHTML = filtered.map(function(r){
+    var dev=r.device;
+    var sd=r.startData||{};
+    var ed=r.endData||{};
+    var startBw=parseInt(sd.bw_count)||0;
+    var startColor=parseInt(sd.color_count)||0;
+    var endBw=parseInt(ed.bw_count)||0;
+    var endColor=parseInt(ed.color_count)||0;
+    var useBw=Math.max(0,endBw-startBw);
+    var useColor=Math.max(0,endColor-startColor);
+    var quotaBw=parseInt(dev.quota_bw)||0;
+    var quotaColor=parseInt(dev.quota_color)||0;
+    var overBw=quotaBw>0?useBw-quotaBw:0;
+    var overColor=quotaColor>0?useColor-quotaColor:0;
+    var isOver=(overBw>0)||(overColor>0);
+
+    function overCell(over,quota){
+      if(quota<=0) return '<td style="text-align:right;color:var(--text3)">-</td>';
+      if(over>0) return '<td style="text-align:right;font-weight:700;color:#dc2626">+'+over.toLocaleString()+'</td>';
+      return '<td style="text-align:right;color:#166534">'+over.toLocaleString()+'</td>';
+    }
+
+    return '<tr style="background:'+(isOver?'#fff5f5':'')+'">'+
+      '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
+      '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
+      '<td style="text-align:right">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
+      '<td style="text-align:right;font-weight:600">'+useBw.toLocaleString()+'</td>'+
+      overCell(overBw,quotaBw)+
+      '<td style="text-align:right">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
+      '<td style="text-align:right;font-weight:600">'+useColor.toLocaleString()+'</td>'+
+      overCell(overColor,quotaColor)+
+      '<td style="text-align:center">'+(isOver?
+        '<span class="badge b-late">🔴 초과</span>':
+        '<span class="badge b-ok">🟢 정상</span>')+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+
+        (sd.date?sd.date+' '+esc(sd.time||''):'-')+'<br>BW:'+startBw.toLocaleString()+' C:'+startColor.toLocaleString()+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+
+        (ed.date?ed.date+' '+esc(ed.time||''):'-')+'<br>BW:'+endBw.toLocaleString()+' C:'+endColor.toLocaleString()+'</td>'+
+      '</tr>';
+  }).join('');
+}
 </script>
 </body>
 </html>
