@@ -361,6 +361,7 @@ body.locked { overflow:hidden; }
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
     <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
+    <a href="monitor.html" target="_blank" title="프린터 모니터링 열기" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
     <label title="JSON 파일에서 복원" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:4px">
       📂 불러오기<input type="file" accept=".json" id="restore-input" style="display:none" onchange="restoreData(this)">
     </label>
@@ -516,28 +517,6 @@ body.locked { overflow:hidden; }
         </div>
         <div class="form-group"><label>세금계산서</label><select class="inp" id="f-tax"><option value="무">무</option><option value="유">유</option></select></div>
         <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder=""></div>
-
-        <!-- 프린터 IP -->
-        <div class="form-group form-full" style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px">
-          <label style="font-size:13px;font-weight:700;color:#166534;margin-bottom:10px;display:block">🖨️ 프린터 모니터링</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group" style="margin:0">
-              <label>프린터 IP 주소</label>
-              <input class="inp" id="f-printer-ip" type="text" placeholder="예) 192.168.1.100">
-            </div>
-            <div class="form-group" style="margin:0">
-              <label>제조사</label>
-              <select class="inp" id="f-printer-type">
-                <option value="">선택안함</option>
-                <option value="ricoh">리코 (RICOH)</option>
-                <option value="kyocera">교세라 (Kyocera)</option>
-                <option value="hp">HP</option>
-                <option value="samsung">삼성 (Samsung)</option>
-                <option value="canon">캐논 (Canon)</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
         <!-- 약정매수 / 추가장당 단가 -->
         <div class="form-group form-full" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px">
@@ -1870,8 +1849,6 @@ function switchDtab(i){
 // ══ 계약 등록/수정 ══
 function clearForm(){
   ['f-name','f-manager','f-phone','f-email','f-payday','f-etc','f-address','f-memo'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-printer-ip').value='';
-  document.getElementById('f-printer-type').value='';
   document.getElementById('f-quota-bw').value='0';
   document.getElementById('f-quota-color').value='0';
   document.getElementById('f-extra-bw').value='0';
@@ -1910,8 +1887,6 @@ function editContract(no){
   document.getElementById('f-qty').value=c.qty||1;
   var _qbw = c.quota_bw||0;
   var _qc = c.quota_color||0;
-  document.getElementById('f-printer-ip').value=c.printer_ip||'';
-  document.getElementById('f-printer-type').value=c.printer_type||'';
   document.getElementById('f-quota-bw').value=_qbw.toLocaleString();
   document.getElementById('f-quota-bw').dataset.raw=String(_qbw);
   document.getElementById('f-quota-color').value=_qc.toLocaleString();
@@ -1964,8 +1939,6 @@ function saveContract(){
     c.address=document.getElementById('f-address').value.trim();
     c.memo=document.getElementById('f-memo').value.trim();
     c.tax=document.getElementById('f-tax').value;
-    c.printer_ip=document.getElementById('f-printer-ip').value.trim();
-    c.printer_type=document.getElementById('f-printer-type').value;
     c.quota_bw=getRawNum('f-quota-bw');
     c.quota_color=getRawNum('f-quota-color');
     c.extra_bw=parseInt(document.getElementById('f-extra-bw').value)||0;
@@ -1996,8 +1969,6 @@ function saveContract(){
       deposit:parseInt(document.getElementById('f-deposit').value)||0,
       memo:document.getElementById('f-memo').value.trim(),
       tax:document.getElementById('f-tax').value,
-      printer_ip:document.getElementById('f-printer-ip').value.trim(),
-      printer_type:document.getElementById('f-printer-type').value,
       quota_bw:getRawNum('f-quota-bw'),
       quota_color:getRawNum('f-quota-color'),
       extra_bw:parseInt(document.getElementById('f-extra-bw').value)||0,
