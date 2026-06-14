@@ -445,8 +445,10 @@ body.locked { overflow:hidden; }
     </div>
     <div class="pg" style="display:none">
       <span id="pg-info"></span>
+      <button id="pg-first" onclick="goFirstPage()" title="처음으로">◀◀ 처음</button>
       <button id="pg-prev" onclick="changePage(-1)">◀ 이전</button>
       <button id="pg-next" onclick="changePage(1)">다음 ▶</button>
+      <button id="pg-last" onclick="goLastPage()" title="마지막으로">마지막 ▶▶</button>
     </div>
   </div>
 </div>
@@ -695,8 +697,10 @@ body.locked { overflow:hidden; }
     </div>
     <div class="pg">
       <span id="svc-pg-info"></span>
+      <button id="svc-first" onclick="goFirstSvcPage()" title="처음으로">◀◀ 처음</button>
       <button id="svc-prev" onclick="changeSvcPage(-1)">◀ 이전</button>
       <button id="svc-next" onclick="changeSvcPage(1)">다음 ▶</button>
+      <button id="svc-last" onclick="goLastSvcPage()" title="마지막으로">마지막 ▶▶</button>
     </div>
   </div>
 </div>
@@ -1511,6 +1515,13 @@ function sortBy(k){
   applyFilters();
 }
 function changePage(d){page+=d;renderList();window.scrollTo(0,0);}
+function goFirstPage(){
+  page=0;renderList();window.scrollTo(0,0);
+}
+function goLastPage(){
+  var totalPages=Math.ceil(filtered.length/PAGE_SIZE)||1;
+  page=totalPages-1;renderList();window.scrollTo(0,0);
+}
 function renderList(){
   updateStats();
   const terminatedCount=CONTRACTS.filter(c=>c.terminated).length;
@@ -1583,8 +1594,10 @@ function renderList(){
   if(pgDiv){
     pgDiv.style.display = filtered.length > PAGE_SIZE ? 'flex' : 'none';
     document.getElementById('pg-info').textContent = (page+1) + ' / ' + totalPages + ' 페이지  (' + filtered.length + '건)';
-    document.getElementById('pg-prev').disabled = page === 0;
-    document.getElementById('pg-next').disabled = page >= totalPages-1;
+    document.getElementById('pg-first').disabled = page === 0;
+    document.getElementById('pg-prev').disabled  = page === 0;
+    document.getElementById('pg-next').disabled  = page >= totalPages-1;
+    document.getElementById('pg-last').disabled  = page >= totalPages-1;
   }
 }
 
@@ -3017,10 +3030,17 @@ function renderService(){
   }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div>이력이 없습니다</div></td></tr>`;
   const pages=Math.ceil(svcFiltered.length/SVC_PAGE)||1;
   document.getElementById('svc-pg-info').textContent=`${svcPage+1} / ${pages} 페이지`;
+  document.getElementById('svc-first').disabled=svcPage===0;
   document.getElementById('svc-prev').disabled=svcPage===0;
   document.getElementById('svc-next').disabled=svcPage>=pages-1;
+  document.getElementById('svc-last').disabled=svcPage>=pages-1;
 }
 function changeSvcPage(d){svcPage+=d;renderService();}
+function goFirstSvcPage(){svcPage=0;renderService();}
+function goLastSvcPage(){
+  var pages=Math.ceil(svcFiltered.length/SVC_PAGE)||1;
+  svcPage=pages-1;renderService();
+}
 
 // ══ 계약서류 자료실 ══
 function handleDocFiles(files){
@@ -4117,8 +4137,11 @@ function renderInvList(){
 
   const pages=Math.ceil(list.length/INV_PAGE)||1;
   document.getElementById('inv-pg-info').textContent=`${invPage+1} / ${pages} 페이지`;
+  if(invPage>=pages) invPage=pages-1; // goLastInvPage 보정
+  document.getElementById('inv-first').disabled=invPage===0;
   document.getElementById('inv-prev').disabled=invPage===0;
   document.getElementById('inv-next').disabled=invPage>=pages-1;
+  document.getElementById('inv-last').disabled=invPage>=pages-1;
 }
 function sortInv(){
   invSortDir*=-1;
@@ -4126,6 +4149,8 @@ function sortInv(){
   renderInvList();
 }
 function changeInvPage(d){invPage+=d;renderInvList();}
+function goFirstInvPage(){invPage=0;renderInvList();}
+function goLastInvPage(){invPage=9999;renderInvList();}
 // ── 입출고 인라인 폼 ──
 var _invFormDir = 'in';
 var _editInvId  = null;
@@ -4636,8 +4661,10 @@ function hidePayTip(){
     </div>
     <div class="pg">
       <span id="inv-pg-info"></span>
+      <button id="inv-first" onclick="goFirstInvPage()" title="처음으로">◀◀ 처음</button>
       <button id="inv-prev" onclick="changeInvPage(-1)">◀ 이전</button>
       <button id="inv-next" onclick="changeInvPage(1)">다음 ▶</button>
+      <button id="inv-last" onclick="goLastInvPage()" title="마지막으로">마지막 ▶▶</button>
     </div>
   </div>
 </div>
