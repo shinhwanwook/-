@@ -1251,7 +1251,11 @@ function showPage(id){
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
   if(id==='devices') renderDeviceManager();
-  if(id==='usage')   renderUsagePage();
+  if(id==='usage'){
+    renderUsagePage();
+    // 날짜 기본값 세팅 후 자동 조회
+    setTimeout(function(){ renderUsageReport(); }, 100);
+  }
 }
 
 // ══════════════════════════════════════════
