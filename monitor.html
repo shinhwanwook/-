@@ -991,7 +991,8 @@ function renderHistory(){
           return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':v+'%')+'</td>';
         }
         return '<tr>'+
-          '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
+          '<td style="white-space:nowrap;font-size:12px;cursor:pointer;color:var(--blue);text-decoration:underline" '+
+          'onclick="setUsageDateFromHistory(''+esc(r.date||'')+'')" title="이 날짜로 사용량조회">'+esc(r.date||'-')+'</td>'+
           '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
           '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
           '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
@@ -1237,7 +1238,7 @@ function renderDeviceManager(){
 
     if(!devices.length){
       document.getElementById('device-mgr-tbody').innerHTML=
-        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
+        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
       return;
     }
 
@@ -1429,6 +1430,23 @@ function deleteDevice(btn){
 // ══════════════════════════════════════════
 //  사용량 조회
 // ══════════════════════════════════════════
+function setUsageDateFromHistory(dateStr){
+  if(!dateStr) return;
+  // 날짜 클릭 시 선택 팝업
+  var choice = confirm(
+    '선택한 날짜: ' + dateStr + '\n\n' +
+    '[확인] → 시작일로 설정\n' +
+    '[취소] → 조회일(끝)로 설정'
+  );
+  if(choice){
+    document.getElementById('usage-start').value = dateStr;
+  } else {
+    document.getElementById('usage-end').value = dateStr;
+  }
+  // 사용량조회 탭으로 이동
+  showPage('usage');
+}
+
 function renderUsagePage(){
   // 날짜 기본값: 이번달 1일 ~ 오늘
   var now=new Date();
@@ -1454,7 +1472,7 @@ function renderUsageReport(){
 
   document.getElementById('usage-info').textContent='조회 중...';
   document.getElementById('usage-tbody').innerHTML=
-    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 조회 중...</td></tr>';
+    '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 조회 중...</td></tr>';
 
   var startStr=startDate.replace(/-/g,'');
   var endStr=endDate.replace(/-/g,'');
@@ -1471,7 +1489,7 @@ function renderUsageReport(){
 
     if(!devices.length){
       document.getElementById('usage-tbody').innerHTML=
-        '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음</td></tr>';
+        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음</td></tr>';
       return;
     }
 
