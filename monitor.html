@@ -278,14 +278,25 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📅 수집 히스토리</span>
     </div>
     <div class="controls">
-      <select class="inp" id="hist-device" style="min-width:200px" onchange="renderHistory()">
-        <option value="">기기 선택...</option>
+      <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="renderHistory()" style="flex:1;min-width:180px">
+      <select class="inp" id="hist-device" style="min-width:180px" onchange="renderHistory()">
+        <option value="">전체 기기</option>
       </select>
-      <input class="inp" type="month" id="hist-month" onchange="renderHistory()" style="width:130px">
-      <select class="inp" id="hist-period" onchange="renderHistory()">
+      <select class="inp" id="hist-period" onchange="renderHistory()" style="min-width:90px">
         <option value="daily">일별</option>
         <option value="all">전체</option>
       </select>
+    </div>
+    <div class="controls">
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">시작일</label>
+        <input class="inp" type="date" id="hist-start" onchange="renderHistory()" style="width:140px">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">조회일</label>
+        <input class="inp" type="date" id="hist-end" onchange="renderHistory()" style="width:140px">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="resetHistFilter()">초기화</button>
     </div>
     <div class="info-row" id="hist-info"></div>
     <div class="tbl-wrap" style="max-height:calc(100vh - 260px)">
@@ -951,70 +962,131 @@ document.getElementById('detail-modal').addEventListener('click',function(e){
 //  히스토리
 // ══════════════════════════════════════════
 function renderHistory(){
-  var devId  = document.getElementById('hist-device').value;
-  var month  = document.getElementById('hist-month').value;
-  if(!devId||!month){
+  if(!_fbReady||!db){ setTimeout(renderHistory,400); return; }
+
+  var srch    = (document.getElementById('hist-srch')   ? document.getElementById('hist-srch').value   : '').toLowerCase();
+  var devId   = document.getElementById('hist-device').value;
+  var period  = document.getElementById('hist-period').value;
+  var startD  = document.getElementById('hist-start') ? document.getElementById('hist-start').value : '';
+  var endD    = document.getElementById('hist-end')   ? document.getElementById('hist-end').value   : '';
+
+  if(!devId && !srch && !startD && !endD){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">기기와 월을 선택하세요</td></tr>';
+      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">거래처를 선택하거나 검색어/날짜를 입력해 주세요.</td></tr>';
+    document.getElementById('hist-info').textContent = '';
     return;
   }
-  var devNo    = devId.replace('device_','');
-  var monthStr = month.replace('-','');
 
   document.getElementById('hist-info').textContent = '불러오는 중...';
   document.getElementById('hist-tbody').innerHTML =
     '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
-  db.collection('device_status')
-    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+devNo+'_'+monthStr+'01')
-    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+devNo+'_'+monthStr+'31')
-    .get().then(function(snap){
-      var rows=[];
-      snap.forEach(function(doc){ rows.push(doc.data()); });
-      // 날짜+시간으로 정렬 (헤더 클릭으로 방향 변경)
-      rows.sort(function(a,b){
-        var ka = (a.date||'')+(a.time||'');
-        var kb = (b.date||'')+(b.time||'');
-        return _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
+  // 검색 대상 기기 목록
+  var targetDevices = _devices.filter(function(d){
+    if(devId && d._id !== devId) return false;
+    if(srch && !((d.name||'')+(d.model||'')).toLowerCase().includes(srch)) return false;
+    return true;
+  });
+
+  if(!targetDevices.length){
+    document.getElementById('hist-tbody').innerHTML =
+      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
+    document.getElementById('hist-info').textContent = '';
+    return;
+  }
+
+  // 날짜 범위 설정
+  var startStr = startD ? startD.replace(/-/g,'') : '';
+  var endStr   = endD   ? endD.replace(/-/g,'')   : '';
+
+  // 각 기기별 히스토리 조회
+  var promises = targetDevices.map(function(dev){
+    var no = dev._id.replace('device_','');
+    var prefix = 'hist_'+no+'_';
+    var q = db.collection('device_status')
+      .where(firebase.firestore.FieldPath.documentId(), '>=', prefix+(startStr||''))
+      .where(firebase.firestore.FieldPath.documentId(), '<=', prefix+(endStr||'99999999')+'_2359');
+    return q.get().then(function(snap){
+      var rows = [];
+      snap.forEach(function(doc){ var d=doc.data(); d._docId=doc.id; d._devName=dev.name||''; d._devModel=dev.model||''; rows.push(d); });
+      return rows;
+    });
+  });
+
+  Promise.all(promises).then(function(allRows){
+    // 모든 기기 히스토리 합치기
+    var rows = [].concat.apply([], allRows);
+
+    // 정렬
+    rows.sort(function(a,b){
+      var ka = (a.date||'')+(a.time||'');
+      var kb = (b.date||'')+(b.time||'');
+      return _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
+    });
+
+    // 일별 중복 제거 (기기별 하루 최신 1건)
+    if(period === 'daily'){
+      var seen = {};
+      rows = rows.filter(function(r){
+        var key = (r._docId||'').split('_').slice(0,3).join('_');
+        if(seen[key]) return false;
+        seen[key] = true;
+        return true;
       });
+    }
 
-      document.getElementById('hist-info').textContent = '총 '+rows.length+'건';
+    document.getElementById('hist-info').textContent = '총 '+rows.length+'건 / '+targetDevices.length+'대';
 
-      if(!rows.length){
-        document.getElementById('hist-tbody').innerHTML =
-          '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">해당 월 데이터 없음</td></tr>';
-        return;
+    if(!rows.length){
+      document.getElementById('hist-tbody').innerHTML =
+        '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
+      return;
+    }
+
+    // 기기별 이전값 추적 (증분 계산용)
+    var prevMap = {};
+
+    document.getElementById('hist-tbody').innerHTML = rows.map(function(r){
+      var key = r._docId ? r._docId.split('_').slice(0,2).join('_') : '';
+      var bw    = parseInt(r.bw_count)||0;
+      var color = parseInt(r.color_count)||0;
+      var prev  = prevMap[key] || {bw:null, color:null};
+      var dBw    = (prev.bw!==null && bw>=prev.bw)    ? bw-prev.bw       : null;
+      var dColor = (prev.color!==null && color>=prev.color) ? color-prev.color : null;
+      var dTotal = (dBw!==null && dColor!==null) ? dBw+dColor : null;
+      prevMap[key] = {bw:bw, color:color};
+
+      function htd(pct){
+        var v=parseInt(pct); var tc=tonerColor(v);
+        return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':v+'%')+'</td>';
       }
 
-      var prevBw=null, prevColor=null;
-      document.getElementById('hist-tbody').innerHTML = rows.map(function(r){
-        var bw    = parseInt(r.bw_count)||0;
-        var color = parseInt(r.color_count)||0;
-        var dBw    = (prevBw!==null&&bw>=prevBw)?bw-prevBw:null;
-        var dColor = (prevColor!==null&&color>=prevColor)?color-prevColor:null;
-        var dTotal = (dBw!==null&&dColor!==null)?dBw+dColor:null;
-        prevBw=bw; prevColor=color;
+      var multiDev = targetDevices.length > 1;
+      return '<tr>'+
+        '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
+        (multiDev ? '<td style="font-size:12px;font-weight:600">'+esc(r._devName||'-')+'</td>' : '')+
+        '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
+        '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
+        '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right;color:#0891b2">'+(dColor!==null?dColor.toLocaleString():'-')+'</td>'+
+        '<td style="text-align:right;font-weight:700;color:#1e3a5f">'+(dTotal!==null?dTotal.toLocaleString():'-')+'</td>'+
+        htd(r.toner_k)+htd(r.toner_c)+htd(r.toner_m)+htd(r.toner_y)+
+        '<td style="font-size:11px">'+esc(r.status||'-')+'</td>'+
+        '</tr>';
+    }).join('');
+  }).catch(function(e){
+    document.getElementById('hist-tbody').innerHTML =
+      '<tr><td colspan="12" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
+  });
+}
 
-        function htd(pct){
-          var v=parseInt(pct); var tc=tonerColor(v);
-          return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':v+'%')+'</td>';
-        }
-        return '<tr>'+
-          '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
-          '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
-          '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
-          '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
-          '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;color:#0891b2">'+(dColor!==null?dColor.toLocaleString():'-')+'</td>'+
-          '<td style="text-align:right;font-weight:700;color:#1e3a5f">'+(dTotal!==null?dTotal.toLocaleString():'-')+'</td>'+
-          htd(r.toner_k)+htd(r.toner_c)+htd(r.toner_m)+htd(r.toner_y)+
-          '<td style="font-size:11px">'+esc(r.status||'-')+'</td>'+
-          '</tr>';
-      }).join('');
-    }).catch(function(e){
-      document.getElementById('hist-tbody').innerHTML =
-        '<tr><td colspan="12" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
-    });
+function resetHistFilter(){
+  if(document.getElementById('hist-srch'))  document.getElementById('hist-srch').value='';
+  if(document.getElementById('hist-start')) document.getElementById('hist-start').value='';
+  if(document.getElementById('hist-end'))   document.getElementById('hist-end').value='';
+  document.getElementById('hist-device').value='';
+  renderHistory();
 }
 
 // ══════════════════════════════════════════
@@ -1187,9 +1259,11 @@ function showPage(id){
 // ══════════════════════════════════════════
 (function(){
   var now = new Date();
-  var m   = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  var el  = document.getElementById('hist-month');
-  if(el) el.value = m;
+  var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
+  var hStart = document.getElementById('hist-start');
+  var hEnd   = document.getElementById('hist-end');
+  if(hStart) hStart.value = y+'-'+m+'-01';
+  if(hEnd)   hEnd.value   = y+'-'+m+'-'+d;
 })();
 
 
