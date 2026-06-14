@@ -1458,9 +1458,7 @@ function deleteDevice(btn){
 // ══════════════════════════════════════════
 function histDateClick(el){
   var dateStr = el.getAttribute('data-date');
-  if(!dateStr) return;
-
-  // 날짜 선택 모달 표시
+  if(!dateStr){ alert('날짜 없음'); return; }
   document.getElementById('hist-date-val').textContent = dateStr;
   document.getElementById('hist-date-modal').classList.add('open');
   window._histClickDate = dateStr;
