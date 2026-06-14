@@ -2349,6 +2349,32 @@ function adminLogout(){
   try{ localStorage.removeItem(AUTO_LOGIN_KEY); }catch(e){}
   setTimeout(function(){ location.reload(); }, 100);
 }
+
+// ══════════════════════════════════════
+//  5분 자동 로그아웃
+// ══════════════════════════════════════
+var _autoLogoutTimer = null;
+var _AUTO_LOGOUT_MS  = 5 * 60 * 1000; // 5분
+
+function resetAutoLogout(){
+  if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
+  _autoLogoutTimer = setTimeout(function(){
+    if(document.getElementById('app-wrapper').style.display !== 'none'){
+      alert('5분 동안 활동이 없어 자동 로그아웃 됩니다.');
+      adminLogout();
+    }
+  }, _AUTO_LOGOUT_MS);
+}
+
+// 마우스/키보드/터치 이벤트 시 타이머 리셋
+(function(){
+  var events = ['mousemove','mousedown','keydown','touchstart','click','scroll'];
+  events.forEach(function(e){
+    document.addEventListener(e, resetAutoLogout, { passive: true });
+  });
+  resetAutoLogout(); // 초기 시작
+})();
+
 function changeAdminPw(){
   const p1=document.getElementById('new-pw1').value;
   const p2=document.getElementById('new-pw2').value;

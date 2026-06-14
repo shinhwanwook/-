@@ -645,6 +645,30 @@ function doLogout(){
   document.getElementById('login-err').style.display = 'none';
 }
 
+// ══════════════════════════════════════
+//  5분 자동 로그아웃
+// ══════════════════════════════════════
+var _autoLogoutTimer = null;
+var _AUTO_LOGOUT_MS  = 5 * 60 * 1000; // 5분
+
+function resetAutoLogout(){
+  if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
+  _autoLogoutTimer = setTimeout(function(){
+    if(document.getElementById('app-wrapper').style.display !== 'none'){
+      alert('5분 동안 활동이 없어 자동 로그아웃 됩니다.');
+      doLogout();
+    }
+  }, _AUTO_LOGOUT_MS);
+}
+
+(function(){
+  var events = ['mousemove','mousedown','keydown','touchstart','click','scroll'];
+  events.forEach(function(e){
+    document.addEventListener(e, resetAutoLogout, { passive: true });
+  });
+  resetAutoLogout();
+})();
+
 // ══════════════════════════════════════════
 //  전역 데이터
 // ══════════════════════════════════════════
