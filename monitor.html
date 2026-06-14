@@ -1034,6 +1034,8 @@ function renderHistory(){
 
   var startStr = startD ? startD.replace(/-/g,'') : '20000101';
   var endStr   = endD   ? endD.replace(/-/g,'')   : '29991231';
+  // 기준값용: 시작일 7일 전까지 탐색
+  var baseStartStr = getPrevDateN(startStr, 7);
 
   // 전체 히스토리 가져오기 후 필터링
   db.collection('device_status').get().then(function(snap){
@@ -1050,9 +1052,8 @@ function renderHistory(){
       var dev = targetDevices.find(function(d){ return d._id === 'device_'+no; });
       if(!dev) return;
 
-      // 날짜 범위 필터 (시작일 하루 전 데이터도 기준값으로 포함)
-      var prevDateStr = getPrevDate(startStr);
-      if(dateStr < prevDateStr || dateStr > endStr) return;
+      // 날짜 범위 필터 (시작일 최대 7일 전까지 기준값으로 포함)
+      if(dateStr < baseStartStr || dateStr > endStr) return;
 
       var d = doc.data();
       d._docId    = doc.id;
@@ -1068,18 +1069,48 @@ function renderHistory(){
       return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
     });
 
-    // 일별: 오름차순 기준 마지막값(최신) 사용
+    // 일별: _isBase는 유지하면서 실제 데이터만 일별 처리
     if(period === 'daily'){
+      // 기준행 중 기기별 가장 최신 1건만
+      var baseMap = {};
+      allRows.filter(function(r){ return r._isBase; }).forEach(function(r){
+        var key = r._devNo;
+        if(!baseMap[key] || (r.date||'')+(r.time||'') > (baseMap[key].date||'')+(baseMap[key].time||''))
+          baseMap[key] = r;
+      });
+      var baseRows = Object.values(baseMap);
+      var dataRows = allRows.filter(function(r){ return !r._isBase; });
+      // 실제 데이터만 일별 최신 1건
       var dailyMap = {};
-      allRows.forEach(function(r){ dailyMap['device_'+r._devNo+'_'+(r.date||'')] = r; });
-      allRows = Object.values(dailyMap);
+      dataRows.forEach(function(r){ dailyMap['device_'+r._devNo+'_'+(r.date||'')] = r; });
+      dataRows = Object.values(dailyMap);
+      // 기준행 + 실제데이터 합쳐서 오름차순
+      allRows = baseRows.concat(dataRows);
       allRows.sort(function(a,b){
         return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
       });
     }
 
     // 2단계: 오름차순 기준 증분 계산 (이전→현재)
+    // 기준값이 없는 기기는 device_status 현재값으로 초기화
     var prevMap = {};
+
+    // 기준행(_isBase)으로 prevMap 초기화
+    allRows.filter(function(r){ return r._isBase; }).forEach(function(r){
+      var key = r._devNo||'';
+      prevMap[key] = {bw:parseInt(r.bw_count)||0, color:parseInt(r.color_count)||0};
+    });
+
+    // 기준행 없는 기기는 device_status 현재값으로 초기화
+    targetDevices.forEach(function(dev){
+      var key = dev._id.replace('device_','');
+      if(!prevMap[key]){
+        // 히스토리 첫행 바로 이전값 = 현재 device_status 값
+        // (없으면 null 유지 → 첫행은 '-')
+        prevMap[key] = {bw:null, color:null};
+      }
+    });
+
     allRows.forEach(function(r){
       var key   = r._devNo||'';
       var bw    = parseInt(r.bw_count)||0;
@@ -1583,14 +1614,15 @@ function deleteDevice(btn){
 // 히스토리 날짜 정렬 토글
 var _histSortAsc = false; // 기본: 최신순(내림차순)
 
-// 날짜 하루 전 계산
-function getPrevDate(dateStr){
+// 날짜 N일 전 계산
+function getPrevDate(dateStr){ return getPrevDateN(dateStr,1); }
+function getPrevDateN(dateStr,n){
   if(!dateStr || dateStr.length < 8) return '00000000';
   var y=parseInt(dateStr.substr(0,4));
   var m=parseInt(dateStr.substr(4,2))-1;
   var d=parseInt(dateStr.substr(6,2));
   var dt=new Date(y,m,d);
-  dt.setDate(dt.getDate()-1);
+  dt.setDate(dt.getDate()-n);
   return dt.getFullYear()+
     String(dt.getMonth()+1).padStart(2,'0')+
     String(dt.getDate()).padStart(2,'0');
