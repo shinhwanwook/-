@@ -654,6 +654,15 @@ function doLogin(){
     }
 
     if(matched){
+      // 사용자 권한 확인 - monitor 권한 없으면 로그인 거부
+      var isAdmin = matched.role === 'admin';
+      var hasMonitorPerm = isAdmin || !!(matched.permissions && matched.permissions.monitor);
+      if(!hasMonitorPerm){
+        errEl.textContent = '프린터 모니터링 접근 권한이 없습니다.';
+        errEl.style.display = 'block';
+        document.getElementById('login-pw').value = '';
+        return;
+      }
       _currentUser = matched;
       errEl.style.display = 'none';
       document.getElementById('login-screen').style.display = 'none';

@@ -1084,6 +1084,7 @@ body.locked { overflow:hidden; }
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-inventory-write"> 장비/소모품 등록</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-stats-read"> 임대통계 조회</label>
               <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="perm-print"> 출력(계약서/견적서 등)</label>
+              <label style="display:flex;align-items:center;gap:6px;grid-column:1/-1;background:#eff6ff;border-radius:6px;padding:4px 6px"><input type="checkbox" id="perm-monitor"> 🖨️ 프린터 모니터링 접근</label>
             </div>
           </div>
 
@@ -2084,7 +2085,8 @@ function getPermFromForm(){
     inventoryRead:  document.getElementById('perm-inventory-read').checked,
     inventoryWrite: document.getElementById('perm-inventory-write').checked,
     statsRead:      document.getElementById('perm-stats-read').checked,
-    print:          document.getElementById('perm-print').checked
+    print:          document.getElementById('perm-print').checked,
+    monitor:        document.getElementById('perm-monitor').checked
   };
 }
 function setPermToForm(perm){
@@ -2098,6 +2100,7 @@ function setPermToForm(perm){
   document.getElementById('perm-tax-read').checked       = p.taxRead       !== false;
   document.getElementById('perm-tax-write').checked      = !!p.taxWrite;
   document.getElementById('perm-stats-read').checked     = !!p.statsRead;
+  document.getElementById('perm-monitor').checked        = !!p.monitor;
 }
 var _currentUserId = '';
 function hasPerm(key){
