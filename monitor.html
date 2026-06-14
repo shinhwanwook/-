@@ -1050,14 +1050,16 @@ function renderHistory(){
       var dev = targetDevices.find(function(d){ return d._id === 'device_'+no; });
       if(!dev) return;
 
-      // 날짜 범위 필터
-      if(dateStr < startStr || dateStr > endStr) return;
+      // 날짜 범위 필터 (시작일 하루 전 데이터도 기준값으로 포함)
+      var prevDateStr = getPrevDate(startStr);
+      if(dateStr < prevDateStr || dateStr > endStr) return;
 
       var d = doc.data();
-      d._docId   = doc.id;
-      d._devNo   = no;
-      d._devName = dev.name||'';
-      d._devModel= dev.model||'';
+      d._docId    = doc.id;
+      d._devNo    = no;
+      d._devName  = dev.name||'';
+      d._devModel = dev.model||'';
+      d._isBase   = dateStr < startStr; // 기준값 여부
       allRows.push(d);
     });
 
@@ -1088,6 +1090,9 @@ function renderHistory(){
       r._dTotal = (r._dBw!==null && r._dColor!==null)      ? r._dBw+r._dColor : null;
       prevMap[key] = {bw:bw, color:color};
     });
+
+    // 기준값 행 제거 (표시 안함)
+    allRows = allRows.filter(function(r){ return !r._isBase; });
 
     // 3단계: 표시 방향으로 재정렬
     allRows.sort(function(a,b){
@@ -1577,6 +1582,19 @@ function deleteDevice(btn){
 // ══════════════════════════════════════════
 // 히스토리 날짜 정렬 토글
 var _histSortAsc = false; // 기본: 최신순(내림차순)
+
+// 날짜 하루 전 계산
+function getPrevDate(dateStr){
+  if(!dateStr || dateStr.length < 8) return '00000000';
+  var y=parseInt(dateStr.substr(0,4));
+  var m=parseInt(dateStr.substr(4,2))-1;
+  var d=parseInt(dateStr.substr(6,2));
+  var dt=new Date(y,m,d);
+  dt.setDate(dt.getDate()-1);
+  return dt.getFullYear()+
+    String(dt.getMonth()+1).padStart(2,'0')+
+    String(dt.getDate()).padStart(2,'0');
+}
 
 function toggleHistSort(){
   _histSortAsc = !_histSortAsc;
