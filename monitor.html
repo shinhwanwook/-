@@ -590,41 +590,67 @@ function initFirebase() {
 initFirebase();
 
 // ══════════════════════════════════════════
-//  계정 정보
+//  계정 정보 (Firebase 연동)
 // ══════════════════════════════════════════
-var ACCOUNTS = {
-  shin: { id:'shin', pw:'9649', role:'admin' },
-  lee:  { id:'lee',  pw:'7190', role:'admin' },
-  jang: { id:'jang', pw:'8888', role:'user'  },
-  min:  { id:'min',  pw:'9999', role:'user'  }
-};
+var ACCOUNTS = {}; // Firebase에서 로드
 var _currentUser = null;
+var _accountsLoaded = false;
+
+function loadAccounts(callback){
+  if(_accountsLoaded){ if(callback) callback(); return; }
+  if(!db){ setTimeout(function(){ loadAccounts(callback); }, 300); return; }
+  db.collection('rental').doc('accounts').get().then(function(snap){
+    if(snap.exists && snap.data().ACCOUNTS){
+      ACCOUNTS = snap.data().ACCOUNTS;
+    } else {
+      // Firebase에 없으면 기본값
+      ACCOUNTS = {
+        shin: { id:'shin', pw:'9649', role:'admin' },
+        lee:  { id:'lee',  pw:'7190', role:'admin' },
+        jang: { id:'jang', pw:'8888', role:'user'  },
+        min:  { id:'min',  pw:'9999', role:'user'  }
+      };
+    }
+    _accountsLoaded = true;
+    if(callback) callback();
+  }).catch(function(){
+    // 오류 시 기본값
+    ACCOUNTS = {
+      shin: { id:'shin', pw:'9649', role:'admin' },
+      lee:  { id:'lee',  pw:'7190', role:'admin' },
+      jang: { id:'jang', pw:'8888', role:'user'  },
+      min:  { id:'min',  pw:'9999', role:'user'  }
+    };
+    _accountsLoaded = true;
+    if(callback) callback();
+  });
+}
 
 // ══════════════════════════════════════════
 //  로그인
 // ══════════════════════════════════════════
 function doLogin(){
-  try {
-    var id = document.getElementById('login-id').value.trim();
-    var pw = document.getElementById('login-pw').value;
-    var errEl = document.getElementById('login-err');
+  var id = document.getElementById('login-id').value.trim();
+  var pw = document.getElementById('login-pw').value;
+  var errEl = document.getElementById('login-err');
 
-    // 입력값 확인
-    if(!id || !pw){
-      errEl.textContent = '아이디와 비밀번호를 입력하세요.';
-      errEl.style.display = 'block';
-      return;
-    }
+  if(!id || !pw){
+    errEl.textContent = '아이디와 비밀번호를 입력하세요.';
+    errEl.style.display = 'block';
+    return;
+  }
 
-    // 계정 확인 (Firebase 불필요 - 로컬 ACCOUNTS만 사용)
+  errEl.textContent = '로그인 중...';
+  errEl.style.display = 'block';
+  errEl.style.color = '#888';
+
+  loadAccounts(function(){
+    errEl.style.color = '';
     var matched = null;
     var keys = Object.keys(ACCOUNTS);
     for(var i=0; i<keys.length; i++){
       var a = ACCOUNTS[keys[i]];
-      if(a.id === id && a.pw === pw){
-        matched = a;
-        break;
-      }
+      if(a.id === id && a.pw === pw){ matched = a; break; }
     }
 
     if(matched){
@@ -632,12 +658,9 @@ function doLogin(){
       errEl.style.display = 'none';
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app-wrapper').style.display  = 'block';
-      // Firebase 준비되면 데이터 로드
+      applyPermissions();
       loadAllDevices();
-      // 자동 새로고침 5분마다
       setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
-      startAutoLogout();
-      // 자동 로그아웃 타이머 시작
       startAutoLogout();
     } else {
       errEl.textContent = '아이디 또는 비밀번호가 틀립니다.';
@@ -645,10 +668,14 @@ function doLogin(){
       document.getElementById('login-pw').value = '';
       document.getElementById('login-pw').focus();
     }
-  } catch(e) {
-    console.error('로그인 오류:', e);
-    alert('로그인 중 오류가 발생했습니다: ' + e.message);
-  }
+  });
+}
+
+function applyPermissions(){
+  var isAdmin = _currentUser && _currentUser.role === 'admin';
+  // 관리자만: 임대관리 가져오기 버튼 표시
+  var importBtn = document.querySelector('button[onclick="importFromRental()"]');
+  if(importBtn) importBtn.style.display = isAdmin ? '' : 'none';
 }
 function doLogout(){
   _currentUser = null;
