@@ -305,6 +305,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <tr>
             <th id="hist-date-th" onclick="toggleHistSort()" style="cursor:pointer;user-select:none" title="클릭하여 정렬">날짜 <span id="hist-sort-icon">▼</span></th>
             <th>시간</th>
+            <th id="hist-name-th" style="display:none">거래처명</th>
             <th style="text-align:right">흑백카운터</th>
             <th style="text-align:right">컬러카운터</th>
             <th style="text-align:right">일출력(흑백)</th>
@@ -1000,25 +1001,25 @@ document.getElementById('detail-modal').addEventListener('click',function(e){
 function renderHistory(){
   if(!_fbReady||!db){ setTimeout(renderHistory,400); return; }
 
-  var srch    = (document.getElementById('hist-srch')   ? document.getElementById('hist-srch').value   : '').toLowerCase();
-  var devId   = document.getElementById('hist-device').value;
-  var period  = document.getElementById('hist-period').value;
-  var startD  = document.getElementById('hist-start') ? document.getElementById('hist-start').value : '';
-  var endD    = document.getElementById('hist-end')   ? document.getElementById('hist-end').value   : '';
+  var srch   = document.getElementById('hist-srch')  ? document.getElementById('hist-srch').value.toLowerCase()  : '';
+  var devId  = document.getElementById('hist-device').value;
+  var period = document.getElementById('hist-period').value;
+  var startD = document.getElementById('hist-start') ? document.getElementById('hist-start').value : '';
+  var endD   = document.getElementById('hist-end')   ? document.getElementById('hist-end').value   : '';
 
   if(!devId && !srch && !startD && !endD){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">거래처를 선택하거나 검색어/날짜를 입력해 주세요.</td></tr>';
+      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">거래처를 선택하거나 검색어/날짜를 입력해 주세요.</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
 
   document.getElementById('hist-info').textContent = '불러오는 중...';
   document.getElementById('hist-tbody').innerHTML =
-    '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+    '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
-  // 검색 대상 기기 목록
-  var targetDevices = _devices.filter(function(d){
+  // 검색 대상 기기
+  var targetDevices = (_devices||[]).filter(function(d){
     if(devId && d._id !== devId) return false;
     if(srch && !((d.name||'')+(d.model||'')).toLowerCase().includes(srch)) return false;
     return true;
@@ -1026,68 +1027,78 @@ function renderHistory(){
 
   if(!targetDevices.length){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
+      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
 
-  // 날짜 범위 설정
-  var startStr = startD ? startD.replace(/-/g,'') : '';
-  var endStr   = endD   ? endD.replace(/-/g,'')   : '';
+  var startStr = startD ? startD.replace(/-/g,'') : '20000101';
+  var endStr   = endD   ? endD.replace(/-/g,'')   : '29991231';
 
-  // 각 기기별 히스토리 조회
-  var promises = targetDevices.map(function(dev){
-    var no = dev._id.replace('device_','');
-    var prefix = 'hist_'+no+'_';
-    var q = db.collection('device_status')
-      .where(firebase.firestore.FieldPath.documentId(), '>=', prefix+(startStr||''))
-      .where(firebase.firestore.FieldPath.documentId(), '<=', prefix+(endStr||'99999999')+'_2359');
-    return q.get().then(function(snap){
-      var rows = [];
-      snap.forEach(function(doc){ var d=doc.data(); d._docId=doc.id; d._devName=dev.name||''; d._devModel=dev.model||''; rows.push(d); });
-      return rows;
+  // 전체 히스토리 가져오기 후 필터링
+  db.collection('device_status').get().then(function(snap){
+    var allRows = [];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')) return;
+      // hist_NO_YYYYMMDD_HHMM 형식
+      var parts = doc.id.split('_');
+      if(parts.length < 3) return;
+      var no      = parts[1];
+      var dateStr = parts[2];
+
+      // 기기 번호로 대상 기기 찾기
+      var dev = targetDevices.find(function(d){ return d._id === 'device_'+no; });
+      if(!dev) return;
+
+      // 날짜 범위 필터
+      if(dateStr < startStr || dateStr > endStr) return;
+
+      var d = doc.data();
+      d._docId   = doc.id;
+      d._devNo   = no;
+      d._devName = dev.name||'';
+      d._devModel= dev.model||'';
+      allRows.push(d);
     });
-  });
-
-  Promise.all(promises).then(function(allRows){
-    // 모든 기기 히스토리 합치기
-    var rows = [].concat.apply([], allRows);
 
     // 정렬
-    rows.sort(function(a,b){
-      var ka = (a.date||'')+(a.time||'');
-      var kb = (b.date||'')+(b.time||'');
+    allRows.sort(function(a,b){
+      var ka=(a.date||'')+(a.time||'');
+      var kb=(b.date||'')+(b.time||'');
       return _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
     });
 
-    // 일별 중복 제거 (기기별 하루 최신 1건)
+    // 일별 최신 1건만
     if(period === 'daily'){
       var seen = {};
-      rows = rows.filter(function(r){
-        var key = (r._docId||'').split('_').slice(0,3).join('_');
+      allRows = allRows.filter(function(r){
+        var key = 'device_'+r._devNo+'_'+(r.date||'');
         if(seen[key]) return false;
         seen[key] = true;
         return true;
       });
     }
 
-    document.getElementById('hist-info').textContent = '총 '+rows.length+'건 / '+targetDevices.length+'대';
+    document.getElementById('hist-info').textContent =
+      '총 '+allRows.length+'건 / '+targetDevices.length+'대';
 
-    if(!rows.length){
+    if(!allRows.length){
       document.getElementById('hist-tbody').innerHTML =
-        '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
+        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
       return;
     }
 
-    // 기기별 이전값 추적 (증분 계산용)
-    var prevMap = {};
+    var multiDev = targetDevices.length > 1;
+    var nameTh = document.getElementById('hist-name-th');
+    if(nameTh) nameTh.style.display = multiDev ? '' : 'none';
+    var prevMap  = {};
 
-    document.getElementById('hist-tbody').innerHTML = rows.map(function(r){
-      var key = r._docId ? r._docId.split('_').slice(0,2).join('_') : '';
-      var bw    = parseInt(r.bw_count)||0;
-      var color = parseInt(r.color_count)||0;
-      var prev  = prevMap[key] || {bw:null, color:null};
-      var dBw    = (prev.bw!==null && bw>=prev.bw)    ? bw-prev.bw       : null;
+    document.getElementById('hist-tbody').innerHTML = allRows.map(function(r){
+      var key    = r._devNo||'';
+      var bw     = parseInt(r.bw_count)||0;
+      var color  = parseInt(r.color_count)||0;
+      var prev   = prevMap[key]||{bw:null,color:null};
+      var dBw    = (prev.bw!==null && bw>=prev.bw)       ? bw-prev.bw         : null;
       var dColor = (prev.color!==null && color>=prev.color) ? color-prev.color : null;
       var dTotal = (dBw!==null && dColor!==null) ? dBw+dColor : null;
       prevMap[key] = {bw:bw, color:color};
@@ -1096,12 +1107,10 @@ function renderHistory(){
         var v=parseInt(pct); var tc=tonerColor(v);
         return '<td style="text-align:center;font-size:12px;font-weight:700;color:'+tc.color+'">'+(isNaN(v)||v<0?'-':v+'%')+'</td>';
       }
-
-      var multiDev = targetDevices.length > 1;
       return '<tr>'+
         '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
-        (multiDev ? '<td style="font-size:12px;font-weight:600">'+esc(r._devName||'-')+'</td>' : '')+
+        (multiDev?'<td style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
         '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
@@ -1113,7 +1122,8 @@ function renderHistory(){
     }).join('');
   }).catch(function(e){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="12" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
+      '<tr><td colspan="13" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
+    console.error('renderHistory error:', e);
   });
 }
 
