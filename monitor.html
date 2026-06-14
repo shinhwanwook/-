@@ -1061,23 +1061,40 @@ function renderHistory(){
       allRows.push(d);
     });
 
-    // 정렬
+    // 1단계: 오름차순으로 증분 계산
+    allRows.sort(function(a,b){
+      return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
+    });
+
+    // 일별: 오름차순 기준 마지막값(최신) 사용
+    if(period === 'daily'){
+      var dailyMap = {};
+      allRows.forEach(function(r){ dailyMap['device_'+r._devNo+'_'+(r.date||'')] = r; });
+      allRows = Object.values(dailyMap);
+      allRows.sort(function(a,b){
+        return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
+      });
+    }
+
+    // 2단계: 오름차순 기준 증분 계산 (이전→현재)
+    var prevMap = {};
+    allRows.forEach(function(r){
+      var key   = r._devNo||'';
+      var bw    = parseInt(r.bw_count)||0;
+      var color = parseInt(r.color_count)||0;
+      var prev  = prevMap[key]||{bw:null,color:null};
+      r._dBw    = (prev.bw!==null    && bw>=prev.bw)      ? bw-prev.bw       : null;
+      r._dColor = (prev.color!==null && color>=prev.color) ? color-prev.color : null;
+      r._dTotal = (r._dBw!==null && r._dColor!==null)      ? r._dBw+r._dColor : null;
+      prevMap[key] = {bw:bw, color:color};
+    });
+
+    // 3단계: 표시 방향으로 재정렬
     allRows.sort(function(a,b){
       var ka=(a.date||'')+(a.time||'');
       var kb=(b.date||'')+(b.time||'');
       return _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
     });
-
-    // 일별 최신 1건만
-    if(period === 'daily'){
-      var seen = {};
-      allRows = allRows.filter(function(r){
-        var key = 'device_'+r._devNo+'_'+(r.date||'');
-        if(seen[key]) return false;
-        seen[key] = true;
-        return true;
-      });
-    }
 
     document.getElementById('hist-info').textContent =
       '총 '+allRows.length+'건 / '+targetDevices.length+'대';
@@ -1091,17 +1108,13 @@ function renderHistory(){
     var multiDev = targetDevices.length > 1;
     var nameTh = document.getElementById('hist-name-th');
     if(nameTh) nameTh.style.display = multiDev ? '' : 'none';
-    var prevMap  = {};
 
     document.getElementById('hist-tbody').innerHTML = allRows.map(function(r){
-      var key    = r._devNo||'';
       var bw     = parseInt(r.bw_count)||0;
       var color  = parseInt(r.color_count)||0;
-      var prev   = prevMap[key]||{bw:null,color:null};
-      var dBw    = (prev.bw!==null && bw>=prev.bw)       ? bw-prev.bw         : null;
-      var dColor = (prev.color!==null && color>=prev.color) ? color-prev.color : null;
-      var dTotal = (dBw!==null && dColor!==null) ? dBw+dColor : null;
-      prevMap[key] = {bw:bw, color:color};
+      var dBw    = r._dBw;
+      var dColor = r._dColor;
+      var dTotal = r._dTotal;
 
       function htd(pct){
         var v=parseInt(pct); var tc=tonerColor(v);
