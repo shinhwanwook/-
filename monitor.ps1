@@ -218,10 +218,22 @@ function Get-RicohData([string]$ip) {
             $cM = [regex]::Match($sHtml, 'deviceStTnBarC\.gif[^>]+width="(\d+)"')
             $mM = [regex]::Match($sHtml, 'deviceStTnBarM\.gif[^>]+width="(\d+)"')
             $yM = [regex]::Match($sHtml, 'deviceStTnBarY\.gif[^>]+width="(\d+)"')
-            if ($kM.Success) { $r.tk = [math]::Max(1,[math]::Round([int]$kM.Groups[1].Value/130*100)) }
-            if ($cM.Success) { $r.tc = [math]::Max(1,[math]::Round([int]$cM.Groups[1].Value/130*100)) }
-            if ($mM.Success) { $r.tm = [math]::Max(1,[math]::Round([int]$mM.Groups[1].Value/130*100)) }
-            if ($yM.Success) { $r.ty = [math]::Max(1,[math]::Round([int]$yM.Groups[1].Value/130*100)) }
+            # 최대 width 값으로 기준값 자동 감지
+            $maxWidth = 130
+            $allWidths = @()
+            if ($kM.Success) { $allWidths += [int]$kM.Groups[1].Value }
+            if ($cM.Success) { $allWidths += [int]$cM.Groups[1].Value }
+            if ($mM.Success) { $allWidths += [int]$mM.Groups[1].Value }
+            if ($yM.Success) { $allWidths += [int]$yM.Groups[1].Value }
+            if ($allWidths.Count -gt 0) {
+                $detectedMax = ($allWidths | Measure-Object -Maximum).Maximum
+                # 최대값이 130보다 크면 그 값을 기준으로 사용
+                if ($detectedMax -gt 130) { $maxWidth = $detectedMax }
+            }
+            if ($kM.Success) { $r.tk = [math]::Min(100,[math]::Max(1,[math]::Round([int]$kM.Groups[1].Value/$maxWidth*100))) }
+            if ($cM.Success) { $r.tc = [math]::Min(100,[math]::Max(1,[math]::Round([int]$cM.Groups[1].Value/$maxWidth*100))) }
+            if ($mM.Success) { $r.tm = [math]::Min(100,[math]::Max(1,[math]::Round([int]$mM.Groups[1].Value/$maxWidth*100))) }
+            if ($yM.Success) { $r.ty = [math]::Min(100,[math]::Max(1,[math]::Round([int]$yM.Groups[1].Value/$maxWidth*100))) }
         }
     } catch { Write-Host "  Ricoh err: $_" }
     return $r
@@ -383,6 +395,13 @@ foreach ($p in $PRINTERS) {
     Write-Host "  BW     : $($info.bw)"
     Write-Host "  Color  : $($info.color)"
     Write-Host "  Toner  : K=$($info.tk)% C=$($info.tc)% M=$($info.tm)% Y=$($info.ty)%"
+
+    # 오프라인이면 Firebase 현재값 유지 (덮어쓰지 않음)
+    if ($info.online -eq "False") {
+        Write-Host "  Firebase: SKIP (offline - keeping existing data)" -ForegroundColor Yellow
+        Write-Host ""
+        continue
+    }
 
     $data = @{
         name         = "$($p.name)"
