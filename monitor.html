@@ -1211,129 +1211,42 @@ function renderGuideList(){
 //  배치파일 다운로드 생성
 // ══════════════════════════════════════════
 function downloadAgent(){
-  // monitor.ps1 내용
-  var ps1 = '# ================================================\r\n'+
-    '#  프린터 모니터링 에이전트 v1.0\r\n'+
-    '#  Firebase REST API 직접 전송\r\n'+
-    '# ================================================\r\n\r\n'+
-    '# Firebase 설정\r\n'+
-    '$FIREBASE_PROJECT = "rental-management-8c377"\r\n'+
-    '$FIREBASE_API_KEY = "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk"\r\n'+
-    '$FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status"\r\n\r\n'+
-    '# ── 수집할 프린터 목록 (IP는 고객사마다 수정) ──\r\n'+
-    '$PRINTERS = @(\r\n'+
-    '    @{ no=1; name="장비1"; ip="192.168.1.100"; model="HP8210" }\r\n'+
-    '    # 기기 추가 시 위 형식으로 추가\r\n'+
-    ')\r\n\r\n'+
-    '# SNMP OID\r\n'+
-    '$OID_BW    = "1.3.6.1.2.1.43.10.2.1.4.1.1"\r\n'+
-    '$OID_COLOR = "1.3.6.1.2.1.43.10.2.1.4.1.2"\r\n'+
-    '$OID_TK_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.1"\r\n'+
-    '$OID_TK_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.1"\r\n'+
-    '$OID_TC_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.2"\r\n'+
-    '$OID_TC_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.2"\r\n'+
-    '$OID_TM_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.3"\r\n'+
-    '$OID_TM_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.3"\r\n'+
-    '$OID_TY_MAX = "1.3.6.1.2.1.43.11.1.1.8.1.4"\r\n'+
-    '$OID_TY_CUR = "1.3.6.1.2.1.43.11.1.1.9.1.4"\r\n\r\n'+
-    'function Get-SNMP($ip,$oid){\r\n'+
-    '  try{\r\n'+
-    '    $r=& snmpget -v1 -c public -t 3 -r 1 $ip $oid 2>$null\r\n'+
-    '    if($r -match "INTEGER:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
-    '    if($r -match "Counter32:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
-    '    if($r -match "Gauge32:\\s*(\\d+)"){return [int]$matches[1]}\r\n'+
-    '    return $null\r\n'+
-    '  }catch{return $null}\r\n'+
-    '}\r\n\r\n'+
-    'function TonerPct($cur,$max){\r\n'+
-    '  if($max -and $max -gt 0 -and $cur -ne $null){\r\n'+
-    '    $p=[math]::Round(($cur/$max)*100)\r\n'+
-    '    return [math]::Max(0,[math]::Min(100,$p))\r\n'+
-    '  }\r\n'+
-    '  return -1\r\n'+
-    '}\r\n\r\n'+
-    'function Save-Firebase($docId,$data){\r\n'+
-    '  $url="$FIREBASE_URL/$docId`?key=$FIREBASE_API_KEY"\r\n'+
-    '  $fields=@{}\r\n'+
-    '  foreach($k in $data.Keys){\r\n'+
-    '    $v=$data[$k]\r\n'+
-    '    if($v -is [int]-or $v -is [long]){$fields[$k]=@{integerValue=$v.ToString()}}\r\n'+
-    '    else{$fields[$k]=@{stringValue=$v.ToString()}}\r\n'+
-    '  }\r\n'+
-    '  $body=@{fields=$fields}|ConvertTo-Json -Depth 5\r\n'+
-    '  try{Invoke-RestMethod -Uri $url -Method Patch -Body $body -ContentType "application/json; charset=utf-8"|Out-Null;return $true}\r\n'+
-    '  catch{Write-Host "저장오류: $_";return $false}\r\n'+
-    '}\r\n\r\n'+
-    '$ts=Get-Date -Format "yyyy-MM-dd HH:mm:ss"\r\n'+
-    '$dt=Get-Date -Format "yyyy-MM-dd"\r\n'+
-    '$tm=Get-Date -Format "HH:mm"\r\n'+
-    'Write-Host "수집시작: $ts"\r\n\r\n'+
-    'foreach($p in $PRINTERS){\r\n'+
-    '  Write-Host "[$($p.name)] 수집중..."\r\n'+
-    '  $bw=Get-SNMP $p.ip $OID_BW\r\n'+
-    '  $cl=Get-SNMP $p.ip $OID_COLOR\r\n'+
-    '  $tkmax=Get-SNMP $p.ip $OID_TK_MAX; $tkcur=Get-SNMP $p.ip $OID_TK_CUR\r\n'+
-    '  $tcmax=Get-SNMP $p.ip $OID_TC_MAX; $tccur=Get-SNMP $p.ip $OID_TC_CUR\r\n'+
-    '  $tmmax=Get-SNMP $p.ip $OID_TM_MAX; $tmcur=Get-SNMP $p.ip $OID_TM_CUR\r\n'+
-    '  $tymax=Get-SNMP $p.ip $OID_TY_MAX; $tycur=Get-SNMP $p.ip $OID_TY_CUR\r\n'+
-    '  $online=($bw -ne $null -or $cl -ne $null)\r\n'+
-    '  $data=@{\r\n'+
-    '    name=$p.name; model=$p.model; ip=$p.ip\r\n'+
-    '    is_online=$online.ToString()\r\n'+
-    '    bw_count=if($bw){$bw}else{0}\r\n'+
-    '    color_count=if($cl){$cl}else{0}\r\n'+
-    '    toner_k=TonerPct $tkcur $tkmax\r\n'+
-    '    toner_c=TonerPct $tccur $tcmax\r\n'+
-    '    toner_m=TonerPct $tmcur $tmmax\r\n'+
-    '    toner_y=TonerPct $tycur $tymax\r\n'+
-    '    status=if($online){"정상"}else{"오프라인"}\r\n'+
-    '    collected_at=$ts; date=$dt; time=$tm\r\n'+
-    '  }\r\n'+
-    '  Save-Firebase "device_$($p.no)" $data | Out-Null\r\n'+
-    '  Save-Firebase "hist_$($p.no)_$($dt -replace \"-\",\"\")_$($tm -replace \":\",\"\")" $data | Out-Null\r\n'+
-    '  Write-Host "완료"\r\n'+
-    '}\r\n'+
-    'Write-Host "전체완료: $ts"\r\n';
+  // GitHub에서 최신 monitor.ps1 다운로드 후 제공
+  var psUrl = 'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1';
 
-  // 설치 bat 내용
-  var bat = '@echo off\r\n'+
-    'chcp 65001 >nul\r\n'+
-    'title 프린터모니터링 설치\r\n'+
-    'echo.\r\n'+
-    'echo  ====================================\r\n'+
-    'echo   프린터 모니터링 에이전트 설치\r\n'+
-    'echo  ====================================\r\n'+
-    'echo.\r\n'+
-    'echo  작업 스케줄러에 등록합니다...\r\n'+
-    'echo  (하루 3회 자동 실행: 9시 / 13시 / 18시)\r\n'+
-    'echo.\r\n'+
-    'set SCRIPT_PATH=%~dp0monitor.ps1\r\n'+
-    'schtasks /create /tn "PrinterMonitor_9" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 09:00 /f >nul 2>&1\r\n'+
-    'schtasks /create /tn "PrinterMonitor_13" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 13:00 /f >nul 2>&1\r\n'+
-    'schtasks /create /tn "PrinterMonitor_18" /tr "powershell -ExecutionPolicy Bypass -File \"%SCRIPT_PATH%\"" /sc daily /st 18:00 /f >nul 2>&1\r\n'+
-    'echo  ✅ 작업 스케줄러 등록 완료!\r\n'+
-    'echo.\r\n'+
-    'echo  지금 바로 한 번 실행합니다...\r\n'+
-    'powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"\r\n'+
-    'echo.\r\n'+
-    'echo  ✅ 설치 완료! 이 창을 닫으셔도 됩니다.\r\n'+
-    'pause\r\n';
+  var statusEl = document.querySelector('#page-guide .info-row');
+  if(statusEl){ statusEl.textContent = '최신 파일 다운로드 중...'; statusEl.style.display='block'; }
 
-  // 다운로드 - 각각 별도 a 태그 사용
-  function doDownload(content, filename){
-    var a = document.createElement('a');
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    var blob = new Blob([content], {type:'text/plain;charset=utf-8'});
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
-  }
+  fetch(psUrl)
+    .then(function(r){
+      if(!r.ok) throw new Error('파일을 가져올 수 없습니다 ('+r.status+')');
+      return r.text();
+    })
+    .then(function(ps1){
+      if(statusEl){ statusEl.textContent = ''; statusEl.style.display='none'; }
 
-  doDownload(ps1, 'monitor.ps1');
-  setTimeout(function(){ doDownload(bat, '프린터모니터링_설치.bat'); }, 800);
-  alert('파일 2개가 다운로드됩니다:\n1. monitor.ps1\n2. 프린터모니터링_설치.bat\n\n두 파일을 같은 폴더에 놓고\n프린터모니터링_설치.bat를 실행하세요!');
+      var bat = '@echo off\r\ncd /d "%~dp0"\r\nset SCRIPT_PATH=%~dp0monitor.ps1\r\n\r\nschtasks /delete /tn "PrinterMonitor_10" /f >nul 2>&1\r\nschtasks /delete /tn "PrinterMonitor_16" /f >nul 2>&1\r\n\r\nschtasks /create /tn "PrinterMonitor_10" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \\"%SCRIPT_PATH%\\"" /sc daily /st 10:00 /f >nul 2>&1\r\nschtasks /create /tn "PrinterMonitor_16" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \\"%SCRIPT_PATH%\\"" /sc daily /st 16:00 /f >nul 2>&1\r\n\r\necho Schedule registered: 10:00 and 16:00\r\necho Running now...\r\necho.\r\n\r\npowershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"\r\n\r\necho.\r\necho Done! Press any key...\r\npause';
+
+      function doDownload(data, filename){
+        var a = document.createElement('a');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        var blob = new Blob([data], {type:'text/plain;charset=utf-8'});
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+      }
+
+      doDownload(ps1, 'monitor.ps1');
+      setTimeout(function(){ doDownload(bat, '프린터모니터링_설치.bat'); }, 800);
+      alert('파일 2개가 다운로드됩니다:\n1. monitor.ps1 (최신버전)\n2. 프린터모니터링_설치.bat\n\n두 파일을 같은 폴더에 놓고\n프린터모니터링_설치.bat를 실행하세요!');
+    })
+    .catch(function(e){
+      if(statusEl){ statusEl.textContent = ''; statusEl.style.display='none'; }
+      // GitHub 실패 시 로컬 생성으로 대체
+      alert('최신 파일 로드 실패: '+e.message+'\n\n기본 파일을 다운로드합니다.\n\nmonitor.ps1 파일을 GitHub에서 직접 다운로드하세요:\nhttps://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1');
+    });
 }
 
 // ══════════════════════════════════════════
