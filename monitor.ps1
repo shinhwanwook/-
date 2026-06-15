@@ -1,35 +1,80 @@
-﻿﻿$FIREBASE_PROJECT = "rental-management-8c377"
+﻿$FIREBASE_PROJECT = "rental-management-8c377"
 $FIREBASE_API_KEY = "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk"
-$FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status"
+$FIREBASE_URL     = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status"
+$RENTAL_URL       = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/rental/main"
 
 # ================================================================
-#  ★★★ 거래처 설치 시 아래 내용만 수정하세요 ★★★
+#  프린터 목록을 임대관리시스템 Firebase에서 자동으로 읽어옵니다
+#  메모장 수정 불필요! 임대관리에 IP 등록하면 자동 적용됩니다.
 # ================================================================
-#
-#  no    = Firebase 기기번호 (다른 거래처와 겹치지 않게 번호 지정)
-#  name  = 거래처명 (임대관리시스템에 등록된 이름과 동일하게)
-#  ip    = 프린터 IP 주소 (프린터 설정에서 확인)
-#  model = 프린터 모델명 (참고용)
-#  type  = 제조사 선택: ricoh / kyocera / hp / samsung / canon
-#
-#  ※ 프린터가 1대면 1줄만, 2대면 2줄 작성
-#  ※ no 번호는 전체 거래처 통틀어 고유해야 합니다
-#     (임대관리 모니터링 기기관리에서 번호 확인)
-#
-$PRINTERS = @(
-    #-- 아래 내용을 거래처에 맞게 수정하세요 --
-    [PSCustomObject]@{ no=1; name="거래처명"; ip="192.168.x.x"; model="프린터모델명"; type="ricoh" }
-    #-- 프린터가 2대이면 아래 줄 주석 해제(#제거) 후 수정 --
-    #[PSCustomObject]@{ no=2; name="거래처명"; ip="192.168.x.x"; model="프린터모델명"; type="ricoh" }
-)
-# ================================================================
-#  제조사(type) 입력 가이드:
-#  리코      → ricoh
-#  교세라    → kyocera
-#  HP        → hp
-#  삼성      → samsung
-#  캐논      → canon
-# ================================================================
+
+function Load-PrintersFromFirebase {
+    try {
+        $url = "$RENTAL_URL`?key=$FIREBASE_API_KEY"
+        $res = Invoke-RestMethod -Uri $url -Method Get
+        $contracts = $res.fields.CONTRACTS.arrayValue.values
+
+        $list = @()
+        $maxNo = 0
+
+        # 기존 device_status 번호 확인 (중복 방지)
+        $devUrl = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status`?key=$FIREBASE_API_KEY&pageSize=100"
+        $existingIps = @{}
+        try {
+            $devRes = Invoke-RestMethod -Uri $devUrl -Method Get
+            if ($devRes.documents) {
+                foreach ($doc in $devRes.documents) {
+                    $docName = $doc.name.Split('/')[-1]
+                    if ($docName -match '^device_(\d+)$') {
+                        $n = [int]$matches[1]
+                        if ($n -gt $maxNo) { $maxNo = $n }
+                        $ip = $doc.fields.ip.stringValue
+                        if ($ip) { $existingIps[$ip] = $n }
+                    }
+                }
+            }
+        } catch {}
+
+        foreach ($c in $contracts) {
+            $f    = $c.mapValue.fields
+            $ip   = $f.printer_ip.stringValue
+            $type = $f.printer_type.stringValue
+            $name = $f.name.stringValue
+            $model= $f.etc.stringValue
+            $term = $f.terminated.booleanValue
+
+            if (-not $ip -or $ip.Trim() -eq '' -or $term) { continue }
+
+            # 이미 등록된 IP면 기존 번호 사용, 없으면 새 번호
+            if ($existingIps.ContainsKey($ip.Trim())) {
+                $devNo = $existingIps[$ip.Trim()]
+            } else {
+                $maxNo++
+                $devNo = $maxNo
+            }
+
+            $list += [PSCustomObject]@{
+                no    = $devNo
+                name  = if ($name)  { $name  } else { "거래처$devNo" }
+                ip    = $ip.Trim()
+                model = if ($model) { $model } else { "" }
+                type  = if ($type)  { $type  } else { "ricoh" }
+            }
+        }
+
+        if ($list.Count -eq 0) {
+            Write-Host "  [경고] 임대관리에 IP 등록된 거래처가 없습니다." -ForegroundColor Yellow
+            Write-Host "  임대관리시스템 -> 신규등록/수정 -> IP 주소 입력 후 저장해 주세요." -ForegroundColor Yellow
+        } else {
+            Write-Host "  임대관리에서 $($list.Count)개 거래처 로드완료" -ForegroundColor Green
+        }
+        return $list
+    } catch {
+        Write-Host "  [오류] 임대관리 데이터 로드 실패: $_" -ForegroundColor Red
+        return @()
+    }
+}
+
 
 # =============================================
 # 공통 함수
@@ -312,6 +357,17 @@ $tm = Get-Date -Format "HH:mm"
 Write-Host "=== Printer Monitor v14.0 ==="
 Write-Host "=== $ts ==="
 Write-Host ""
+
+# 임대관리에서 거래처 목록 자동 로드
+$PRINTERS = Load-PrintersFromFirebase
+
+if ($PRINTERS.Count -eq 0) {
+    Write-Host "수집할 거래처가 없습니다." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Press any key..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
 
 foreach ($p in $PRINTERS) {
     Write-Host "[$($p.name)] $($p.ip)"
