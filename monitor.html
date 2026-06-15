@@ -1319,18 +1319,20 @@ function downloadAgent(){
     'echo  ✅ 설치 완료! 이 창을 닫으셔도 됩니다.\r\n'+
     'pause\r\n';
 
-  // 다운로드
-  var a = document.createElement('a');
-  var blob1 = new Blob([ps1],{type:'text/plain;charset=utf-8'});
-  a.href = URL.createObjectURL(blob1);
-  a.download = 'monitor.ps1';
-  a.click();
-  setTimeout(function(){
-    var blob2 = new Blob([bat],{type:'text/plain;charset=utf-8'});
-    a.href = URL.createObjectURL(blob2);
-    a.download = '프린터모니터링_설치.bat';
+  // 다운로드 - 각각 별도 a 태그 사용
+  function doDownload(content, filename){
+    var a = document.createElement('a');
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    var blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
     a.click();
-  }, 500);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+  }
+
+  doDownload(ps1, 'monitor.ps1');
+  setTimeout(function(){ doDownload(bat, '프린터모니터링_설치.bat'); }, 800);
   alert('파일 2개가 다운로드됩니다:\n1. monitor.ps1\n2. 프린터모니터링_설치.bat\n\n두 파일을 같은 폴더에 놓고\n프린터모니터링_설치.bat를 실행하세요!');
 }
 
