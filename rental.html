@@ -1337,7 +1337,15 @@ function showPage(id){
   if(id==='stats') renderStats();
   if(id==='inventory'){renderInvStock();renderInvList();}
   if(id==='tax') renderTax();
-  if(id==='register'&&!editingNo){clearForm();document.getElementById('reg-title').textContent='신규 임대업체 등록';}
+  if(id==='register'){
+    // 탭 직접 클릭 시 항상 초기화 (editContract에서 호출 시는 _fromEdit 플래그로 구분)
+    if(!window._fromEditContract){
+      editingNo=null;
+      clearForm();
+      document.getElementById('reg-title').textContent='신규 임대업체 등록';
+    }
+    window._fromEditContract = false;
+  }
 }
 
 // ══ 담당자 관리 ══
@@ -1957,6 +1965,7 @@ function editContract(no){
   renderStaffTags();
   renderPendingFiles();
   document.getElementById('reg-title').textContent=`계약 수정 — No.${no} ${c.name}`;
+  window._fromEditContract = true;
   showPage('register');
 }
 function saveContract(){
