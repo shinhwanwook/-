@@ -1009,7 +1009,7 @@ function renderHistory(){
 
   if(!devId && !srch && !startD && !endD){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">거래처를 선택하거나 검색어/날짜를 입력해 주세요.</td></tr>';
+      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">거래처를 선택하거나 검색어를 입력해 주세요.</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
@@ -1177,9 +1177,11 @@ function renderHistory(){
 }
 
 function resetHistFilter(){
+  var now = new Date();
+  var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
   if(document.getElementById('hist-srch'))  document.getElementById('hist-srch').value='';
-  if(document.getElementById('hist-start')) document.getElementById('hist-start').value='';
-  if(document.getElementById('hist-end'))   document.getElementById('hist-end').value='';
+  if(document.getElementById('hist-start')) document.getElementById('hist-start').value=y+'-'+m+'-01';
+  if(document.getElementById('hist-end'))   document.getElementById('hist-end').value=y+'-'+m+'-'+d;
   document.getElementById('hist-device').value='';
   renderHistory();
 }
