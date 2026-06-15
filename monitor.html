@@ -1670,10 +1670,30 @@ function renderUsageReport(){
         startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
         endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
 
+        // 조회일 히스토리 없으면 device_status 현재값 사용
+        var endData = endRows[0] || null;
+        if(!endData || parseInt(endData.bw_count||0) === 0){
+          // device_status 현재값으로 대체
+          if(parseInt(dev.bw_count||0) > 0){
+            endData = dev;
+          }
+        }
+
+        // 시작일 히스토리 없으면 device의 start_bw 사용
+        var startData = startRows[0] || null;
+        if(!startData && (parseInt(dev.start_bw||0) > 0 || parseInt(dev.start_color||0) > 0)){
+          startData = {
+            bw_count: parseInt(dev.start_bw)||0,
+            color_count: parseInt(dev.start_color)||0,
+            date: startDate,
+            time: '00:00'
+          };
+        }
+
         return {
           device: dev,
-          startData: startRows[0]||null,
-          endData: endRows[0]||null
+          startData: startData,
+          endData: endData
         };
       });
     });
