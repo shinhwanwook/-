@@ -1663,12 +1663,50 @@ function saveDeviceModal(){
 }
 
 function deleteDevice(btn){
-  var id = btn.getAttribute('data-id');
+  var id   = btn.getAttribute('data-id');
   var name = btn.getAttribute('data-name');
-  if(!confirm(name+' 기기를 삭제하시겠습니까?')) return;
-  db.collection('device_status').doc(id).delete().then(function(){
+  var no   = id.replace('device_','');
+
+  if(!confirm(
+    '['+name+'] 기기 삭제\n\n' +
+    '아래 데이터가 모두 삭제됩니다:\n' +
+    '• 현재 기기 상태 (device_'+no+')\n' +
+    '• 수집 히스토리 전체 (hist_'+no+'_...)\n\n' +
+    '고객사 PC의 작업 스케줄러는\n' +
+    '별도로 삭제해 주세요.\n\n' +
+    '계속하시겠습니까?'
+  )) return;
+
+  // 로딩 표시
+  var infoEl = document.getElementById('device-mgr-info');
+  if(infoEl) infoEl.textContent = name+' 삭제 중...';
+
+  // 히스토리 전체 + 현재값 삭제
+  db.collection('device_status').get().then(function(snap){
+    var batch = db.batch();
+    var count = 0;
+    snap.forEach(function(doc){
+      var docId = doc.id;
+      if(docId === id || docId.startsWith('hist_'+no+'_')){
+        batch.delete(doc.ref);
+        count++;
+      }
+    });
+    return batch.commit().then(function(){
+      return count;
+    });
+  }).then(function(count){
+    alert('['+name+'] 삭제완료!\n\n' +
+      '• 현재 기기 상태 1개\n' +
+      '• 히스토리 '+(count-1)+'개\n' +
+      '총 '+count+'개 삭제됨\n\n' +
+      '※ 고객사 PC 작업 스케줄러도\n' +
+      '  별도로 삭제해 주세요!');
     loadAllDevices(true);
     renderDeviceManager();
+  }).catch(function(e){
+    alert('삭제 실패: '+e.message);
+    if(infoEl) infoEl.textContent = '';
   });
 }
 
