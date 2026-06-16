@@ -4,83 +4,19 @@ $FIREBASE_URL     = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJ
 $RENTAL_URL       = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/rental/main"
 
 # ================================================================
-#  프린터 목록을 임대관리시스템 Firebase에서 자동으로 읽어옵니다
-#  메모장 수정 불필요! 임대관리에 IP 등록하면 자동 적용됩니다.
+#  설치 시 이 부분만 수정하세요!
+#  이 PC에 연결된 프린터 IP만 입력합니다
+#  (다른 거래처 IP는 입력하지 마세요)
+# ================================================================
+$MY_PRINTER_IPS = @(
+    "192.168.1.100"   # ← 이 PC에 연결된 프린터 IP로 변경
+    # "192.168.1.101" # ← 프린터가 2대면 이 줄 주석 해제 후 IP 입력
+)
 # ================================================================
 
-function Load-PrintersFromFirebase {
-    try {
-        $url = "$RENTAL_URL`?key=$FIREBASE_API_KEY"
-        $res = Invoke-RestMethod -Uri $url -Method Get
-        $contracts = $res.fields.CONTRACTS.arrayValue.values
-
-        $list = @()
-        $maxNo = 0
-
-        # 기존 device_status 번호 확인 (중복 방지)
-        $devUrl = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status`?key=$FIREBASE_API_KEY&pageSize=100"
-        $existingIps = @{}
-        try {
-            $devRes = Invoke-RestMethod -Uri $devUrl -Method Get
-            if ($devRes.documents) {
-                foreach ($doc in $devRes.documents) {
-                    $docName = $doc.name.Split('/')[-1]
-                    if ($docName -match '^device_(\d+)$') {
-                        $n = [int]$matches[1]
-                        if ($n -gt $maxNo) { $maxNo = $n }
-                        $ip = $doc.fields.ip.stringValue
-                        if ($ip) { $existingIps[$ip] = $n }
-                    }
-                }
-            }
-        } catch {}
-
-        foreach ($c in $contracts) {
-            $f    = $c.mapValue.fields
-            $ip   = $f.printer_ip.stringValue
-            $type = $f.printer_type.stringValue
-            $name = $f.name.stringValue
-            $model= $f.etc.stringValue
-            $term = $f.terminated.booleanValue
-
-            if (-not $ip -or $ip.Trim() -eq '' -or $term) { continue }
-
-            # 이미 등록된 IP면 기존 번호 사용, 없으면 새 번호
-            if ($existingIps.ContainsKey($ip.Trim())) {
-                $devNo = $existingIps[$ip.Trim()]
-            } else {
-                $maxNo++
-                $devNo = $maxNo
-            }
-
-            $list += [PSCustomObject]@{
-                no    = $devNo
-                name  = if ($name)  { $name  } else { "거래처$devNo" }
-                ip    = $ip.Trim()
-                model = if ($model) { $model } else { "" }
-                type  = if ($type)  { $type  } else { "ricoh" }
-            }
-        }
-
-        if ($list.Count -eq 0) {
-            Write-Host "  [경고] 임대관리에 IP 등록된 거래처가 없습니다." -ForegroundColor Yellow
-            Write-Host "  임대관리시스템 -> 신규등록/수정 -> IP 주소 입력 후 저장해 주세요." -ForegroundColor Yellow
-        } else {
-            Write-Host "  임대관리에서 $($list.Count)개 거래처 로드완료" -ForegroundColor Green
-        }
-        return $list
-    } catch {
-        Write-Host "  [오류] 임대관리 데이터 로드 실패: $_" -ForegroundColor Red
-        return @()
-    }
-}
-
-
-# =============================================
+# ============================================================
 # 공통 함수
-# =============================================
-
-# HTTP 요청
+# ============================================================
 function Get-WebPage([string]$url, [int]$timeout=10, [string]$cookie="", [string]$referer="") {
     try {
         [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
@@ -94,14 +30,13 @@ function Get-WebPage([string]$url, [int]$timeout=10, [string]$cookie="", [string
         if ($cookie)  { $req.Headers.Add("Cookie", $cookie) }
         if ($referer) { $req.Referer = $referer }
         $res = $req.GetResponse()
-        $sr = New-Object System.IO.StreamReader($res.GetResponseStream())
+        $sr  = New-Object System.IO.StreamReader($res.GetResponseStream())
         $html = $sr.ReadToEnd()
         $sr.Close(); $res.Close()
         return $html
     } catch { return $null }
 }
 
-# SNMP 함수 (교세라용)
 function Encode-OID([int[]]$oid) {
     $enc = [System.Collections.ArrayList]@()
     [void]$enc.Add([byte]($oid[0]*40+$oid[1]))
@@ -131,16 +66,13 @@ function Get-SNMP([string]$ip, [int[]]$oid) {
         $commTlv = [byte[]](,0x04)+[byte[]]($comm.Length)+$comm
         $msg     = [byte[]](0x02,0x01,0x00)+$commTlv+$pdu
         $packet  = [byte[]](,0x30)+[byte[]]($msg.Length)+$msg
-
         $udp = New-Object System.Net.Sockets.UdpClient
         $udp.Client.ReceiveTimeout = 3000
         $udp.Connect($ip, 161)
         $udp.Send($packet, $packet.Length) | Out-Null
         $ep   = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)
         $resp = $udp.Receive([ref]$ep)
-
         if ($resp[$resp.Length-2] -eq 0x05) { return $null }
-
         $last = $null
         for ($i=0; $i -lt $resp.Length-2; $i++) {
             if ($resp[$i] -in @(0x41,0x42,0x43)) {
@@ -172,7 +104,9 @@ function Get-TonerPct($cur, $max) {
     return -1
 }
 
+# ============================================================
 # Firebase 저장
+# ============================================================
 function Save-Firebase([string]$docId, [hashtable]$data) {
     $url = "$FIREBASE_URL/${docId}?key=$FIREBASE_API_KEY"
     $fields = @{}
@@ -191,16 +125,88 @@ function Save-Firebase([string]$docId, [hashtable]$data) {
     } catch { Write-Host "  Firebase err: $_"; return $false }
 }
 
-# =============================================
-# 리코 - HTTP 방식
-# =============================================
+# ============================================================
+# 임대관리에서 내 IP에 해당하는 거래처만 로드
+# ============================================================
+function Load-MyPrinters([string[]]$myIps) {
+    $list = @()
+    try {
+        # 임대관리 거래처 목록
+        $url = "$RENTAL_URL`?key=$FIREBASE_API_KEY"
+        $res = Invoke-RestMethod -Uri $url -Method Get
+        $contracts = $res.fields.CONTRACTS.arrayValue.values
+
+        # 기존 device_status 번호 확인
+        $existingIps = @{}
+        $maxNo = 0
+        try {
+            $devUrl = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status`?key=$FIREBASE_API_KEY&pageSize=100"
+            $devRes = Invoke-RestMethod -Uri $devUrl -Method Get
+            if ($devRes.documents) {
+                foreach ($doc in $devRes.documents) {
+                    $docName = $doc.name.Split('/')[-1]
+                    if ($docName -match '^device_(\d+)$') {
+                        $n = [int]$matches[1]
+                        if ($n -gt $maxNo) { $maxNo = $n }
+                        $ip = $doc.fields.ip.stringValue
+                        if ($ip) { $existingIps[$ip.Trim()] = $n }
+                    }
+                }
+            }
+        } catch {}
+
+        foreach ($c in $contracts) {
+            $f    = $c.mapValue.fields
+            $ip   = $f.printer_ip.stringValue
+            $type = $f.printer_type.stringValue
+            $name = $f.name.stringValue
+            $model= $f.etc.stringValue
+            $term = $f.terminated.booleanValue
+
+            if (-not $ip -or $ip.Trim() -eq '' -or $term) { continue }
+
+            # 내 IP 목록에 있는 것만 처리
+            if ($myIps -notcontains $ip.Trim()) { continue }
+
+            if ($existingIps.ContainsKey($ip.Trim())) {
+                $devNo = $existingIps[$ip.Trim()]
+            } else {
+                $maxNo++
+                $devNo = $maxNo
+            }
+
+            $list += [PSCustomObject]@{
+                no    = $devNo
+                name  = if ($name)  { $name  } else { "거래처$devNo" }
+                ip    = $ip.Trim()
+                model = if ($model) { $model } else { "" }
+                type  = if ($type)  { $type  } else { "ricoh" }
+            }
+        }
+
+        if ($list.Count -eq 0) {
+            Write-Host "  [경고] 임대관리에서 이 PC의 프린터를 찾을 수 없습니다." -ForegroundColor Yellow
+            Write-Host "  MY_PRINTER_IPS 에 입력한 IP를 확인하세요." -ForegroundColor Yellow
+            Write-Host "  임대관리에 IP가 등록되어 있는지 확인하세요." -ForegroundColor Yellow
+        } else {
+            Write-Host "  임대관리에서 $($list.Count)개 프린터 로드완료" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "  [오류] 임대관리 연결 실패: $_" -ForegroundColor Red
+    }
+    return $list
+}
+
+# ============================================================
+# 리코 수집
+# ============================================================
 function Get-RicohData([string]$ip) {
     $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
     try {
-        if (-not (Get-WebPage "http://$ip/")) { return $r }
+        $main = Get-WebPage "http://$ip/"
+        if (-not $main) { return $r }
         $r.online = "True"; $r.status = "OK"
 
-        # 카운터
         $cHtml = Get-WebPage "http://$ip/web/guest/ko/websys/status/getUnificationCounter.cgi"
         if ($cHtml -and $cHtml.Length -gt 500) {
             $tdNums = [regex]::Matches($cHtml, '<td nowrap>(\d+)</td>')
@@ -211,24 +217,21 @@ function Get-RicohData([string]$ip) {
             }
         }
 
-        # 토너
         $sHtml = Get-WebPage "http://$ip/web/guest/ko/websys/webArch/getStatus.cgi"
         if ($sHtml -and $sHtml.Length -gt 500) {
             $kM = [regex]::Match($sHtml, 'deviceStTnBarK\.gif[^>]+width="(\d+)"')
             $cM = [regex]::Match($sHtml, 'deviceStTnBarC\.gif[^>]+width="(\d+)"')
             $mM = [regex]::Match($sHtml, 'deviceStTnBarM\.gif[^>]+width="(\d+)"')
             $yM = [regex]::Match($sHtml, 'deviceStTnBarY\.gif[^>]+width="(\d+)"')
-            # 최대 width 값으로 기준값 자동 감지
             $maxWidth = 130
-            $allWidths = @()
-            if ($kM.Success) { $allWidths += [int]$kM.Groups[1].Value }
-            if ($cM.Success) { $allWidths += [int]$cM.Groups[1].Value }
-            if ($mM.Success) { $allWidths += [int]$mM.Groups[1].Value }
-            if ($yM.Success) { $allWidths += [int]$yM.Groups[1].Value }
-            if ($allWidths.Count -gt 0) {
-                $detectedMax = ($allWidths | Measure-Object -Maximum).Maximum
-                # 최대값이 130보다 크면 그 값을 기준으로 사용
-                if ($detectedMax -gt 130) { $maxWidth = $detectedMax }
+            $allW = @()
+            if ($kM.Success) { $allW += [int]$kM.Groups[1].Value }
+            if ($cM.Success) { $allW += [int]$cM.Groups[1].Value }
+            if ($mM.Success) { $allW += [int]$mM.Groups[1].Value }
+            if ($yM.Success) { $allW += [int]$yM.Groups[1].Value }
+            if ($allW.Count -gt 0) {
+                $dMax = ($allW | Measure-Object -Maximum).Maximum
+                if ($dMax -gt 130) { $maxWidth = $dMax }
             }
             if ($kM.Success) { $r.tk = [math]::Min(100,[math]::Max(1,[math]::Round([int]$kM.Groups[1].Value/$maxWidth*100))) }
             if ($cM.Success) { $r.tc = [math]::Min(100,[math]::Max(1,[math]::Round([int]$cM.Groups[1].Value/$maxWidth*100))) }
@@ -239,23 +242,19 @@ function Get-RicohData([string]$ip) {
     return $r
 }
 
-# =============================================
-# HP - HTTP XML 방식
-# =============================================
+# ============================================================
+# HP 수집
+# ============================================================
 function Get-HPData([string]$ip) {
     $r = @{ bw=0; color=0; tk=0; tc=0; tm=0; ty=0; online="False"; status="Offline" }
     try {
         if (-not (Get-WebPage "http://$ip/")) { return $r }
         $r.online = "True"; $r.status = "OK"
-
-        # 카운터
         $xml = Get-WebPage "http://$ip/DevMgmt/ProductUsageDyn.xml"
         if ($xml) {
-            if ($xml -match 'TotalImpressions[^>]*>\s*(\d+)') { $r.bw = [int]$matches[1] }
+            if ($xml -match 'TotalImpressions[^>]*>\s*(\d+)') { $r.bw    = [int]$matches[1] }
             if ($xml -match 'ColorImpressions[^>]*>\s*(\d+)') { $r.color = [int]$matches[1] }
         }
-
-        # 잉크 (리필 잉크 = 0%)
         $inkXml = Get-WebPage "http://$ip/DevMgmt/ConsumableConfigDyn.xml"
         if ($inkXml) {
             $inkM = [regex]::Matches($inkXml, 'PercentageLevelRemaining[^>]*>\s*(\d+)')
@@ -268,89 +267,32 @@ function Get-HPData([string]$ip) {
     return $r
 }
 
-# =============================================
-# 캐논 - HTTP 방식
-# =============================================
-function Get-CanonData([string]$ip) {
-    $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
-    try {
-        $urls = @("http://$ip/portal_top.html","http://$ip/","http://$ip/index.html")
-        $html = $null
-        foreach ($u in $urls) { $html = Get-WebPage $u; if ($html) { break } }
-        if (-not $html) { return $r }
-        $r.online = "True"; $r.status = "OK"
-
-        $curls = @("http://$ip/countertop.html","http://$ip/counter.html","http://$ip/status_counter.html")
-        foreach ($u in $curls) {
-            $ch = Get-WebPage $u
-            if ($ch) {
-                $nums = [regex]::Matches($ch, '(\d[\d,]{2,})')
-                $found = @()
-                foreach ($m in $nums) { $v=[int]($m.Groups[1].Value -replace ',',''); if($v -gt 0){$found+=$v} }
-                if ($found.Count -ge 1) { $r.bw = $found[0] }
-                if ($found.Count -ge 2) { $r.color = $found[1] }
-                break
-            }
-        }
-
-        $turls = @("http://$ip/consumables.html","http://$ip/inkinfo.html","http://$ip/status_ink.html")
-        foreach ($u in $turls) {
-            $th = Get-WebPage $u
-            if ($th) {
-                $pm = [regex]::Matches($th, '(\d+)\s*%')
-                if ($pm.Count -ge 1) { $r.tk = [int]$pm[0].Groups[1].Value }
-                if ($pm.Count -ge 2) { $r.tc = [int]$pm[1].Groups[1].Value }
-                if ($pm.Count -ge 3) { $r.tm = [int]$pm[2].Groups[1].Value }
-                if ($pm.Count -ge 4) { $r.ty = [int]$pm[3].Groups[1].Value }
-                if ($r.tk -gt 0) { break }
-            }
-        }
-    } catch { Write-Host "  Canon err: $_" }
-    return $r
-}
-
-# =============================================
-# 교세라 - SNMP(온라인/토너) + HTTP(카운터) 혼합 방식
-# =============================================
+# ============================================================
+# 교세라 수집 (HTTP 카운터 + SNMP 토너)
+# ============================================================
 function Get-KyoceraData([string]$ip) {
     $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
     try {
-        # 온라인 확인 - SNMP
-        $snmpTotal = Get-SNMP $ip @(1,3,6,1,2,1,43,10,2,1,4,1,1)
-        if ($null -eq $snmpTotal) { return $r }
-        $r.online = "True"
-        $r.status = "OK"
+        $snmpBw = Get-SNMP $ip @(1,3,6,1,2,1,43,10,2,1,4,1,1)
+        if ($null -eq $snmpBw) { return $r }
+        $r.online = "True"; $r.status = "OK"
 
-        # 카운터 - HTTP 쿠키 방식 (rtl=0; css=1)
-        $kyoCookie = "rtl=0; css=1"
-        $prnUrl  = "https://$ip/js/jssrc/model/dvcinfo/dvccounter/DvcInfo_Counter_PrnCounter.model.htm"
-        $scanUrl = "https://$ip/js/jssrc/model/dvcinfo/dvccounter/DvcInfo_Counter_ScanCounter.model.htm"
-
+        $kyoCookie  = "rtl=0; css=1"
         $kyoReferer = "https://$ip/startwlm/Start_Wlm.htm"
-        $prnHtml  = Get-WebPage $prnUrl 10 $kyoCookie $kyoReferer
-        $scanHtml = Get-WebPage $scanUrl 10 $kyoCookie $kyoReferer
+        $prnUrl     = "https://$ip/js/jssrc/model/dvcinfo/dvccounter/DvcInfo_Counter_PrnCounter.model.htm"
+        $prnHtml    = Get-WebPage $prnUrl 10 $kyoCookie $kyoReferer
 
         if ($prnHtml -and $prnHtml.Length -gt 100) {
-            # copyBlackWhite + printerBlackWhite
             $copyBW = 0; $printBW = 0
             if ($prnHtml -match "copyBlackWhite\s*=\s*\('(\d+)'\)")    { $copyBW  = [int]$matches[1] }
             if ($prnHtml -match "printerBlackWhite\s*=\s*\('(\d+)'\)") { $printBW = [int]$matches[1] }
             $r.bw = $copyBW + $printBW
-            Write-Host "  HTTP Counter: copy=$copyBW print=$printBW total=$($r.bw)"
+            Write-Host "  Counter: copy=$copyBW print=$printBW total=$($r.bw)"
         } else {
-            # HTTP 실패시 SNMP 값 사용 (스캔 포함)
-            $r.bw = [int]$snmpTotal
+            $r.bw = [int]$snmpBw
             Write-Host "  SNMP Counter (scan included): $($r.bw)"
         }
 
-        if ($scanHtml -and $scanHtml.Length -gt 100) {
-            $scanCopy = 0; $scanOther = 0
-            if ($scanHtml -match "scanCopy\s*=\s*parseInt\('(\d+)'")  { $scanCopy  = [int]$matches[1] }
-            if ($scanHtml -match "scanOther\s*=\s*parseInt\('(\d+)'") { $scanOther = [int]$matches[1] }
-            Write-Host "  Scan: copy=$scanCopy other=$scanOther"
-        }
-
-        # 토너 - SNMP
         $tkMax = Get-SNMP $ip @(1,3,6,1,2,1,43,11,1,1,8,1,1)
         $tkCur = Get-SNMP $ip @(1,3,6,1,2,1,43,11,1,1,9,1,1)
         $r.tk  = Get-TonerPct $tkCur $tkMax
@@ -358,29 +300,60 @@ function Get-KyoceraData([string]$ip) {
     return $r
 }
 
+# ============================================================
+# 캐논 수집
+# ============================================================
+function Get-CanonData([string]$ip) {
+    $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
+    try {
+        $html = $null
+        foreach ($u in @("http://$ip/portal_top.html","http://$ip/","http://$ip/index.html")) {
+            $html = Get-WebPage $u; if ($html) { break }
+        }
+        if (-not $html) { return $r }
+        $r.online = "True"; $r.status = "OK"
 
-# =============================================
+        foreach ($u in @("http://$ip/countertop.html","http://$ip/counter.html")) {
+            $ch = Get-WebPage $u
+            if ($ch) {
+                $nums = [regex]::Matches($ch, '(\d[\d,]{2,})')
+                $found = @()
+                foreach ($m in $nums) { $v=[int]($m.Groups[1].Value -replace ',',''); if($v -gt 0){$found+=$v} }
+                if ($found.Count -ge 1) { $r.bw    = $found[0] }
+                if ($found.Count -ge 2) { $r.color = $found[1] }
+                break
+            }
+        }
+    } catch { Write-Host "  Canon err: $_" }
+    return $r
+}
+
+# ============================================================
 # 메인 실행
-# =============================================
+# ============================================================
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $dt = Get-Date -Format "yyyy-MM-dd"
 $tm = Get-Date -Format "HH:mm"
 
-Write-Host "=== Printer Monitor v14.0 ==="
+Write-Host "=== Printer Monitor v15.0 ==="
 Write-Host "=== $ts ==="
 Write-Host ""
 
-# 임대관리에서 거래처 목록 자동 로드
-$PRINTERS = Load-PrintersFromFirebase
+# 내 IP에 해당하는 거래처만 로드
+Write-Host "[임대관리 연동] 거래처 정보 로드 중..."
+$PRINTERS = Load-MyPrinters $MY_PRINTER_IPS
 
 if ($PRINTERS.Count -eq 0) {
-    Write-Host "수집할 거래처가 없습니다." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "수집할 프린터가 없습니다." -ForegroundColor Yellow
+    Write-Host "MY_PRINTER_IPS 를 확인해 주세요." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Press any key..."
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
 
+Write-Host ""
 foreach ($p in $PRINTERS) {
     Write-Host "[$($p.name)] $($p.ip)"
     switch ($p.type) {
@@ -396,9 +369,9 @@ foreach ($p in $PRINTERS) {
     Write-Host "  Color  : $($info.color)"
     Write-Host "  Toner  : K=$($info.tk)% C=$($info.tc)% M=$($info.tm)% Y=$($info.ty)%"
 
-    # 오프라인이면 Firebase 현재값 유지 (덮어쓰지 않음)
+    # 오프라인이면 Firebase 기존값 유지
     if ($info.online -eq "False") {
-        Write-Host "  Firebase: SKIP (offline - keeping existing data)" -ForegroundColor Yellow
+        Write-Host "  [SKIP] Offline - Firebase not updated" -ForegroundColor Yellow
         Write-Host ""
         continue
     }
@@ -407,8 +380,8 @@ foreach ($p in $PRINTERS) {
         name         = "$($p.name)"
         model        = "$($p.model)"
         ip           = "$($p.ip)"
-        is_online    = "$($info.online)"
-        status       = "$($info.status)"
+        is_online    = "True"
+        status       = "OK"
         bw_count     = [int]$info.bw
         color_count  = [int]$info.color
         toner_k      = [int]$info.tk
@@ -420,7 +393,7 @@ foreach ($p in $PRINTERS) {
         time         = "$tm"
     }
 
-    $ok = Save-Firebase "device_$($p.no)" $data
+    $ok  = Save-Firebase "device_$($p.no)" $data
     Save-Firebase "hist_$($p.no)_$($dt -replace '-','')_$($tm -replace ':','')" $data | Out-Null
 
     if ($ok) { Write-Host "  Firebase: OK" -ForegroundColor Green }
