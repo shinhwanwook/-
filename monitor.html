@@ -316,6 +316,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <tr>
             <th id="hist-date-th" onclick="toggleHistSort()" style="cursor:pointer;user-select:none" title="클릭하여 정렬">날짜 <span id="hist-sort-icon">▼</span></th>
             <th>시간</th>
+            <th>기기명</th>
             <th id="hist-name-th" style="display:none">거래처명</th>
             <th style="text-align:right">흑백카운터</th>
             <th style="text-align:right">컬러카운터</th>
@@ -1200,6 +1201,7 @@ function renderHistory(){
       return '<tr>'+
         '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
+        '<td style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
         (multiDev?'<td style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
         '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
