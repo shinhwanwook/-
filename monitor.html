@@ -1347,7 +1347,7 @@ function downloadAgentForContract(){
       var model = _selectedContract.model||type;
 
       // MY_PRINTER_IPS 부분 교체
-      var oldIps = ps1.match(/\$MY_PRINTER_IPS\s*=\s*@\([^)]+\)/s);
+      var oldIps = ps1.match(/\$MY_PRINTER_IPS[\s\S]*?@\([\s\S]*?\)/);
       if(oldIps){
         var newIps = '$MY_PRINTER_IPS = @(
     "'+ip+'"  # '+name+'
