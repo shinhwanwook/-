@@ -1094,6 +1094,8 @@ function renderHistory(){
       d._devName  = dev.name||'';
       d._devModel = dev.model||'';
       d._isBase   = dateStr < startStr; // 기준값 여부
+      // bw=0이고 오프라인인 데이터 제외
+      if(parseInt(d.bw_count||0) === 0 && d.is_online === 'False') return;
       allRows.push(d);
     });
 
@@ -1104,18 +1106,24 @@ function renderHistory(){
 
     // 일별: _isBase는 유지하면서 실제 데이터만 일별 처리
     if(period === 'daily'){
-      // 기준행 중 기기별 가장 최신 1건만
+      // 기준행 중 기기별 bw>0인 가장 최신 1건
       var baseMap = {};
       allRows.filter(function(r){ return r._isBase; }).forEach(function(r){
+        if(parseInt(r.bw_count||0) === 0) return; // bw=0 제외
         var key = r._devNo;
         if(!baseMap[key] || (r.date||'')+(r.time||'') > (baseMap[key].date||'')+(baseMap[key].time||''))
           baseMap[key] = r;
       });
       var baseRows = Object.values(baseMap);
       var dataRows = allRows.filter(function(r){ return !r._isBase; });
-      // 실제 데이터만 일별 최신 1건
+      // 실제 데이터: 일별 bw>0인 가장 최신 1건
       var dailyMap = {};
-      dataRows.forEach(function(r){ dailyMap['device_'+r._devNo+'_'+(r.date||'')] = r; });
+      dataRows.forEach(function(r){
+        if(parseInt(r.bw_count||0) === 0) return; // bw=0 오프라인 제외
+        var key = 'device_'+r._devNo+'_'+(r.date||'');
+        if(!dailyMap[key] || (r.time||'') > (dailyMap[key].time||''))
+          dailyMap[key] = r;
+      });
       dataRows = Object.values(dailyMap);
       // 기준행 + 실제데이터 합쳐서 오름차순
       allRows = baseRows.concat(dataRows);
