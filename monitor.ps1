@@ -369,9 +369,16 @@ foreach ($p in $PRINTERS) {
     Write-Host "  Color  : $($info.color)"
     Write-Host "  Toner  : K=$($info.tk)% C=$($info.tc)% M=$($info.tm)% Y=$($info.ty)%"
 
-    # 오프라인이면 Firebase 기존값 유지
+    # 오프라인이면 Firebase 기존값 유지 (절대 덮어쓰지 않음)
     if ($info.online -eq "False") {
         Write-Host "  [SKIP] Offline - Firebase not updated" -ForegroundColor Yellow
+        Write-Host ""
+        continue
+    }
+
+    # bw=0이면 수집 실패로 간주하여 SKIP
+    if ([int]$info.bw -eq 0) {
+        Write-Host "  [SKIP] BW=0 - Possible collection error, Firebase not updated" -ForegroundColor Yellow
         Write-Host ""
         continue
     }
@@ -380,6 +387,7 @@ foreach ($p in $PRINTERS) {
         name         = "$($p.name)"
         model        = "$($p.model)"
         ip           = "$($p.ip)"
+        printer_type = "$($p.type)"
         is_online    = "True"
         status       = "OK"
         bw_count     = [int]$info.bw
