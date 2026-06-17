@@ -2043,7 +2043,8 @@ function saveContract(){
       gdrive:document.getElementById('f-gdrive').value.trim(),
       staff_ids:[...formStaffIds],
       files:pendingFiles.map(f=>({id:Date.now()+Math.random(),...f})),
-      payments:{}
+      payments:{},
+      terminated: false
     });
     alert('등록되었습니다.');
   }
