@@ -6016,6 +6016,22 @@ function doLogin(){
   var inputId = document.getElementById('login-id').value.trim();
   var inputPw = document.getElementById('login-pw').value;
 
+  // Firebase에서 최신 계정 로드 후 로그인 시도
+  if(window._fbReady && window._db){
+    window._db.collection('rental').doc('accounts').get()
+      .then(function(snap){
+        if(snap.exists && snap.data().ACCOUNTS){
+          ACCOUNTS = snap.data().ACCOUNTS;
+        }
+        _doLoginCheck(inputId, inputPw);
+      })
+      .catch(function(){ _doLoginCheck(inputId, inputPw); });
+    return;
+  }
+  _doLoginCheck(inputId, inputPw);
+}
+
+function _doLoginCheck(inputId, inputPw){
   // 현재 탭의 계정 + 전체 계정에서 아이디/비번 일치 찾기
   var matchedKey = Object.keys(ACCOUNTS).find(function(k){
     return ACCOUNTS[k].id === inputId && ACCOUNTS[k].pw === inputPw;
@@ -6239,10 +6255,24 @@ function doLogin(){
   }, 30000); // 30초마다 체크
   // 계정 정보 Firebase에서 불러오기 후 자동로그인 처리
   if(typeof loadAccountsFromStorage === 'function'){
-    loadAccountsFromStorage();
+    // Firebase에서 계정 로드 후 자동로그인 처리
+    window._db.collection('rental').doc('accounts').get()
+      .then(function(snap){
+        if(snap.exists && snap.data().ACCOUNTS){
+          ACCOUNTS = snap.data().ACCOUNTS;
+          console.log('계정 로드됨:', Object.keys(ACCOUNTS).length+'개');
+        }
+      })
+      .catch(function(){})
+      .finally(function(){
+        // 계정 로드 완료 후 자동로그인 시도
+        tryAutoLogin();
+      });
+  } else {
+    tryAutoLogin();
   }
-  // 자동 로그인 복원
-  setTimeout(function(){
+
+  function tryAutoLogin(){
     try{
       var saved = localStorage.getItem('rental_auto_login_v8');
       if(saved){
@@ -6258,7 +6288,7 @@ function doLogin(){
           var acct = ACCOUNTS[matchedKey];
           _currentUserId = acct.id;
           _loginTab = tab;
-          window.isAdmin = false; // 반드시 초기화
+          window.isAdmin = false;
           if(typeof showApp === 'function') showApp(acct.role);
           return;
         }
@@ -6270,7 +6300,7 @@ function doLogin(){
       var el = document.getElementById('login-id');
       if(el) el.focus();
     }, 100);
-  }, 500); // 계정 로드 후 실행
+  }
 })();
 </script>
 <script>
