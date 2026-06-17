@@ -3297,6 +3297,7 @@ function saveToApi(callback) {
     var plain = JSON.parse(JSON.stringify(data));
     window._fbSave(plain).then(function(ok) {
       window._isSaving = false;
+      window._saveRetryCount = 0;
       if (ok) {
         showSaveStatus('☁ 클라우드 저장됨', '#86efac');
         if(callback) callback(true);
@@ -3311,8 +3312,15 @@ function saveToApi(callback) {
       if(callback) callback(false);
     });
   } else {
-    // Firebase 아직 로딩중 - 1초 후 재시도
-    console.log('Firebase 준비중... 재시도');
+    // Firebase 준비중 - 잠시 후 재시도 (최대 10초)
+    if(!window._saveRetryCount) window._saveRetryCount = 0;
+    window._saveRetryCount++;
+    if(window._saveRetryCount > 10){
+      window._saveRetryCount = 0;
+      showSaveStatus('⚠ Firebase 연결 실패', '#ef4444');
+      if(callback) callback(false);
+      return;
+    }
     setTimeout(function(){ saveToApi(callback); }, 1000);
   }
 }
@@ -5645,8 +5653,6 @@ function saveTaxIssue() {
   closeModal('tax-modal');
   renderTax();
   saveToLocal();
-  // 해당 seq의 청크만 즉시 저장
-  saveToLocal();
   markUnsaved();
 }
 
@@ -6036,7 +6042,7 @@ function doLogin(){
     var contracts = data.CONTRACTS || [];
     var payChunks = {};
     var contractsSlim = contracts.map(function(c, idx) {
-      var no = c.no || (idx+1);
+      var no = parseInt(c.no) || (idx+1);
       var chunkIdx = Math.floor((no-1)/20) + 1;
       var key = String(chunkIdx).padStart(2,'0');
       if(!payChunks[key]) payChunks[key] = {};
@@ -6052,7 +6058,8 @@ function doLogin(){
     var taxClients = data.TAX_CLIENTS || [];
     var taxChunks = {};
     var taxSlim = taxClients.map(function(t) {
-      var seq = t.seq;
+      var seq = parseInt(t.seq) || 0;
+      if(seq <= 0) return Object.assign({}, t, {issues: {}});
       var chunkIdx = Math.floor((seq-1)/30) + 1;
       var key = String(chunkIdx).padStart(2,'0');
       if(!taxChunks[key]) taxChunks[key] = {};
