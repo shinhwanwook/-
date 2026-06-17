@@ -1538,8 +1538,15 @@ function applyFilters(){
     return true;
   });
 
+  // no 기준 정렬 (기본)
+  filtered.sort(function(a,b){
+    var ak = a[sortKey] !== undefined ? a[sortKey] : a.no;
+    var bk = b[sortKey] !== undefined ? b[sortKey] : b.no;
+    if(typeof ak === 'string') return ak.localeCompare(bk,'ko') * sortDir;
+    return (ak - bk) * sortDir;
+  });
 
-    page=0; renderList();
+  page=0; renderList();
 }
 function sortBy(k){
   if(sortKey===k) sortDir*=-1; else{sortKey=k;sortDir=1;}
