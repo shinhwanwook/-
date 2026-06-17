@@ -369,10 +369,6 @@ body.locked { overflow:hidden; }
              font-family:inherit;transition:all .3s">
       💾 저장하기
     </button>
-    <button id="manual-save-btn" onclick="manualSave()"
-      style="background:#3b82f6;color:#fff;border:none;border-radius:6px;
-             padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;
-             font-family:inherit;transition:all .3s">💾 저장하기</button>
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
     <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
     <a href="monitor.html" target="_blank" title="프린터 모니터링 열기" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
@@ -5176,23 +5172,10 @@ function saveTaxMemo(){
   renderTax();
   saveToLocal();
   // TAX_CLIENTS slim 만들어서 tax_main만 업데이트
-  if(window._fbReady && window._db){
-    showSaveStatus('⏳ 저장 중...', '#93c5fd');
-    var taxSlim = TAX_CLIENTS.map(function(t2){
-      var s = Object.assign({}, t2);
-      s.issues = {};
-      return s;
-    });
-    window._db.collection('rental').doc('tax_main').update({TAX_CLIENTS: taxSlim})
-      .then(function(){
-        showSaveStatus('✅ 메모 저장됨', '#86efac');
-      })
-      .catch(function(e){
-        console.error('메모 저장 오류:', e);
-        showSaveStatus('⚠ 저장 실패', '#fbbf24');
-      });
-  }
+  saveToLocal();
+  markUnsaved();
 }
+
 
 function getTaxDate(v) {
   if(!v) return '';
@@ -5659,31 +5642,10 @@ function saveTaxIssue() {
   renderTax();
   saveToLocal();
   // 해당 seq의 청크만 즉시 저장
-  if(window._fbReady && window._db){
-    showSaveStatus('⏳ 세금계산서 저장 중...', '#93c5fd');
-    // seq로 청크 번호 계산
-    var chunkIdx = Math.floor((seq-1)/30) + 1;
-    var chunkKey = String(chunkIdx).padStart(2,'0');
-    // 해당 청크의 모든 거래처 issues 수집
-    var chunkData = {};
-    TAX_CLIENTS.forEach(function(t2){
-      var ci = Math.floor((t2.seq-1)/30) + 1;
-      if(ci === chunkIdx){
-        chunkData[String(t2.seq)] = t2.issues || {};
-      }
-    });
-    window._db.collection('rental').doc('tax_issues_'+chunkKey)
-      .set({issues: chunkData})
-      .then(function(){
-        showSaveStatus('✅ 세금계산서 저장 완료', '#86efac');
-        console.log('tax_issues_'+chunkKey+' 저장 완료');
-      })
-      .catch(function(e){
-        console.error('세금계산서 저장 오류:', e);
-        showSaveStatus('⚠ 저장 실패', '#ef4444');
-      });
-  }
+  saveToLocal();
+  markUnsaved();
 }
+
 
 function deleteTaxIssue() {
   if(!_taxEditKey) return;
@@ -5694,23 +5656,11 @@ function deleteTaxIssue() {
   closeModal('tax-modal');
   renderTax();
   saveToLocal();
-  if(window._fbReady && window._db){
-    var delChunkIdx = Math.floor((seq-1)/30) + 1;
-    var delChunkKey = String(delChunkIdx).padStart(2,'0');
-    var delChunkData = {};
-    TAX_CLIENTS.forEach(function(t2){
-      if(Math.floor((t2.seq-1)/30)+1 === delChunkIdx){
-        delChunkData[String(t2.seq)] = t2.issues||{};
-      }
-    });
-    window._db.collection('rental').doc('tax_issues_'+delChunkKey)
-      .set({issues: delChunkData})
-      .then(function(){ showSaveStatus('✅ 삭제 완료', '#86efac'); })
-      .catch(function(e){ console.error('삭제 오류:', e); });
-  }
+  saveToLocal();
+  markUnsaved();
 }
 
-// ── 거래처 관리 ──
+
 function openTaxClientMgr() {
   renderTaxClientList();
   openModal('tax-client-modal');
@@ -5907,40 +5857,11 @@ function restoreTaxClient(seq) {
 // TAX_CLIENTS를 tax_main에 직접 저장
 function saveTaxClientsToFirebase(successMsg){
   saveToLocal();
-  if(!window._db){
-    showSaveStatus('⚠ DB 연결 없음', '#ef4444');
-    return;
-  }
-  showSaveStatus('⏳ 저장 중...', '#93c5fd');
-  // slim 변환 (issues 제거)
-  var taxSlim = TAX_CLIENTS.map(function(t){
-    var s = Object.assign({}, t);
-    s.issues = {};
-    return s;
-  });
-  window._db.collection('rental').doc('tax_main').update({TAX_CLIENTS: taxSlim})
-    .then(function(){
-      showSaveStatus(successMsg || '✅ 저장됨', '#86efac');
-    })
-    .catch(function(e){
-      console.error('tax_main 저장 오류:', e);
-      showSaveStatus('⚠ 저장 실패', '#ef4444');
-    });
+  saveToLocal();
+  markUnsaved();
 }
-</script>
 
 
-</div><!-- /app-wrapper -->
-<script>
-// ══ 로그인 설정 ══
-// ══ 계정 설정 ══
-const ACCOUNTS_DEFAULT = {
-  admin: { id:'admin', pw:'1234', role:'admin', label:'관리자' },
-  user:  { id:'user',  pw:'1234', role:'user',  label:'사용자' }
-};
-// localStorage에 저장된 계정 불러오기 (없으면 기본값)
-let ACCOUNTS = JSON.parse(JSON.stringify(ACCOUNTS_DEFAULT)); // 기본값으로 시작
-// Firebase/localStorage에서 계정 불러오기
 function loadAccountsFromStorage(){
   // Firebase 우선
   if(window._fbReady && window._db){
