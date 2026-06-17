@@ -1,4 +1,7 @@
-﻿$FIREBASE_PROJECT = "rental-management-8c377"
+﻿# 실행 모드: "" = 전체수집, "online" = 온라인상태만 갱신
+param([string]$Mode = "")
+
+$FIREBASE_PROJECT = "rental-management-8c377"
 $FIREBASE_API_KEY = "AIzaSyAoEuQ_femEy46c07wIHXY3WykfXvqZRgk"
 $FIREBASE_URL     = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/device_status"
 $RENTAL_URL       = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT/databases/(default)/documents/rental/main"
@@ -7,6 +10,12 @@ $RENTAL_URL       = "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJ
 #  설치 시 이 부분만 수정하세요!
 #  이 PC에 연결된 프린터 IP만 입력합니다
 #  (다른 거래처 IP는 입력하지 마세요)
+# ================================================================
+# ================================================================
+# 상시 온라인 유지 시스템 v16.0
+# - PC 시작 시 자동 실행
+# - 30분마다 자동 수집
+# - 오프라인/bw=0이면 Firebase SKIP (기존 데이터 보호)
 # ================================================================
 $MY_PRINTER_IPS = @(
     "192.168.1.100"   # ← 이 PC에 연결된 프린터 IP로 변경
@@ -354,6 +363,40 @@ if ($PRINTERS.Count -eq 0) {
 }
 
 Write-Host ""
+
+# ────────────────────────────────────────
+# 온라인 상태만 갱신 모드 (30분마다)
+# ────────────────────────────────────────
+if ($Mode -eq "online") {
+    Write-Host "[Online Status Check]" -ForegroundColor Cyan
+    foreach ($p in $PRINTERS) {
+        Write-Host "  [$($p.name)] $($p.ip)" -NoNewline
+        $ping = Test-Connection -ComputerName $p.ip -Count 1 -Quiet -ErrorAction SilentlyContinue
+        if ($ping) {
+            Write-Host " [Online]" -ForegroundColor Green
+            # 온라인 확인 시간 기록
+            $chkData = @{
+                fields = @{
+                    last_seen  = @{ stringValue = $ts }
+                    is_checked = @{ stringValue = "True" }
+                }
+            }
+            $patchUrl = "$FIREBASE_URL/device_$($p.no)?key=$FIREBASE_API_KEY&updateMask.fieldPaths=last_seen&updateMask.fieldPaths=is_checked"
+            try {
+                $chkData | ConvertTo-Json -Depth 10 | Invoke-RestMethod -Uri $patchUrl -Method Patch -ContentType "application/json; charset=utf-8" -ErrorAction Stop | Out-Null
+            } catch {}
+        } else {
+            Write-Host " [Offline]" -ForegroundColor Red
+        }
+    }
+    Write-Host ""
+    Write-Host "=== Online Check Done ==="
+    exit
+}
+
+# ────────────────────────────────────────
+# 전체 수집 모드 (PC시작 30분후 + 오후4시)
+# ────────────────────────────────────────
 foreach ($p in $PRINTERS) {
     Write-Host "[$($p.name)] $($p.ip)"
     switch ($p.type) {
@@ -369,11 +412,17 @@ foreach ($p in $PRINTERS) {
     Write-Host "  Color  : $($info.color)"
     Write-Host "  Toner  : K=$($info.tk)% C=$($info.tc)% M=$($info.tm)% Y=$($info.ty)%"
 
-    # 오프라인이면 Firebase 기존값 유지 (절대 덮어쓰지 않음)
+    # 오프라인이면 1회 재시도 후 SKIP (기존 Firebase 값 보호)
     if ($info.online -eq "False") {
-        Write-Host "  [SKIP] Offline - Firebase not updated" -ForegroundColor Yellow
-        Write-Host ""
-        continue
+        Write-Host "  [RETRY] Offline - Retrying in 10 seconds..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 10
+        $info = Get-PrinterInfo $p.ip $p.type
+        if ($info.online -eq "False") {
+            Write-Host "  [SKIP] Still offline - Firebase not updated" -ForegroundColor Yellow
+            Write-Host ""
+            continue
+        }
+        Write-Host "  [OK] Back online!" -ForegroundColor Green
     }
 
     # bw=0이면 수집 실패로 간주하여 SKIP
