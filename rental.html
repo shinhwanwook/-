@@ -292,6 +292,9 @@ body.locked { overflow:hidden; }
 </style>
 </style>
 
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+</style>
 </head>
 <body>
 <!-- Firebase SDK -->
@@ -359,6 +362,12 @@ body.locked { overflow:hidden; }
   <div class="nav-tab" id="nav-tab-tax" onclick="showPage('tax')">🧾 세금계산서</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
+    <button id="manual-save-btn" onclick="manualSave()"
+      style="background:#3b82f6;color:#fff;border:none;border-radius:6px;
+             padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;
+             font-family:inherit;transition:all .3s">
+      💾 저장하기
+    </button>
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
     <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
     <a href="monitor.html" target="_blank" title="프린터 모니터링 열기" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
