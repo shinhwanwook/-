@@ -2269,6 +2269,42 @@ function tryAdminLogin(){
 var _onlineInterval = null;
 var _onlineUnsubscribe = null;
 
+function updateOnlineUI(users){
+  var countEl = document.getElementById('online-count');
+  if(countEl) countEl.textContent = users.length;
+
+  // 다른 사용자 편집 중 여부 확인
+  var othersEditing = users.filter(function(u){
+    return u.id !== _currentUserId && u.editing === true;
+  });
+
+  var btn = document.getElementById('manual-save-btn');
+  if(btn){
+    if(_hasUnsaved){
+      // 내가 편집 중 → 빨간색 유지
+      btn.style.background = '#ef4444';
+      btn.style.color = '#fff';
+      btn.style.animation = 'pulse 1.5s infinite';
+      btn.textContent = '💾 저장하기 *';
+    } else if(othersEditing.length > 0){
+      // 다른 사람 편집 중 → 노란색
+      var names = othersEditing.map(function(u){ return u.id; }).join(', ');
+      btn.style.background = '#f59e0b';
+      btn.style.color = '#fff';
+      btn.style.animation = 'pulse 2s infinite';
+      btn.textContent = '✏️ ' + names + ' 편집 중';
+      btn.title = '다른 사용자가 편집 중입니다!';
+    } else {
+      // 아무도 편집 안 함 → 파란색
+      btn.style.background = '#3b82f6';
+      btn.style.color = '#fff';
+      btn.style.animation = '';
+      btn.textContent = '💾 저장하기';
+      btn.title = '';
+    }
+  }
+}
+
 function initOnlinePresence(){
   if(!window._db || !_currentUserId) return;
   var db = window._db;
@@ -2308,32 +2344,13 @@ function initOnlinePresence(){
 
   // 페이지 닫을 때 접속 해제
   window.addEventListener('beforeunload', function(){
+    // 편집 상태 해제 후 접속 해제
+    if(_hasUnsaved) broadcastEditState(false);
     userRef.delete().catch(function(){});
     if(_onlineInterval) clearInterval(_onlineInterval);
   });
 }
 
-function updateOnlineUI(users){
-  var countEl = document.getElementById('online-count');
-  var listEl = document.getElementById('online-list');
-  if(countEl) countEl.textContent = users.length;
-  if(listEl){
-    if(users.length === 0){
-      listEl.innerHTML = '<div style="color:#9ca3af;font-size:11px">접속자 없음</div>';
-    } else {
-      listEl.innerHTML = users.map(function(u){
-        var isMe = u.id === _currentUserId;
-        var roleColor = u.role === '관리자' ? '#fbbf24' : '#86efac';
-        return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
-          '<span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block"></span>' +
-          '<span style="color:'+roleColor+';font-weight:600">'+esc(u.id)+'</span>' +
-          '<span style="color:#9ca3af;font-size:10px">('+u.role+')</span>' +
-          (isMe ? '<span style="color:#60a5fa;font-size:10px">나</span>' : '') +
-          '</div>';
-      }).join('');
-    }
-  }
-}
 
 function toggleOnlinePanel(){
   var panel = document.getElementById('online-panel');
@@ -3312,16 +3329,29 @@ function autoSave() {
   }, 500);
 }
 
+// 편집 상태를 Firebase에 공유
+function broadcastEditState(editing) {
+  if(!window._db || !_currentUserId) return;
+  try {
+    window._db.collection('rental_online').doc(_currentUserId).update({
+      editing: editing,
+      editAt: editing ? new Date().toISOString() : null
+    }).catch(function(){});
+  } catch(e) {}
+}
+
 // 미저장 상태 표시
 function markUnsaved() {
   _hasUnsaved = true;
   var btn = document.getElementById('manual-save-btn');
   if(btn){
     btn.style.background = '#ef4444';
+    btn.style.color = '#fff';
     btn.style.animation = 'pulse 1.5s infinite';
     btn.textContent = '💾 저장하기 *';
   }
   showSaveStatus('● 미저장 변경사항 있음', '#fbbf24');
+  broadcastEditState(true); // 다른 PC에 편집 중 알림
 }
 
 // 수동저장 버튼 클릭
@@ -3347,6 +3377,7 @@ function manualSave() {
         btn.style.animation = '';
         btn.textContent = '💾 저장하기';
         _hasUnsaved = false;
+        broadcastEditState(false); // 다른 PC에 저장 완료 알림
       } else {
         btn.style.background = '#ef4444';
         btn.textContent = '💾 저장하기 *';
