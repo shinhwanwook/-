@@ -26,7 +26,7 @@ $MY_PRINTER_IPS = @(
 # ============================================================
 # 공통 함수
 # ============================================================
-function Get-WebPage([string]$url, [int]$timeout=10, [string]$cookie="", [string]$referer="") {
+function Get-WebPage([string]$url, [int]$timeout=30, [string]$cookie="", [string]$referer="") {
     try {
         [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
@@ -412,17 +412,30 @@ foreach ($p in $PRINTERS) {
     Write-Host "  Color  : $($info.color)"
     Write-Host "  Toner  : K=$($info.tk)% C=$($info.tc)% M=$($info.tm)% Y=$($info.ty)%"
 
-    # 오프라인이면 1회 재시도 후 SKIP (기존 Firebase 값 보호)
+    # 오프라인이면 최대 3회 재시도 (30초 간격) - 기존 Firebase 값 보호
     if ($info.online -eq "False") {
-        Write-Host "  [RETRY] Offline - Retrying in 10 seconds..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 10
-        $info = Get-PrinterInfo $p.ip $p.type
-        if ($info.online -eq "False") {
-            Write-Host "  [SKIP] Still offline - Firebase not updated" -ForegroundColor Yellow
+        $retryOk = $false
+        for ($retry = 1; $retry -le 3; $retry++) {
+            Write-Host "  [RETRY $retry/3] Offline - Waiting 30 seconds..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 30
+            switch ($p.type) {
+                "ricoh"   { $info = Get-RicohData   $p.ip }
+                "hp"      { $info = Get-HPData      $p.ip }
+                "canon"   { $info = Get-CanonData   $p.ip }
+                "kyocera" { $info = Get-KyoceraData $p.ip }
+                default   { $info = Get-RicohData   $p.ip }
+            }
+            if ($info.online -eq "True") {
+                Write-Host "  [OK] Back online after retry $retry!" -ForegroundColor Green
+                $retryOk = $true
+                break
+            }
+        }
+        if (-not $retryOk) {
+            Write-Host "  [SKIP] Still offline after 3 retries - Firebase not updated" -ForegroundColor Red
             Write-Host ""
             continue
         }
-        Write-Host "  [OK] Back online!" -ForegroundColor Green
     }
 
     # bw=0이면 수집 실패로 간주하여 SKIP
