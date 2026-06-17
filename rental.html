@@ -1212,7 +1212,12 @@ let CONTRACTS = [
 ];
 
 let SERVICES = [
-
+  {id:1,no:11,date:"2023-02-10",type:"방문",content:"정기 방문점검 및 소모품 교체",person:"홍길동",result:"토너 교체 완료"},
+  {id:2,no:36,date:"2023-01-15",type:"A/S",content:"프린터 용지걸림 수리",person:"김철수",result:"롤러 청소 후 정상화"},
+  {id:3,no:9,date:"2022-12-20",type:"방문",content:"연말 인사 방문",person:"홍길동",result:""},
+  {id:4,no:14,date:"2023-02-01",type:"A/S",content:"프린터 출력불량",person:"이영희",result:"드럼 교체"},
+  {id:5,no:24,date:"2023-01-25",type:"방문",content:"계약 갱신 상담",person:"홍길동",result:"갱신 완료"}
+];
 
 let EXTRA_PAYS = [
   {id:1,no:36,date:"2023-01-20",item:"토너 교체",amount:35000,memo:"HP토너 검정"},
@@ -4089,7 +4094,11 @@ var _sFilter=document.getElementById('stat-status-filter'); if(_sFilter) _sFilte
 //  장비/소모품 입출고
 // ══════════════════════════════════════════
 let INVENTORY = [
-
+  {id:1,date:'2023-01-10',dir:'in',item:'HP토너 CF217A',cat:'소모품',qty:10,price:15000,no:null,person:'홍길동',memo:'정기 입고'},
+  {id:2,date:'2023-01-15',dir:'out',item:'HP토너 CF217A',cat:'소모품',qty:2,price:15000,no:36,person:'홍길동',memo:'신선설렁탕(부평점) 교체'},
+  {id:3,date:'2023-02-01',dir:'in',item:'HP8600 본체',cat:'장비',qty:2,price:350000,no:null,person:'김철수',memo:'신규 입고'},
+  {id:4,date:'2023-02-10',dir:'out',item:'HP8600 본체',cat:'장비',qty:1,price:350000,no:11,person:'김철수',memo:'서머힐 교체 설치'},
+];
 let nextInvId=5, invPage=0, invSortDir=-1;
 const INV_PAGE=20;
 let editingInvId=null;
@@ -6016,28 +6025,11 @@ function doLogin(){
   var inputId = document.getElementById('login-id').value.trim();
   var inputPw = document.getElementById('login-pw').value;
 
-  // Firebase에서 최신 계정 로드 후 로그인 시도
-  if(window._fbReady && window._db){
-    window._db.collection('rental').doc('accounts').get()
-      .then(function(snap){
-        if(snap.exists && snap.data().ACCOUNTS){
-          ACCOUNTS = snap.data().ACCOUNTS;
-        }
-        _doLoginCheck(inputId, inputPw);
-      })
-      .catch(function(){ _doLoginCheck(inputId, inputPw); });
-    return;
-  }
-  _doLoginCheck(inputId, inputPw);
-}
-
-function _doLoginCheck(inputId, inputPw){
-  // 현재 탭의 계정 + 전체 계정에서 아이디/비번 일치 찾기
-  var matchedKey = Object.keys(ACCOUNTS).find(function(k){
-    return ACCOUNTS[k].id === inputId && ACCOUNTS[k].pw === inputPw;
-  });
-
-  if(matchedKey){
+  function tryLogin(){
+    var matchedKey = Object.keys(ACCOUNTS).find(function(k){
+      return ACCOUNTS[k].id === inputId && ACCOUNTS[k].pw === inputPw;
+    });
+    if(matchedKey){
     var acct = ACCOUNTS[matchedKey];
     _currentUserId = acct.id;
     window.isAdmin = false; // 반드시 초기화
@@ -6046,10 +6038,22 @@ function _doLoginCheck(inputId, inputPw){
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
     }
     showApp(acct.role);
+    } else {
+      document.getElementById('login-err').style.display = 'block';
+      document.getElementById('login-pw').value = '';
+      document.getElementById('login-pw').focus();
+    }
+  }
+
+  // Firebase에서 최신 계정 로드 후 로그인
+  if(window._fbReady && window._db){
+    window._db.collection('rental').doc('accounts').get()
+      .then(function(snap){
+        if(snap.exists && snap.data().ACCOUNTS) ACCOUNTS = snap.data().ACCOUNTS;
+        tryLogin();
+      }).catch(function(){ tryLogin(); });
   } else {
-    document.getElementById('login-err').style.display = 'block';
-    document.getElementById('login-pw').value = '';
-    document.getElementById('login-pw').focus();
+    tryLogin();
   }
 }
 </script>
@@ -6253,54 +6257,42 @@ function _doLoginCheck(inputId, inputPw){
       lastSavedAt = serverSavedAt;
     }).catch(function(){});
   }, 30000); // 30초마다 체크
-  // 계정 정보 Firebase에서 불러오기 후 자동로그인 처리
-  if(typeof loadAccountsFromStorage === 'function'){
-    // Firebase에서 계정 로드 후 자동로그인 처리
-    window._db.collection('rental').doc('accounts').get()
-      .then(function(snap){
-        if(snap.exists && snap.data().ACCOUNTS){
-          ACCOUNTS = snap.data().ACCOUNTS;
-          console.log('계정 로드됨:', Object.keys(ACCOUNTS).length+'개');
-        }
-      })
-      .catch(function(){})
-      .finally(function(){
-        // 계정 로드 완료 후 자동로그인 시도
-        tryAutoLogin();
-      });
-  } else {
-    tryAutoLogin();
-  }
-
-  function tryAutoLogin(){
-    try{
-      var saved = localStorage.getItem('rental_auto_login_v8');
-      if(saved){
-        var decoded = atob(saved);
-        var parts = decoded.split(':');
-        var tab = parts[0];
-        var id = parts[1];
-        var pw = parts.slice(2).join(':');
-        var matchedKey = Object.keys(ACCOUNTS).find(function(k){
-          return ACCOUNTS[k].id === id && ACCOUNTS[k].pw === pw;
-        });
-        if(matchedKey){
-          var acct = ACCOUNTS[matchedKey];
-          _currentUserId = acct.id;
-          _loginTab = tab;
-          window.isAdmin = false;
-          if(typeof showApp === 'function') showApp(acct.role);
-          return;
-        }
+  // Firebase에서 계정 로드 후 자동로그인 처리
+  window._db.collection('rental').doc('accounts').get()
+    .then(function(snap){
+      if(snap.exists && snap.data().ACCOUNTS){
+        ACCOUNTS = snap.data().ACCOUNTS;
       }
-    }catch(e){ console.log('자동로그인 오류:', e); }
-    // 자동로그인 없으면 로그인 화면
-    document.body.classList.add('locked');
-    setTimeout(function(){
-      var el = document.getElementById('login-id');
-      if(el) el.focus();
-    }, 100);
-  }
+    })
+    .catch(function(){})
+    .finally(function(){
+      try{
+        var saved = localStorage.getItem('rental_auto_login_v8');
+        if(saved){
+          var decoded = atob(saved);
+          var parts = decoded.split(':');
+          var tab = parts[0];
+          var id = parts[1];
+          var pw = parts.slice(2).join(':');
+          var matchedKey = Object.keys(ACCOUNTS).find(function(k){
+            return ACCOUNTS[k].id === id && ACCOUNTS[k].pw === pw;
+          });
+          if(matchedKey){
+            var acct = ACCOUNTS[matchedKey];
+            _currentUserId = acct.id;
+            _loginTab = tab;
+            window.isAdmin = false;
+            if(typeof showApp === 'function') showApp(acct.role);
+            return;
+          }
+        }
+      }catch(e){ console.log('자동로그인 오류:', e); }
+      document.body.classList.add('locked');
+      setTimeout(function(){
+        var el = document.getElementById('login-id');
+        if(el) el.focus();
+      }, 100);
+    });
 })();
 </script>
 <script>
