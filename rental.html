@@ -3288,6 +3288,16 @@ function saveToLocal() {
 }
 
 // ── PHP API 저장 ──
+function broadcastEditState(editing) {
+  if(!window._db || !_currentUserId) return;
+  try {
+    window._db.collection('rental_online').doc(_currentUserId).update({
+      editing: editing,
+      editAt: editing ? new Date().toISOString() : null
+    }).catch(function(){});
+  } catch(e) {}
+}
+
 function saveToApi(callback) {
   var data = collectData();
   // Firebase 저장
