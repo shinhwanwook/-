@@ -3521,6 +3521,17 @@ function loadFromApi(callback) {
       if(callback) callback(false);
     });
   } else {
+    // _fbReady 대기 (최대 15초)
+    if(!window._fbLoadWaitCount) window._fbLoadWaitCount = 0;
+    window._fbLoadWaitCount++;
+    if(window._fbLoadWaitCount > 18) {
+      // 15초 초과 - Firebase 연결 실패
+      window._fbLoadWaitCount = 0;
+      hideLoadingScreen();
+      alert('서버 연결 실패! 새로고침 해주세요.');
+      if(callback) callback(false);
+      return;
+    }
     setTimeout(function(){ loadFromApi(callback); }, 800);
   }
 }
@@ -6242,6 +6253,8 @@ function doLogin(){
 
   window._fbReady = true;
   console.log('✅ Firebase 연결 완료');
+  // Firebase 준비 완료 후 계정 즉시 로드
+  loadAccountsFromStorage();
 
   // 실시간 변경 감지 - 다른 PC에서 저장하면 알림
   var lastSavedAt = null;
