@@ -6051,6 +6051,20 @@ function doLogin(){
   var inputId = document.getElementById('login-id').value.trim();
   var inputPw = document.getElementById('login-pw').value;
 
+  // Firebase 계정이 아직 로드 안됐으면 재로드 후 시도
+  if(window._fbReady && window._db && Object.keys(ACCOUNTS).length <= 2){
+    window._db.collection('rental').doc('accounts').get().then(function(snap){
+      if(snap.exists && snap.data().ACCOUNTS){
+        ACCOUNTS = snap.data().ACCOUNTS;
+      }
+      _tryLogin(inputId, inputPw);
+    }).catch(function(){ _tryLogin(inputId, inputPw); });
+    return;
+  }
+  _tryLogin(inputId, inputPw);
+}
+
+function _tryLogin(inputId, inputPw){
   // 현재 탭의 계정 + 전체 계정에서 아이디/비번 일치 찾기
   var matchedKey = Object.keys(ACCOUNTS).find(function(k){
     return ACCOUNTS[k].id === inputId && ACCOUNTS[k].pw === inputPw;
@@ -6071,6 +6085,8 @@ function doLogin(){
     document.getElementById('login-pw').focus();
   }
 }
+
+// _tryLogin 종료 (doLogin에서 분리)
 </script>
 
 <script>
@@ -6307,7 +6323,7 @@ function doLogin(){
       var el = document.getElementById('login-id');
       if(el) el.focus();
     }, 100);
-  }, 500); // 계정 로드 후 실행
+  }, 2000); // Firebase 계정 로드 완료 후 실행
 })();
 </script>
 <script>
