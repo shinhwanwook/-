@@ -2040,18 +2040,7 @@ function saveContract(){
   // 즉시 Firebase 저장
   window._isLoading = false; // 저장 차단 해제
   saveToLocal();
-  saveToApi(function(ok){
-    if(ok){
-      showSaveStatus('✅ 계약 저장 완료', '#86efac');
-    } else {
-      // 저장 실패 시 재시도
-      setTimeout(function(){
-        saveToApi(function(ok2){
-          showSaveStatus(ok2?'✅ 계약 저장 완료':'⚠ 저장 실패 - 새로고침 후 다시 시도', ok2?'#86efac':'#ef4444');
-        });
-      }, 2000);
-    }
-  });
+  markUnsaved();
 }
 // ══ 관리자 권한 ══
 let ADMIN_PW = '1234'; // 초기 비밀번호 (변경 가능)
@@ -2517,9 +2506,7 @@ function confirmDeleteContract(no){
     applyFilters();
     window._isLoading = false;
     saveToLocal();
-    saveToApi(function(ok){
-      showSaveStatus(ok?'✅ 계약 삭제 완료':'⚠ 삭제 실패', ok?'#86efac':'#ef4444');
-    });
+  markUnsaved();
   }, '삭제', false);
 }
 
@@ -2543,10 +2530,7 @@ function terminateContract(no){
   applyFilters();
   window._isLoading=false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 해지 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    if(!ok) setTimeout(function(){ saveToApi(null); },2000);
-  });
+  markUnsaved();
 }
 function restoreContract(no){
   closeModal('confirm-modal');
@@ -2556,9 +2540,7 @@ function restoreContract(no){
   applyFilters();
   window._isLoading=false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 복원 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-  });
+  markUnsaved();
 }
 
 function confirmDelete(no){ confirmTerminate(no); } // 하위호환
@@ -2581,9 +2563,7 @@ function savePayMemo(){
   closeModal('pay-memo-modal');
   window._isLoading = false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 메모 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-  });
+  markUnsaved();
 }
 
 function openPayEdit(){
@@ -2648,12 +2628,7 @@ function savePayment(){
   renderPayment();
   window._isLoading = false;
   saveToLocal();
-  saveToApi(function(ok){
-    if(!ok){
-      setTimeout(function(){ saveToApi(null); }, 2000);
-    }
-    showSaveStatus(ok?'✅ 입금 저장됨':'⚠ 재저장 중...', ok?'#86efac':'#fbbf24');
-  });
+  markUnsaved();
 }
 function deletePayment(){
   const y=document.getElementById('pm-year').value;
@@ -2711,10 +2686,7 @@ function saveExtraPay(){
   // 즉시 Firebase 저장
   window._isLoading = false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 추가사용료 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    if(!ok) setTimeout(function(){ saveToApi(null); }, 2000);
-  });
+  markUnsaved();
 }
 function confirmDeleteExtra(id){
   showConfirm('이 추가사용료를 삭제하시겠습니까?',()=>{
@@ -2724,9 +2696,7 @@ function confirmDeleteExtra(id){
     renderPayment();
     window._isLoading = false;
     saveToLocal();
-    saveToApi(function(ok){
-      showSaveStatus(ok?'✅ 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    });
+  markUnsaved();
   });
 }
 
@@ -2949,9 +2919,7 @@ function svcDetailDelete(id){
     SERVICES = SERVICES.filter(function(x){ return x.id!==id; });
     window._isLoading = false;
     saveToLocal();
-    saveToApi(function(ok){
-      showSaveStatus(ok?'✅ 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    });
+  markUnsaved();
     renderService();
     renderSvcDetail();
   }, '삭제', false);
@@ -3019,12 +2987,10 @@ function saveService(){
   clearTimeout(window._saveTimer); // autoSave 타이머 취소
   saveToLocal();
   // 저장 완료 후 콜백 실행 (저장 전 콜백 실행 방지)
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 이력 저장됨':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    if(!ok) setTimeout(function(){ saveToApi(null); }, 2000);
-    // 저장 완료 후 팝업 복귀
-    if(window._afterSvcSave){ window._afterSvcSave(); window._afterSvcSave=null; }
-  });
+  saveToLocal();
+  markUnsaved();
+  // 저장 완료 후 팝업 복귀
+  if(window._afterSvcSave){ window._afterSvcSave(); window._afterSvcSave=null; }
 }
 function confirmDeleteSvc(id){
   showConfirm('이 이력을 삭제하시겠습니까?',()=>{
@@ -3232,7 +3198,7 @@ let _apiEnabled = false;   // API URL 설정 시 자동으로 true
 
 // API 사용 가능 여부
 function isApiEnabled() {
-  return true; // Firebase 항상 활성화
+  return false; // 수동저장 전용 - 자동 Firebase 저장 비활성화
 }
 
 // 저장 상태 표시
@@ -3323,18 +3289,60 @@ function saveToApi(callback) {
   }
 }
 
-// ── 자동저장 (0.5초 debounce) ──
+// ── 자동저장 (로컬만 - Firebase는 수동저장 버튼으로) ──
+var _hasUnsaved = false; // 미저장 변경사항 플래그
+
 function autoSave() {
-  if(window._colDragging) return; // 컬럼 드래그 중엔 저장 안 함
-  if(window._isLoading) return;   // 데이터 로딩 중엔 저장 안 함
-  if(window._isSaving) return;    // 저장 진행 중엔 저장 안 함
+  if(window._colDragging) return;
+  if(window._isLoading) return;
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function(){
-    if(window._isLoading) return; // 재확인
-    if(window._isSaving) return;  // 재확인
-    saveToLocal();
-    if(isApiEnabled()) saveToApi(null);
-  }, 2000);
+    if(window._isLoading) return;
+    saveToLocal(); // 로컬에만 저장
+    markUnsaved(); // 미저장 표시
+  }, 500);
+}
+
+// 미저장 상태 표시
+function markUnsaved() {
+  _hasUnsaved = true;
+  var btn = document.getElementById('manual-save-btn');
+  if(btn){
+    btn.style.background = '#ef4444';
+    btn.style.animation = 'pulse 1.5s infinite';
+    btn.textContent = '💾 저장하기 *';
+  }
+  showSaveStatus('● 미저장 변경사항 있음', '#fbbf24');
+}
+
+// 수동저장 버튼 클릭
+function manualSave() {
+  if(window._isSaving){
+    alert('저장 중입니다. 잠시 기다려 주세요.');
+    return;
+  }
+  if(!_hasUnsaved){
+    showSaveStatus('✓ 이미 저장됨', '#86efac');
+    return;
+  }
+  var btn = document.getElementById('manual-save-btn');
+  if(btn){ btn.textContent = '⏳ 저장 중...'; btn.disabled = true; }
+
+  saveToApi(function(ok){
+    if(btn){
+      btn.disabled = false;
+      btn.style.animation = '';
+      if(ok){
+        btn.style.background = '';
+        btn.textContent = '💾 저장하기';
+        _hasUnsaved = false;
+      } else {
+        btn.style.background = '#ef4444';
+        btn.textContent = '💾 저장하기 *';
+        alert('저장 실패! 다시 시도해 주세요.');
+      }
+    }
+  });
 }
 
 // ── localStorage 복원 ──
@@ -5050,9 +5058,7 @@ function setTaxColor(color){
   closeModal('tax-color-modal');
   window._isLoading = false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 색상 저장됨':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-  });
+  markUnsaved();
   renderTax();
 }
 function openTaxClientDetail(seq){
@@ -5079,9 +5085,7 @@ function saveTaxClientDetailMemo(){
   closeModal('tax-client-detail-modal');
   window._isLoading=false;
   saveToLocal();
-  saveToApi(function(ok){
-    showSaveStatus(ok?'✅ 메모 저장 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-  });
+  markUnsaved();
   renderTax();
 }
 function taxClientDetailEdit(){
@@ -5117,9 +5121,7 @@ function taxClientDetailDelete(){
     closeModal('tax-client-detail-modal');
     window._isLoading = false;
     saveToLocal();
-    saveToApi(function(ok){
-      showSaveStatus(ok?'✅ 거래처 삭제 완료':'⚠ 저장 실패', ok?'#86efac':'#ef4444');
-    });
+  markUnsaved();
     renderTax();
   }, '삭제', false);
 }
@@ -6276,6 +6278,16 @@ function doLogin(){
     }, 100);
   }, 500); // 계정 로드 후 실행
 })();
+</script>
+<script>
+// 미저장 상태에서 페이지 이탈 경고
+window.addEventListener('beforeunload', function(e){
+  if(_hasUnsaved){
+    e.preventDefault();
+    e.returnValue = '저장하지 않은 변경사항이 있습니다. 페이지를 떠나시겠습니까?';
+    return e.returnValue;
+  }
+});
 </script>
 </body>
 </html>
