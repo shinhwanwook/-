@@ -22,10 +22,11 @@
 body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
 /* NAV */
-.nav{background:var(--blue);color:#fff;padding:0 12px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;box-sizing:border-box}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+@media(max-width:768px){.nav{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav-logo{flex-shrink:0}.nav-tab{flex-shrink:0}}
 .nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
-.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
 .nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
 .nav-tab.active{opacity:1;border-bottom-color:#fff}
 
@@ -150,7 +151,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .nav-logo span{display:none}
   .nav-tab{padding:0 7px;font-size:11px}
 }
-.nav::-webkit-scrollbar{display:none}
 </style>
 </head>
 <body>
@@ -180,27 +180,34 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <div id="app-wrapper" style="display:none">
 
 <nav class="nav">
-  <div class="nav-logo">🖨️ 프린터모니터링</div>
+  <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
   <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
-  <div style="flex:1;min-width:4px;flex-shrink:1"></div>
-  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-    <button onclick="refreshAll()" id="refresh-btn" title="새로고침"
-      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;flex-shrink:0">🔄</button>
-    <button onclick="importFromRental()" title="임대관리 가져오기"
-      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;flex-shrink:0">📥</button>
-    <a href="rental.html" title="임대관리"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap;flex-shrink:0">📋</a>
-    <button onclick="doLogout()" title="로그아웃"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;flex-shrink:0">🚪 로그아웃</button>
+  <div style="flex:1"></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
+    <button onclick="refreshAll()" id="refresh-btn"
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🔄 새로고침
+    </button>
+    <button onclick="importFromRental()"
+      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      📥 임대관리 가져오기
+    </button>
+    <a href="rental.html"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
+      📋 임대관리
+    </a>
+    <button onclick="doLogout()"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🚪 로그아웃
+    </button>
   </div>
 </nav>
-<div style="background:var(--blue);padding:2px 12px;display:flex;align-items:center">
-  <span id="last-update" style="font-size:10px;color:rgba(255,255,255,.5);margin-left:auto"></span>
-</div>
+
 <!-- ══ PAGE: 현황판 ══ -->
 <div class="page active" id="page-monitor">
 
