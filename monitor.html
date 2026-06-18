@@ -138,6 +138,12 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
+@media(max-width:768px){
+  .nav{padding:4px;gap:0;height:auto;min-height:auto}
+  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
+  .nav-logo span{display:none}
+  .nav-tab{padding:0 8px;height:40px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -457,6 +463,22 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📈 기간별 사용량 조회</span>
     </div>
     <div class="controls">
+      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable()" style="flex:1;min-width:180px">
+      <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
+        <option value="">전체 제조사</option>
+        <option value="ricoh">리코</option>
+        <option value="kyocera">교세라</option>
+        <option value="hp">HP</option>
+        <option value="samsung">삼성</option>
+        <option value="canon">캐논</option>
+      </select>
+      <select class="inp" id="usage-filter" onchange="filterUsageTable()" style="min-width:110px">
+        <option value="">전체</option>
+        <option value="over">🔴 초과만</option>
+        <option value="safe">🟢 여유만</option>
+      </select>
+    </div>
+    <div class="controls">
       <div style="display:flex;align-items:center;gap:6px">
         <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">시작일</label>
         <input class="inp" type="date" id="usage-start" style="width:140px">
@@ -484,6 +506,29 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </select>
     </div>
     <div class="info-row" id="usage-info"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>거래처명</th>
+            <th>기기명</th>
+            <th style="text-align:right">흑백(시작)</th>
+            <th style="text-align:right">흑백(현재)</th>
+            <th style="text-align:right">흑백약정</th>
+            <th style="text-align:right">흑백사용량</th>
+            <th style="text-align:right">컬러(시작)</th>
+            <th style="text-align:right">컬러(현재)</th>
+            <th style="text-align:right">컬러약정</th>
+            <th style="text-align:right">컬러사용량</th>
+            <th style="text-align:center">상태</th>
+            <th style="text-align:center">상세</th>
+          </tr>
+        </thead>
+        <tbody id="usage-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+<div class="info-row" id="usage-info"></div>
     <div class="tbl-wrap">
       <table>
         <thead>
