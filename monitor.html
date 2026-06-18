@@ -187,22 +187,22 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
   <div style="flex:1"></div>
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
     <button onclick="refreshAll()" id="refresh-btn"
-      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
       🔄 새로고침
     </button>
     <button onclick="importFromRental()"
-      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
       📥 임대관리 가져오기
     </button>
     <a href="rental.html"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap">
       📋 임대관리
     </a>
     <button onclick="doLogout()"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
       🚪 로그아웃
     </button>
   </div>
