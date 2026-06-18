@@ -23,7 +23,7 @@ body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg)
 
 /* NAV */
 .nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap}
+.nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
 .nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
 .nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
@@ -143,6 +143,12 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
   .nav-logo span{display:none}
   .nav-tab{padding:0 8px;height:40px;font-size:12px}
+}
+@media(max-width:600px){
+  .nav{padding:0 4px}
+  .nav-logo{font-size:13px;margin-right:4px}
+  .nav-logo span{display:none}
+  .nav-tab{padding:0 7px;font-size:11px}
 }
 </style>
 </head>
@@ -489,22 +495,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
       <button class="btn btn-primary" onclick="renderUsageReport()">🔍 조회</button>
     </div>
-    <div class="controls">
-      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable()" style="flex:1;min-width:180px">
-      <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
-        <option value="">전체 제조사</option>
-        <option value="ricoh">리코</option>
-        <option value="kyocera">교세라</option>
-        <option value="hp">HP</option>
-        <option value="samsung">삼성</option>
-        <option value="canon">캐논</option>
-      </select>
-      <select class="inp" id="usage-filter" onchange="filterUsageTable()" style="min-width:110px">
-        <option value="">전체</option>
-        <option value="over">🔴 초과만</option>
-        <option value="safe">🟢 여유만</option>
-      </select>
-    </div>
+
     <div class="info-row" id="usage-info"></div>
     <div class="tbl-wrap">
       <table>
@@ -1804,6 +1795,8 @@ function renderUsagePage(){
   if(!document.getElementById('usage-end').value){
     document.getElementById('usage-end').value=y+'-'+m+'-'+d;
   }
+  // 탭 진입 시 자동 조회
+  renderUsageReport();
 }
 
 function renderUsageReport(){
