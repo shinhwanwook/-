@@ -23,7 +23,7 @@ body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg)
 
 /* NAV */
 .nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
+.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
 .nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
 .nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
@@ -127,9 +127,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 #login-box .login-err{color:#dc2626;font-size:13px;margin-top:8px;display:none}
 
 /* RESPONSIVE */
-@media(max-width:768px){
-  .device-grid{grid-template-columns:1fr}
-  .nav{padding:0 10px}
+.nav{padding:0 10px}
   .page{padding:10px}
 }
 
@@ -138,15 +136,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
-@media(max-width:768px){
-  .nav{padding:4px;gap:0;height:auto;min-height:auto}
-  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
+.nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
   .nav-logo span{display:none}
   .nav-tab{padding:0 8px;height:40px;font-size:12px}
 }
-@media(max-width:600px){
-  .nav{padding:0 4px}
-  .nav-logo{font-size:13px;margin-right:4px}
+.nav-logo{font-size:13px;margin-right:4px}
   .nav-logo span{display:none}
   .nav-tab{padding:0 7px;font-size:11px}
 }
@@ -851,10 +845,28 @@ function loadAllDevices(silent){
   db.collection('device_status').get().then(function(snap){
     _devices = [];
     snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
-        var d = doc.data();
-        d._id = doc.id;
-        _devices.push(d);
+      var d = doc.data();
+      d._id = doc.id;
+      _devices.push(d); // device, hist 모두 포함
+    });
+    // bw_count=0인 device는 최신 히스토리값으로 보완
+    _devices.filter(function(d){ return !d._id.startsWith('hist_'); }).forEach(function(dev){
+      if(parseInt(dev.bw_count||0) === 0){
+        var devNo = dev._id.replace('device_','');
+        var latestHist = _devices.filter(function(h){
+          return h._id && h._id.startsWith('hist_'+devNo+'_') && parseInt(h.bw_count||0) > 0;
+        }).sort(function(a,b){
+          return ((b.date||'')+(b.time||'')).localeCompare((a.date||'')+(a.time||''));
+        })[0];
+        if(latestHist){
+          dev.bw_count = latestHist.bw_count;
+          dev.color_count = latestHist.color_count;
+          dev.toner_k = latestHist.toner_k;
+          dev.toner_c = latestHist.toner_c;
+          dev.toner_m = latestHist.toner_m;
+          dev.toner_y = latestHist.toner_y;
+          dev._from_hist = true;
+        }
       }
     });
 
@@ -1861,6 +1873,17 @@ function renderUsageReport(){
           // device_status 현재값으로 대체
           if(parseInt(dev.bw_count||0) > 0){
             endData = dev;
+          } else {
+            // device_status도 0이면 _devices의 히스토리에서 최신값 가져오기
+            var devNo = dev._id ? dev._id.replace('device_','') : '';
+            if(devNo){
+              var allDevHist = _devices.filter(function(h){
+                return h._id && h._id.startsWith('hist_'+devNo+'_') && parseInt(h.bw_count||0) > 0;
+              }).sort(function(a,b){
+                return ((b.date||'')+(b.time||'')).localeCompare((a.date||'')+(a.time||''));
+              });
+              if(allDevHist.length > 0) endData = allDevHist[0];
+            }
           }
         }
 
