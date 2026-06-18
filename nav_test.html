@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{--blue:#1e3a5f}
+body{margin:0;font-family:sans-serif}
+
+/* 테스트 1: 원본 그대로 */
+.test1{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px}
+.test1 .logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap}
+.test1 .tab{padding:0 14px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:600;white-space:nowrap}
+.test1 .spacer{flex:1}
+
+/* 테스트 2: flex-shrink:0 추가 */
+.test2{background:#1a4a7f;color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.test2::-webkit-scrollbar{display:none}
+.test2 .logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;flex-shrink:0}
+.test2 .tab{padding:0 14px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.test2 .spacer{flex:1}
+.test2 .btns{display:flex;align-items:center;gap:8px;flex-shrink:0}
+</style>
+</head>
+<body>
+<p style="margin:8px;font-size:13px">테스트1: 원본 (공간이 생기면 ❌)</p>
+<div class="test1">
+  <div class="logo">🖨️ 프린터모니터링<span style="font-size:12px;opacity:.6">v1.0</span></div>
+  <div class="tab">📊 현황판</div>
+  <div class="tab">📅 히스토리</div>
+  <div class="tab">⚙️ 기기관리</div>
+  <div class="tab">📈 사용량조회</div>
+  <div class="tab">📋 설치안내</div>
+  <div class="spacer"></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:11px">최근: 오후 2:14:50</span>
+    <button style="color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px">🔄 새로고침</button>
+    <button style="color:#fff;background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);padding:4px 8px;border-radius:4px;font-size:12px">📥 임대관리 가져오기</button>
+    <a href="#" style="color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px;text-decoration:none">📋 임대관리</a>
+    <button style="color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px">🚪 로그아웃</button>
+  </div>
+</div>
+
+<p style="margin:8px;font-size:13px">테스트2: 수정안 (공간이 없으면 ✅)</p>
+<div class="test2">
+  <div class="logo">🖨️ 프린터모니터링<span style="font-size:12px;opacity:.6">v1.0</span></div>
+  <div class="tab">📊 현황판</div>
+  <div class="tab">📅 히스토리</div>
+  <div class="tab">⚙️ 기기관리</div>
+  <div class="tab">📈 사용량조회</div>
+  <div class="tab">📋 설치안내</div>
+  <div class="spacer"></div>
+  <div class="btns">
+    <button style="color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap">🔄 새로고침</button>
+    <button style="color:#fff;background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap">📥 임대관리 가져오기</button>
+    <a href="#" style="color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px;text-decoration:none;white-space:nowrap">📋 임대관리</a>
+    <button style="color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap">🚪 로그아웃</button>
+  </div>
+</div>
+
+<p style="margin:8px;font-size:12px;color:#666">
+테스트1 파란줄: 모니터링v1.0 ← 공간 → 현황판이면 ❌<br>
+테스트2 진파란줄: 모니터링v1.0현황판 붙으면 ✅
+</p>
+</body>
+</html>
