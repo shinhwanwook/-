@@ -179,7 +179,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
-  <div style="flex:1"></div>
+
   <div style="display:flex;align-items:center;gap:8px">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
     <button onclick="refreshAll()" id="refresh-btn"
@@ -913,7 +913,7 @@ function updateSummary(){
   // 오늘 총 출력 (bw+color 합계)
   var today = new Date().toISOString().slice(0,10);
   var todayTotal = 0;
-  _devices.forEach(function(d){
+  _devices.filter(function(d){ return !d._id||!d._id.startsWith('hist_'); }).forEach(function(d){
     if(d.date === today){
       todayTotal += (parseInt(d.bw_count)||0) + (parseInt(d.color_count)||0);
     }
@@ -938,8 +938,9 @@ function renderDevices(){
   document.getElementById('card-view').style.display  = view==='card'  ? '' : 'none';
   document.getElementById('table-view').style.display = view==='table' ? '' : 'none';
 
-  // 필터링
+  // 필터링 (hist_ 문서 제외)
   var list = _devices.filter(function(d){
+    if(d._id && d._id.startsWith('hist_')) return false;
     if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
     if(filter==='online'  && !isOnline(d))    return false;
     if(filter==='offline' && isOnline(d))     return false;
