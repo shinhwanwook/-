@@ -22,10 +22,10 @@
 body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
 /* NAV */
-.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);width:100%;box-sizing:border-box;overflow-x:auto}
-.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;letter-spacing:-.3px;flex-shrink:0}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
-.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
 .nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
 .nav-tab.active{opacity:1;border-bottom-color:#fff}
 
@@ -127,7 +127,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
 #login-box .login-err{color:#dc2626;font-size:13px;margin-top:8px;display:none}
 
 /* RESPONSIVE */
-.nav{padding:0 10px}
+@media(max-width:768px){
+  .device-grid{grid-template-columns:1fr}
+  .nav{padding:0 10px}
   .page{padding:10px}
 }
 
@@ -136,17 +138,18 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
-.nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
+@media(max-width:768px){
+  .nav{padding:4px;gap:0;height:auto;min-height:auto}
+  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
   .nav-logo span{display:none}
   .nav-tab{padding:0 8px;height:40px;font-size:12px}
 }
-.nav-logo{font-size:13px;margin-right:4px}
+@media(max-width:600px){
+  .nav{padding:0 4px}
+  .nav-logo{font-size:13px;margin-right:4px}
   .nav-logo span{display:none}
   .nav-tab{padding:0 7px;font-size:11px}
 }
-.nav::-webkit-scrollbar{display:none}
-@media(max-width:1100px){.nav-tab{padding:0 10px;font-size:12px}}
-@media(max-width:900px){.nav-tab{padding:0 8px;font-size:11px}.nav{padding:0 8px}.nav-logo{margin-right:10px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -176,25 +179,35 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <div id="app-wrapper" style="display:none">
 
 <nav class="nav">
-  <div class="nav-logo">🖨️ 프린터모니터링</div>
+  <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
   <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
   <div style="flex:1"></div>
-  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+  <div style="display:flex;align-items:center;gap:8px">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
-    <button onclick="refreshAll()" id="refresh-btn" title="새로고침"
-      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">🔄</button>
-    <button onclick="importFromRental()" title="임대관리 연동"
-      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">📥</button>
-    <a href="rental.html" title="임대관리"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none">📋</a>
-    <button onclick="doLogout()" title="로그아웃"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">🚪 로그아웃</button>
+    <button onclick="refreshAll()" id="refresh-btn"
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🔄 새로고침
+    </button>
+    <button onclick="importFromRental()"
+      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      📥 임대관리 가져오기
+    </button>
+    <a href="rental.html"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
+      📋 임대관리
+    </a>
+    <button onclick="doLogout()"
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+      🚪 로그아웃
+    </button>
   </div>
-</nav><!-- ══ PAGE: 현황판 ══ -->
+</nav>
+
+<!-- ══ PAGE: 현황판 ══ -->
 <div class="page active" id="page-monitor">
 
   <!-- 요약 통계 -->
@@ -838,28 +851,10 @@ function loadAllDevices(silent){
   db.collection('device_status').get().then(function(snap){
     _devices = [];
     snap.forEach(function(doc){
-      var d = doc.data();
-      d._id = doc.id;
-      _devices.push(d); // device, hist 모두 포함
-    });
-    // bw_count=0인 device는 최신 히스토리값으로 보완
-    _devices.filter(function(d){ return !d._id.startsWith('hist_'); }).forEach(function(dev){
-      if(parseInt(dev.bw_count||0) === 0){
-        var devNo = dev._id.replace('device_','');
-        var latestHist = _devices.filter(function(h){
-          return h._id && h._id.startsWith('hist_'+devNo+'_') && parseInt(h.bw_count||0) > 0;
-        }).sort(function(a,b){
-          return ((b.date||'')+(b.time||'')).localeCompare((a.date||'')+(a.time||''));
-        })[0];
-        if(latestHist){
-          dev.bw_count = latestHist.bw_count;
-          dev.color_count = latestHist.color_count;
-          dev.toner_k = latestHist.toner_k;
-          dev.toner_c = latestHist.toner_c;
-          dev.toner_m = latestHist.toner_m;
-          dev.toner_y = latestHist.toner_y;
-          dev._from_hist = true;
-        }
+      if(!doc.id.startsWith('hist_')){
+        var d = doc.data();
+        d._id = doc.id;
+        _devices.push(d);
       }
     });
 
@@ -876,14 +871,14 @@ function loadAllDevices(silent){
     // 마지막 업데이트 시간
     var now = new Date().toLocaleTimeString('ko-KR');
     document.getElementById('last-update').textContent = '최근: '+now;
-    if(btn) btn.innerHTML = '🔄';
+    if(btn) btn.innerHTML = '🔄 새로고침';
 
     renderDevices();
     renderGuideList();
     updateSummary();
 
   }).catch(function(e){
-    if(btn) btn.innerHTML = '🔄';
+    if(btn) btn.innerHTML = '🔄 새로고침';
     document.getElementById('device-grid').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#dc2626">'+
       '오류: '+e.message+'<br><small>Firebase 연결을 확인하세요</small></div>';
@@ -898,16 +893,15 @@ function refreshAll(){
 //  요약 통계 업데이트
 // ══════════════════════════════════════════
 function updateSummary(){
-  var devOnly = _devices.filter(function(d){ return !d._id||!d._id.startsWith('hist_'); });
-  var total   = devOnly.length;
-  var online  = devOnly.filter(isOnline).length;
+  var total   = _devices.length;
+  var online  = _devices.filter(isOnline).length;
   var offline = total - online;
-  var warns   = devOnly.filter(hasTonerWarn).length;
+  var warns   = _devices.filter(hasTonerWarn).length;
 
   // 오늘 총 출력 (bw+color 합계)
   var today = new Date().toISOString().slice(0,10);
   var todayTotal = 0;
-  _devices.filter(function(d){ return !d._id||!d._id.startsWith('hist_'); }).forEach(function(d){
+  _devices.forEach(function(d){
     if(d.date === today){
       todayTotal += (parseInt(d.bw_count)||0) + (parseInt(d.color_count)||0);
     }
@@ -932,9 +926,8 @@ function renderDevices(){
   document.getElementById('card-view').style.display  = view==='card'  ? '' : 'none';
   document.getElementById('table-view').style.display = view==='table' ? '' : 'none';
 
-  // 필터링 (hist_ 문서 제외)
+  // 필터링
   var list = _devices.filter(function(d){
-    if(d._id && d._id.startsWith('hist_')) return false;
     if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
     if(filter==='online'  && !isOnline(d))    return false;
     if(filter==='offline' && isOnline(d))     return false;
@@ -1868,17 +1861,6 @@ function renderUsageReport(){
           // device_status 현재값으로 대체
           if(parseInt(dev.bw_count||0) > 0){
             endData = dev;
-          } else {
-            // device_status도 0이면 _devices의 히스토리에서 최신값 가져오기
-            var devNo = dev._id ? dev._id.replace('device_','') : '';
-            if(devNo){
-              var allDevHist = _devices.filter(function(h){
-                return h._id && h._id.startsWith('hist_'+devNo+'_') && parseInt(h.bw_count||0) > 0;
-              }).sort(function(a,b){
-                return ((b.date||'')+(b.time||'')).localeCompare((a.date||'')+(a.time||''));
-              });
-              if(allDevHist.length > 0) endData = allDevHist[0];
-            }
           }
         }
 
