@@ -690,7 +690,7 @@ $tm = Get-Date -Format "HH:mm"
 
 
 
-Write-Host "=== Printer Monitor v15.0 ==="
+Write-Host "=== Printer Monitor v16.0 ==="
 
 Write-Host "=== $ts ==="
 
