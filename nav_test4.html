@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic',sans-serif;background:#f3f4f6}
+:root{--blue:#1e3a5f}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
+.nav::-webkit-scrollbar{display:none}
+.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;flex-shrink:0}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;opacity:.7;border-bottom:3px solid transparent}
+.nav-tab.active{opacity:1;border-bottom-color:#fff}
+#login-screen{display:flex;justify-content:center;align-items:center;height:100vh;background:#1e3a5f}
+#login-box{background:#fff;padding:40px;border-radius:12px;width:280px;text-align:center}
+#app-wrapper{display:none}
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div id="login-box">
+    <p style="font-weight:700;margin-bottom:20px">테스트 로그인</p>
+    <button onclick="doLogin()" style="width:100%;padding:12px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer">로그인</button>
+  </div>
+</div>
+<div id="app-wrapper">
+  <nav class="nav">
+    <div class="nav-logo">🖨️ 프린터모니터링<span style="opacity:.65;font-size:12px;margin-left:5px">v1.0</span></div>
+    <div class="nav-tab active">📊 현황판</div>
+    <div class="nav-tab">📅 히스토리</div>
+    <div class="nav-tab">⚙️ 기기관리</div>
+    <div class="nav-tab">📈 사용량조회</div>
+    <div class="nav-tab">📋 설치안내</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
+      <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
+      <button style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;white-space:nowrap">🔄 새로고침</button>
+      <button id="import-btn" style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;white-space:nowrap">📥 임대관리 가져오기</button>
+      <a href="#" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap">📋 임대관리</a>
+      <button style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;white-space:nowrap">🚪 로그아웃</button>
+    </div>
+  </nav>
+  <div style="padding:20px;font-size:13px">
+    <p>파란줄: 모니터링 바로 옆 현황판 붙으면 ✅ / 공간있으면 ❌</p>
+  </div>
+</div>
+<script>
+function doLogin(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-wrapper').style.display='block';
+  // last-update 업데이트 (monitor.html과 동일)
+  setInterval(function(){
+    var now = new Date().toLocaleTimeString('ko-KR');
+    document.getElementById('last-update').textContent = '최근: '+now;
+  }, 1000);
+}
+</script>
+</body>
+</html>
