@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic',sans-serif;background:#f3f4f6}
+:root{--blue:#1e3a5f}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
+.nav::-webkit-scrollbar{display:none}
+.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;letter-spacing:-.3px;flex-shrink:0}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;white-space:nowrap;flex-shrink:0}
+.nav-tab.active{opacity:1;border-bottom-color:#fff}
+</style>
+</head>
+<body>
+
+<p style="padding:8px;font-size:12px">monitor.html과 동일한 CSS + JS 환경</p>
+
+<!-- monitor.html과 완전히 동일한 nav 구조 -->
+<nav class="nav">
+  <div class="nav-logo">🖨️ 프린터모니터링<span style="opacity:.65;font-weight:400;font-size:12px;margin-left:5px">v1.0</span></div>
+  <div class="nav-tab active">📊 현황판</div>
+  <div class="nav-tab">📅 히스토리</div>
+  <div class="nav-tab">⚙️ 기기관리</div>
+  <div class="nav-tab">📈 사용량조회</div>
+  <div class="nav-tab">📋 설치안내</div>
+  <div style="flex:1;min-width:4px"></div>
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <button style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;white-space:nowrap;flex-shrink:0">🔄 새로고침</button>
+    <button style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;white-space:nowrap;flex-shrink:0">📥 임대관리 가져오기</button>
+    <a href="#" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap;flex-shrink:0">📋 임대관리</a>
+    <button style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;white-space:nowrap;flex-shrink:0">🚪 로그아웃</button>
+  </div>
+  <span id="last-update" style="display:none"></span>
+</nav>
+
+<p style="padding:8px;font-size:12px">
+위 파란줄에서:<br>
+프린터모니터링 바로 옆에 현황판 붙어있으면 ✅<br>
+공간이 있으면 ❌
+</p>
+
+<!-- JS로 last-update 업데이트 (monitor.html과 동일) -->
+<script>
+setTimeout(function(){
+  var now = new Date().toLocaleTimeString('ko-KR');
+  document.getElementById('last-update').textContent = '최근: ' + now;
+}, 1000);
+</script>
+</body>
+</html>
