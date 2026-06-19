@@ -23,7 +23,7 @@ body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg)
 
 /* NAV */
 .nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
-.nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;flex-shrink:0}
+.nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
 .nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .nav-tab:hover{opacity:1;background:rgba(255,255,255,.08)}
@@ -138,18 +138,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
-@media(max-width:768px){
-  .nav{padding:4px;gap:0;height:auto;min-height:auto}
-  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
-  .nav-logo span{display:none}
-  .nav-tab{padding:0 8px;height:40px;font-size:12px}
-}
-@media(max-width:600px){
-  .nav{padding:0 4px}
-  .nav-logo{font-size:13px;margin-right:4px}
-  .nav-logo span{display:none}
-  .nav-tab{padding:0 7px;font-size:11px}
-}
+
 .nav::-webkit-scrollbar{display:none}
 </style>
 </head>
@@ -180,7 +169,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <div id="app-wrapper" style="display:none">
 
 <nav class="nav">
-  <div class="nav-logo">🖨️ 프린터모니터링<span style="opacity:.65;font-size:12px;margin-left:5px">v1.0</span></div>
+  <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
   <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
@@ -189,19 +178,19 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
     <button onclick="refreshAll()" id="refresh-btn"
-      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       🔄 새로고침
     </button>
     <button onclick="importFromRental()"
-      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
+      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       📥 임대관리 가져오기
     </button>
     <a href="rental.html"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none;white-space:nowrap">
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
       📋 임대관리
     </a>
     <button onclick="doLogout()"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">
+      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       🚪 로그아웃
     </button>
   </div>
