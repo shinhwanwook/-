@@ -1382,7 +1382,7 @@ function downloadAgentForContract(){
         'schtasks /delete /tn "PrinterMonitor_30min" /f >nul 2>&1',
         '',
         'rem [1] PC 시작 후 30분 뒤 전체 수집 (로그인 시)',
-        'schtasks /create /tn "PrinterMonitor_Boot" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc onlogon /delay 0000:30 /rl HIGHEST /f >nul 2>&1',
+        'schtasks /create /tn "PrinterMonitor_Boot" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc onlogon /delay 0000:30 /ru "%USERNAME%" /rl HIGHEST /f >nul 2>&1',
         '',
         'rem [2] 오후 4시 전체 수집',
         'schtasks /create /tn "PrinterMonitor_16" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc daily /st 16:00 /rl HIGHEST /f >nul 2>&1',
