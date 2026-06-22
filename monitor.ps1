@@ -420,6 +420,97 @@ function Load-MyPrinters([string[]]$myIps) {
 
 # ============================================================
 
+
+# ============================================================
+# SNMP 수집 함수 (외부 라이브러리 불필요!)
+# ============================================================
+function Get-SnmpValue([string]$ip, [string]$oid, [string]$community="public", [int]$port=161) {
+    function ConvertTo-OidBytes($oidStr) {
+        $parts = $oidStr.Split('.')
+        $bytes = @()
+        $bytes += [byte](40 * [int]$parts[0] + [int]$parts[1])
+        for($i=2; $i -lt $parts.Length; $i++) {
+            $val = [int]$parts[$i]
+            if($val -lt 128) { $bytes += [byte]$val }
+            else {
+                $hi = [byte](0x80 -bor ($val -shr 7))
+                $lo = [byte]($val -band 0x7F)
+                $bytes += $hi; $bytes += $lo
+            }
+        }
+        return $bytes
+    }
+    try {
+        $commBytes = [System.Text.Encoding]::ASCII.GetBytes($community)
+        $oidBytes  = ConvertTo-OidBytes $oid
+        $oidSeq    = @(0x06, $oidBytes.Length) + $oidBytes
+        $varBind   = @(0x30, ($oidSeq.Length + 2)) + $oidSeq + @(0x05, 0x00)
+        $varBindList = @(0x30, $varBind.Length) + $varBind
+        $pdu       = @(0x02,0x04,0x00,0x00,0x00,0x01, 0x02,0x01,0x00, 0x02,0x01,0x00) + $varBindList
+        $pduSeq    = @(0xa0, $pdu.Length) + $pdu
+        $commSeq   = @(0x04, $commBytes.Length) + $commBytes
+        $msg       = @(0x02,0x01,0x00) + $commSeq + $pduSeq
+        $packet    = [byte[]](@(0x30, $msg.Length) + $msg)
+
+        $udp = New-Object System.Net.Sockets.UdpClient
+        $udp.Client.ReceiveTimeout = 5000
+        $udp.Send($packet, $packet.Length, $ip, $port) | Out-Null
+        $ep   = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)
+        $resp = $udp.Receive([ref]$ep)
+        $udp.Close()
+
+        # 응답에서 정수값 추출
+        $val = 0
+        for($i = $resp.Length - 4; $i -lt $resp.Length; $i++) {
+            $val = ($val -shl 8) -bor $resp[$i]
+        }
+        return $val
+    } catch { return -1 }
+}
+
+function Get-RicohDataSNMP([string]$ip) {
+    $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
+    try {
+        # Ping 체크
+        $ping = Test-Connection -ComputerName $ip -Count 1 -Quiet -ErrorAction SilentlyContinue
+        if (-not $ping) { return $r }
+
+        # SNMP 수집
+        $bw    = Get-SnmpValue $ip "1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.1"
+        $color = Get-SnmpValue $ip "1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.2"
+
+        # 토너 잔량/최대
+        $tk = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.9.1.1"
+        $tc = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.9.1.2"
+        $tm = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.9.1.3"
+        $ty = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.9.1.4"
+        $mk = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.8.1.1"
+        $mc = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.8.1.2"
+        $mm = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.8.1.3"
+        $my = Get-SnmpValue $ip "1.3.6.1.2.1.43.11.1.1.8.1.4"
+
+        # 토너 % 계산
+        $tkp = if($mk -gt 0) { [math]::Round($tk / $mk * 100) } else { -1 }
+        $tcp = if($mc -gt 0) { [math]::Round($tc / $mc * 100) } else { -1 }
+        $tmp = if($mm -gt 0) { [math]::Round($tm / $mm * 100) } else { -1 }
+        $typ = if($my -gt 0) { [math]::Round($ty / $my * 100) } else { -1 }
+
+        if ($bw -ge 0) {
+            $r.bw     = $bw
+            $r.color  = $color
+            $r.tk     = $tkp
+            $r.tc     = $tcp
+            $r.tm     = $tmp
+            $r.ty     = $typ
+            $r.online = "True"
+            $r.status = "OK"
+        }
+    } catch {
+        Write-Host "  SNMP 오류: $_"
+    }
+    return $r
+}
+
 function Get-RicohData([string]$ip) {
 
     $r = @{ bw=0; color=0; tk=-1; tc=-1; tm=-1; ty=-1; online="False"; status="Offline" }
@@ -804,7 +895,7 @@ foreach ($p in $PRINTERS) {
 
     switch ($p.type) {
 
-        "ricoh"   { $info = Get-RicohData   $p.ip }
+        "ricoh"   { $info = Get-RicohDataSNMP $p.ip }
 
         "hp"      { $info = Get-HPData      $p.ip }
 
@@ -842,7 +933,7 @@ foreach ($p in $PRINTERS) {
 
             switch ($p.type) {
 
-                "ricoh"   { $info = Get-RicohData   $p.ip }
+                "ricoh"   { $info = Get-RicohDataSNMP $p.ip }
 
                 "hp"      { $info = Get-HPData      $p.ip }
 
