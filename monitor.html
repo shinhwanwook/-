@@ -739,10 +739,9 @@ function doLogin(){
 }
 
 function applyPermissions(){
-  var isAdmin = _currentUser && _currentUser.role === 'admin';
-  // 관리자만: 임대관리 가져오기 버튼 표시
+  // 모든 사용자: 임대관리 가져오기 버튼 표시
   var importBtn = document.querySelector('button[onclick="importFromRental()"]');
-  if(importBtn) importBtn.style.display = isAdmin ? '' : 'none';
+  if(importBtn) importBtn.style.display = '';
 }
 function doLogout(){
   _currentUser = null;
