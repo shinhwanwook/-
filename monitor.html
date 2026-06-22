@@ -1384,8 +1384,13 @@ function downloadAgentForContract(){
         'echo  ===================================',
         'echo.',
         'echo  [Step 0] Downloading latest monitor.ps1...',
-        'powershell -Command "Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1\' -OutFile \'%~dp0monitor.ps1\' -UseBasicParsing"',
-        'echo  Download complete!',
+        'powershell -ExecutionPolicy Bypass -Command "' +
+          'Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1\' -OutFile \'%~dp0monitor.ps1\' -UseBasicParsing; ' +
+          '$c = Get-Content \'%~dp0monitor.ps1\' -Raw; ' +
+          '$c = $c -replace \'(?ms)\\$MY_PRINTER_IPS\\s*=\\s*@\\([^)]*\\)\', ' +
+          '\'$MY_PRINTER_IPS = @(\\r\\n    \"'+ip+'\"  # '+name+'\\r\\n)\'; ' +
+          'Set-Content \'%~dp0monitor.ps1\' $c"',
+        'echo  Download and IP setup complete!',
         'echo.',
         'echo  [Step 1] Registering scheduler...',
         'schtasks /delete /tn "PrinterMonitor_10" /f >nul 2>&1',
