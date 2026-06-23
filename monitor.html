@@ -370,11 +370,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
             target="_blank">
             ⬇ Alloy 설치파일 (v1.17.0)
           </a>
-          <a href="https://raw.githubusercontent.com/shinhwanwook/-/main/snmp_modules.yml"
-            class="btn" style="background:#0891b2;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
-            download="snmp_modules.yml">
+          <button onclick="downloadSnmpModules()"
+            class="btn" style="background:#0891b2;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;border:none">
             ⬇ snmp_modules.yml
-          </a>
+          </button>
         </div>
         <!-- 검색 결과 드롭다운 -->
         <div id="guide-search-result" style="display:none;margin-top:8px;border:1px solid #93c5fd;border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
@@ -1344,6 +1343,18 @@ function selectGuideContract(el){
 }
 
 // 거래처별 배치파일 다운로드
+function downloadSnmpModules(){
+  fetch('https://raw.githubusercontent.com/shinhwanwook/-/main/snmp_modules.yml')
+    .then(function(r){ return r.text(); })
+    .then(function(text){
+      var blob = new Blob([text], {type:'text/plain'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'snmp_modules.yml';
+      a.click();
+    });
+}
+
 function downloadAgentForContract(){
   if(!_selectedContract){
     alert('거래처를 먼저 선택해 주세요!\n\n거래처명을 입력하면 목록이 표시됩니다.');
