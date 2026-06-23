@@ -22,7 +22,7 @@
 body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
 /* NAV */
-.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav-logo{font-size:15px;font-weight:700;margin-right:8px;white-space:nowrap;flex-shrink:0}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
 .nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
@@ -138,7 +138,18 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
-
+@media(max-width:768px){
+  .nav{padding:4px;gap:0;height:auto;min-height:auto}
+  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
+  .nav-logo span{display:none}
+  .nav-tab{padding:0 8px;height:40px;font-size:12px}
+}
+@media(max-width:600px){
+  .nav{padding:0 4px}
+  .nav-logo{font-size:13px;margin-right:4px}
+  .nav-logo span{display:none}
+  .nav-tab{padding:0 7px;font-size:11px}
+}
 .nav::-webkit-scrollbar{display:none}
 </style>
 </head>
@@ -1329,150 +1340,105 @@ function downloadAgentForContract(){
     return;
   }
 
-  var ip   = _selectedContract.ip;
-  var name = _selectedContract.name;
+  var psUrl = 'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1';
+  var statusEl = document.querySelector('#page-guide .info-row');
+  if(statusEl){ statusEl.textContent='최신 파일 다운로드 중...'; statusEl.style.display='block'; }
 
-  var lines = [
-    '@echo off',
-    'chcp 65001 >nul',
-    'net session >nul 2>&1',
-    'if %errorLevel% neq 0 (',
-    '  echo [Error] Administrator rights required!',
-    '  pause & exit /b 1',
-    ')',
-    'echo.',
-    'echo ===================================',
-    'echo  Printer Monitoring Install - Alloy',
-    'echo  ' + name,
-    'echo ===================================',
-    'echo.',
-    'if not exist "C:\alloy" mkdir "C:\alloy"',
-    '',
-    'echo [Step 1] Creating snmp_modules.yml...',
-    '(',
-    'echo auths:',
-    'echo   public_v2:',
-    'echo     community: public',
-    'echo     version: 2',
-    'echo modules:',
-    'echo   printer_mib:',
-    'echo     max_repetitions: 25',
-    'echo     retries: 1',
-    'echo     timeout: 5s',
-    'echo     walk:',
-    'echo       - 1.3.6.1.2.1.43.10.2.1.4',
-    'echo       - 1.3.6.1.2.1.43.11.1.1.6',
-    'echo       - 1.3.6.1.2.1.43.11.1.1.8',
-    'echo       - 1.3.6.1.2.1.43.11.1.1.9',
-    'echo       - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5',
-    'echo       - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9',
-    'echo     metrics:',
-    'echo       - name: prtMarkerSuppliesLevel',
-    'echo         oid: 1.3.6.1.2.1.43.11.1.1.9',
-    'echo         type: gauge',
-    'echo         help: toner level',
-    'echo         indexes:',
-    'echo           - labelname: hrDeviceIndex',
-    'echo             type: gauge',
-    'echo           - labelname: prtMarkerSuppliesIndex',
-    'echo             type: gauge',
-    'echo         lookups:',
-    'echo           - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]',
-    'echo             labelname: prtMarkerSuppliesDescription',
-    'echo             oid: 1.3.6.1.2.1.43.11.1.1.6',
-    'echo             type: DisplayString',
-    'echo       - name: prtMarkerSuppliesMaxCapacity',
-    'echo         oid: 1.3.6.1.2.1.43.11.1.1.8',
-    'echo         type: gauge',
-    'echo         help: toner max',
-    'echo         indexes:',
-    'echo           - labelname: hrDeviceIndex',
-    'echo             type: gauge',
-    'echo           - labelname: prtMarkerSuppliesIndex',
-    'echo             type: gauge',
-    'echo         lookups:',
-    'echo           - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]',
-    'echo             labelname: prtMarkerSuppliesDescription',
-    'echo             oid: 1.3.6.1.2.1.43.11.1.1.6',
-    'echo             type: DisplayString',
-    'echo       - name: ricohCounterValue',
-    'echo         oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9',
-    'echo         type: counter',
-    'echo         help: ricoh counter',
-    'echo         indexes:',
-    'echo           - labelname: ricohCounterIndex',
-    'echo             type: gauge',
-    'echo         lookups:',
-    'echo           - labels: [ricohCounterIndex]',
-    'echo             labelname: counterName',
-    'echo             oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5',
-    'echo             type: DisplayString',
-    ') > "C:\alloy\snmp_modules.yml"',
-    'echo Done!',
-    '',
-    'echo [Step 2] Creating printers.alloy...',
-    '(',
-    'echo // ' + name,
-    'echo local.file "snmp_config" {',
-    'echo   filename = "C:\\alloy\\snmp_modules.yml"',
-    'echo }',
-    'echo prometheus.exporter.snmp "printers" {',
-    'echo   config = local.file.snmp_config.content',
-    'echo   target "printer_1" {',
-    'echo     address     = "' + ip + '"',
-    'echo     module      = "printer_mib"',
-    'echo     auth        = "public_v2"',
-    'echo     walk_params = "default"',
-    'echo   }',
-    'echo   walk_param "default" { retries = "2" }',
-    'echo }',
-    'echo prometheus.scrape "printers" {',
-    'echo   targets         = prometheus.exporter.snmp.printers.targets',
-    'echo   forward_to      = [prometheus.remote_write.central.receiver]',
-    'echo   scrape_interval = "300s"',
-    'echo   scrape_timeout  = "30s"',
-    'echo }',
-    'echo prometheus.remote_write "central" {',
-    'echo   external_labels = {',
-    'echo     customer = "' + name + '",',
-    'echo   }',
-    'echo   endpoint {',
-    'echo     url = "http://161.33.35.210:8428/api/v1/write"',
-    'echo   }',
-    'echo }',
-    ') > "C:\alloy\printers.alloy"',
-    'echo Done!',
-    '',
-    'echo [Step 3] Downloading Alloy...',
-    'bitsadmin /transfer AlloyDL /download /priority normal "https://github.com/grafana/alloy/releases/download/v1.7.0/alloy-installer-windows-amd64.exe" "C:\\alloy\\alloy-installer.exe"',
-    'if not exist "C:\\alloy\\alloy-installer.exe" (',
-    '  echo Download failed!',
-    '  pause & exit /b 1',
-    ')',
-    'ech 'echo [Step 4] Installing Alloy service...',
-    '"C:\alloy\alloy-installer.exe" /S /CONFIG="C:\alloy\printers.alloy"',
-    'timeout /t 5 /nobreak >nul',
-    'net stop Alloy >nul 2>&1',
-    'net start Alloy >nul 2>&1',
-    '',
-    'echo.',
-    'echo ===================================',
-    'echo  Install Complete!',
-    'echo  Check Alloy in services.msc',
-    'echo  http://localhost:12345',
-    'echo ===================================',
-    'pause'
-  ].join('\r\n');
+  fetch(psUrl)
+    .then(function(r){
+      if(!r.ok) throw new Error('파일 로드 실패 ('+r.status+')');
+      return r.text();
+    })
+    .then(function(ps1){
+      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
 
-  var bom = '\xFF\xFE';
-  var blob = new Blob(['\xFF\xFE' + lines.split('').map(function(c){ return c + '\x00'; }).join('')], {type:'text/plain;charset=utf-16le'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name + '_설치.bat';
-  a.click();
+      // MY_PRINTER_IPS에 선택된 거래처 IP 자동 입력
+      var ip    = _selectedContract.ip;
+      var name  = _selectedContract.name;
+      var type  = _selectedContract.type;
+      var model = _selectedContract.model||type;
+
+      // MY_PRINTER_IPS 부분 교체
+      var oldIps = ps1.match(/\$MY_PRINTER_IPS[\s\S]*?@\([\s\S]*?\)/);
+      if(oldIps){
+        var newIps = '$MY_PRINTER_IPS = @(\r\n    "'+ip+'"  # '+name+'\r\n)';
+        ps1 = ps1.replace(oldIps[0], newIps);
+      }
+
+      // bat 파일 생성
+      var bat = [
+        '@echo off',
+        'cd /d "%~dp0"',
+        'set SCRIPT_PATH=%~dp0monitor.ps1',
+        '',
+        'if not exist "%SCRIPT_PATH%" (',
+        '  echo ERROR: monitor.ps1 file not found!',
+        '  echo Please put monitor.ps1 and this bat file in the same folder.',
+        '  pause',
+        '  exit /b 1',
+        ')',
+        '',
+        'echo.',
+        'echo  ===================================',
+        'echo   Printer Monitoring Install',
+        'echo   '+name,
+        'echo  ===================================',
+        'echo.',
+        'echo  [Step 1] Registering scheduler...',
+        'schtasks /delete /tn "PrinterMonitor_10" /f >nul 2>&1',
+        'schtasks /delete /tn "PrinterMonitor_16" /f >nul 2>&1',
+        'schtasks /delete /tn "PrinterMonitor_Boot" /f >nul 2>&1',
+        'schtasks /delete /tn "PrinterMonitor_Online" /f >nul 2>&1',
+        'schtasks /delete /tn "PrinterMonitor_30min" /f >nul 2>&1',
+        '',
+        'rem [1] PC 시작 후 30분 뒤 전체 수집',
+        'schtasks /create /tn "PrinterMonitor_Boot" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc onlogon /delay 0000:30 /f >nul 2>&1',
+        '',
+        'rem [2] 오후 4시 전체 수집',
+        'schtasks /create /tn "PrinterMonitor_16" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc daily /st 16:00 /f >nul 2>&1',
+        '',
+        'rem [3] 30분마다 온라인 상태 갱신 (상시 온라인 유지)',
+        'schtasks /create /tn "PrinterMonitor_Online" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\" -Mode online" /sc minute /mo 30 /f >nul 2>&1',
+        '',
+        'echo  Done! (Boot+30min collect / 16:00 collect / 30min online check)',
+        'echo.',
+        'echo  [Step 2] Checking printer connection...',
+        'echo  Check: Online : True = Connection OK!',
+        'echo  ===================================',
+        'echo.',
+        'powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"',
+        'echo.',
+        'echo  ===================================',
+        'echo  Install Complete!',
+        'echo  Check Online : True above.',
+        'echo  Firebase: OK = Server OK!',
+        'echo  ===================================',
+        'echo.',
+        'pause'
+      ].join('\r\n');
+
+      function doDownload(data, filename){
+        var a = document.createElement('a');
+        a.style.display='none';
+        document.body.appendChild(a);
+        var blob = new Blob([data],{type:'text/plain;charset=utf-8'});
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+      }
+
+      doDownload(ps1, 'monitor.ps1');
+      setTimeout(function(){ doDownload(bat, name+'_설치.bat'); }, 800);
+      alert('다운로드 완료!\n\n1. monitor.ps1\n2. '+name+'_설치.bat\n\n두 파일을 같은 폴더에 놓고\n'+name+'_설치.bat 실행하세요!');
+    })
+    .catch(function(e){
+      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
+      alert('다운로드 실패: '+e.message);
+    });
 }
 
-
+// 기존 downloadAgent (직접 다운로드용 유지)
 function downloadAgent(){
   downloadAgentForContract();
 }
