@@ -1340,105 +1340,93 @@ function downloadAgentForContract(){
     return;
   }
 
-  var psUrl = 'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1';
-  var statusEl = document.querySelector('#page-guide .info-row');
-  if(statusEl){ statusEl.textContent='최신 파일 다운로드 중...'; statusEl.style.display='block'; }
+  var ip   = _selectedContract.ip;
+  var name = _selectedContract.name;
+  var no   = _selectedContract.no || '';
 
-  fetch(psUrl)
-    .then(function(r){
-      if(!r.ok) throw new Error('파일 로드 실패 ('+r.status+')');
-      return r.text();
-    })
-    .then(function(ps1){
-      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
+  // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
+  var installBat = [
+    '@echo off',
+    'net session >nul 2>&1',
+    'if %errorLevel% neq 0 (',
+    '  echo [Error] Administrator rights required!',
+    '  echo Right-click and select Run as administrator',
+    '  pause & exit /b 1',
+    ')',
+    'set "ALLOY_DIR=C:\alloy"',
+    'echo [1/4] Prepare config folder: %ALLOY_DIR%',
+    'if not exist "%ALLOY_DIR%" mkdir "%ALLOY_DIR%"',
+    'echo [2/4] Copy config files',
+    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\printers.alloy"   >nul',
+    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\snmp_modules.yml" >nul',
+    'echo [3/4] Install Alloy',
+    '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG="%ALLOY_DIR%\printers.alloy"',
+    'echo [4/4] Restart Alloy service',
+    'net stop Alloy >nul 2>&1',
+    'net start Alloy >nul 2>&1',
+    'echo.',
+    'echo ============================================================',
+    'echo  Done! - ' + name,
+    'echo  Check 1: services.msc - Alloy Running',
+    'echo  Check 2: http://localhost:12345',
+    'echo ============================================================',
+    'pause'
+  ].join('\r\n');
 
-      // MY_PRINTER_IPS에 선택된 거래처 IP 자동 입력
-      var ip    = _selectedContract.ip;
-      var name  = _selectedContract.name;
-      var type  = _selectedContract.type;
-      var model = _selectedContract.model||type;
+  // printers.alloy 내용 생성
+  var printersAlloy = [
+    '// ' + name + ' - Printer Monitoring Agent',
+    'local.file "snmp_config" {',
+    '  filename = "C:\\\\alloy\\\\snmp_modules.yml"',
+    '}',
+    'prometheus.exporter.snmp "printers" {',
+    '  config = local.file.snmp_config.content',
+    '  target "printer_1" {',
+    '    address     = "' + ip + '"',
+    '    module      = "printer_mib"',
+    '    auth        = "public_v2"',
+    '    walk_params = "default"',
+    '  }',
+    '  walk_param "default" { retries = "2" }',
+    '}',
+    'prometheus.scrape "printers" {',
+    '  targets         = prometheus.exporter.snmp.printers.targets',
+    '  forward_to      = [prometheus.remote_write.central.receiver]',
+    '  scrape_interval = "300s"',
+    '  scrape_timeout  = "30s"',
+    '}',
+    'prometheus.remote_write "central" {',
+    '  external_labels = {',
+    '    customer = "' + name + '",',
+    '    device_no = "' + no + '",',
+    '  }',
+    '  endpoint {',
+    '    url = "http://161.33.35.210:8428/api/v1/write"',
+    '  }',
+    '}'
+  ].join('\n');
 
-      // MY_PRINTER_IPS 부분 교체
-      var oldIps = ps1.match(/\$MY_PRINTER_IPS[\s\S]*?@\([\s\S]*?\)/);
-      if(oldIps){
-        var newIps = '$MY_PRINTER_IPS = @(\r\n    "'+ip+'"  # '+name+'\r\n)';
-        ps1 = ps1.replace(oldIps[0], newIps);
-      }
+  // 파일들 다운로드
+  // 1. install.bat
+  var blob1 = new Blob([installBat], {type:'text/plain;charset=windows-1252'});
+  var a1 = document.createElement('a');
+  a1.href = URL.createObjectURL(blob1);
+  a1.download = 'install.bat';
+  a1.click();
 
-      // bat 파일 생성
-      var bat = [
-        '@echo off',
-        'cd /d "%~dp0"',
-        'set SCRIPT_PATH=%~dp0monitor.ps1',
-        '',
-        'if not exist "%SCRIPT_PATH%" (',
-        '  echo ERROR: monitor.ps1 file not found!',
-        '  echo Please put monitor.ps1 and this bat file in the same folder.',
-        '  pause',
-        '  exit /b 1',
-        ')',
-        '',
-        'echo.',
-        'echo  ===================================',
-        'echo   Printer Monitoring Install',
-        'echo   '+name,
-        'echo  ===================================',
-        'echo.',
-        'echo  [Step 1] Registering scheduler...',
-        'schtasks /delete /tn "PrinterMonitor_10" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_16" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_Boot" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_Online" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_30min" /f >nul 2>&1',
-        '',
-        'rem [1] PC 시작 후 30분 뒤 전체 수집',
-        'schtasks /create /tn "PrinterMonitor_Boot" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc onlogon /delay 0000:30 /f >nul 2>&1',
-        '',
-        'rem [2] 오후 4시 전체 수집',
-        'schtasks /create /tn "PrinterMonitor_16" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc daily /st 16:00 /f >nul 2>&1',
-        '',
-        'rem [3] 30분마다 온라인 상태 갱신 (상시 온라인 유지)',
-        'schtasks /create /tn "PrinterMonitor_Online" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\" -Mode online" /sc minute /mo 30 /f >nul 2>&1',
-        '',
-        'echo  Done! (Boot+30min collect / 16:00 collect / 30min online check)',
-        'echo.',
-        'echo  [Step 2] Checking printer connection...',
-        'echo  Check: Online : True = Connection OK!',
-        'echo  ===================================',
-        'echo.',
-        'powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"',
-        'echo.',
-        'echo  ===================================',
-        'echo  Install Complete!',
-        'echo  Check Online : True above.',
-        'echo  Firebase: OK = Server OK!',
-        'echo  ===================================',
-        'echo.',
-        'pause'
-      ].join('\r\n');
+  // 2. printers.alloy
+  setTimeout(function(){
+    var blob2 = new Blob([printersAlloy], {type:'text/plain'});
+    var a2 = document.createElement('a');
+    a2.href = URL.createObjectURL(blob2);
+    a2.download = 'printers.alloy';
+    a2.click();
+  }, 500);
 
-      function doDownload(data, filename){
-        var a = document.createElement('a');
-        a.style.display='none';
-        document.body.appendChild(a);
-        var blob = new Blob([data],{type:'text/plain;charset=utf-8'});
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        a.click();
-        setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
-      }
-
-      doDownload(ps1, 'monitor.ps1');
-      setTimeout(function(){ doDownload(bat, name+'_설치.bat'); }, 800);
-      alert('다운로드 완료!\n\n1. monitor.ps1\n2. '+name+'_설치.bat\n\n두 파일을 같은 폴더에 놓고\n'+name+'_설치.bat 실행하세요!');
-    })
-    .catch(function(e){
-      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
-      alert('다운로드 실패: '+e.message);
-    });
+  alert('install.bat + printers.alloy 다운로드!\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat 실행하세요!');
 }
 
-// 기존 downloadAgent (직접 다운로드용 유지)
+
 function downloadAgent(){
   downloadAgentForContract();
 }
