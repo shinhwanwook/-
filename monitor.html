@@ -1334,9 +1334,10 @@ function downloadAgentForContract(){
 
   var lines = [
     '@echo off',
+    'chcp 65001 >nul',
     'net session >nul 2>&1',
     'if %errorLevel% neq 0 (',
-    '  echo Administrator rights required!',
+    '  echo [Error] Administrator rights required!',
     '  pause & exit /b 1',
     ')',
     'echo.',
@@ -1345,7 +1346,7 @@ function downloadAgentForContract(){
     'echo  ' + name,
     'echo ===================================',
     'echo.',
-    'if not exist "C:\\alloy" mkdir "C:\\alloy"',
+    'if not exist "C:\alloy" mkdir "C:\alloy"',
     '',
     'echo [Step 1] Creating snmp_modules.yml...',
     '(',
@@ -1406,14 +1407,14 @@ function downloadAgentForContract(){
     'echo             labelname: counterName',
     'echo             oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5',
     'echo             type: DisplayString',
-    ') > "C:\\alloy\\snmp_modules.yml"',
+    ') > "C:\alloy\snmp_modules.yml"',
     'echo Done!',
     '',
     'echo [Step 2] Creating printers.alloy...',
     '(',
     'echo // ' + name,
     'echo local.file "snmp_config" {',
-    'echo   filename = "C:\\\\alloy\\\\snmp_modules.yml"',
+    'echo   filename = "C:\\alloy\\snmp_modules.yml"',
     'echo }',
     'echo prometheus.exporter.snmp "printers" {',
     'echo   config = local.file.snmp_config.content',
@@ -1439,22 +1440,20 @@ function downloadAgentForContract(){
     'echo     url = "http://161.33.35.210:8428/api/v1/write"',
     'echo   }',
     'echo }',
-    ') > "C:\\alloy\\printers.alloy"',
+    ') > "C:\alloy\printers.alloy"',
     'echo Done!',
     '',
-    'echo [Step 3] Downloading Alloy installer...',
-    'if not exist "C:\\alloy\\alloy-installer.exe" (',
-    '  powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile(\"https://github.com/grafana/alloy/releases/download/v1.7.0/alloy-installer-windows-amd64.exe\",\"C:\\alloy\\alloy-installer.exe\")"',
-    ')',
+    'echo [Step 3] Downloading Alloy...',
+    'bitsadmin /transfer AlloyDL /download /priority normal "https://github.com/grafana/alloy/releases/download/v1.7.0/alloy-installer-windows-amd64.exe" "C:\\alloy\\alloy-installer.exe"',
     'if not exist "C:\\alloy\\alloy-installer.exe" (',
     '  echo Download failed!',
     '  pause & exit /b 1',
     ')',
-    'echo [Step 4] Installing Alloy...',
-    '"C:\\alloy\\alloy-installer.exe" /S /CONFIG="C:\\alloy\\printers.alloy"',
+    'ech 'echo [Step 4] Installing Alloy service...',
+    '"C:\alloy\alloy-installer.exe" /S /CONFIG="C:\alloy\printers.alloy"',
     'timeout /t 5 /nobreak >nul',
     'net stop Alloy >nul 2>&1',
-    'net start Alloy',
+    'net start Alloy >nul 2>&1',
     '',
     'echo.',
     'echo ===================================',
@@ -1465,8 +1464,8 @@ function downloadAgentForContract(){
     'pause'
   ].join('\r\n');
 
-  // ANSI 인코딩으로 저장 (BOM 없음)
-  var blob = new Blob([lines], {type:'text/plain;charset=windows-1252'});
+  var bom = '\xFF\xFE';
+  var blob = new Blob(['\xFF\xFE' + lines.split('').map(function(c){ return c + '\x00'; }).join('')], {type:'text/plain;charset=utf-16le'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name + '_설치.bat';
