@@ -1,0 +1,116 @@
+# =====================================================================
+#  snmp_modules.yml  —  표준 Printer-MIB 기준, 바로 사용 가능한 설정
+#  (snmp_exporter generator 없이 손으로 작성한 표준 구성)
+#
+#  수집 항목:
+#   - 토너/잉크 카트리지별 잔량·최대용량 (설명 라벨로 K/C/M/Y 구분)
+#   - 누적 페이지 카운터
+#   - 프린터 상태 / 오류 상태
+#
+#  사용: install.bat 옆(같은 폴더)에 이 파일을 두면 됩니다.
+# =====================================================================
+
+auths:
+  public_v2:
+    community: public      # 프린터 SNMP 커뮤니티 (장비 설정에 맞게)
+    version: 2
+
+modules:
+  printer_mib:
+    max_repetitions: 25
+    retries: 1
+    timeout: 5s
+    walk:
+      - 1.3.6.1.2.1.43.10.2.1.4    # prtMarkerLifeCount (누적 페이지)
+      - 1.3.6.1.2.1.43.11.1.1.6    # prtMarkerSuppliesDescription (카트리지 설명)
+      - 1.3.6.1.2.1.43.11.1.1.8    # prtMarkerSuppliesMaxCapacity (최대 용량)
+      - 1.3.6.1.2.1.43.11.1.1.9    # prtMarkerSuppliesLevel (현재 잔량)
+      - 1.3.6.1.2.1.25.3.5.1.1     # hrPrinterStatus (상태)
+      - 1.3.6.1.2.1.25.3.5.1.2     # hrPrinterDetectedErrorState (오류 비트)
+      - 1.3.6.1.2.1.25.3.2.1.3     # hrDeviceDescr (장비 이름)
+      - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5   # [리코] ricohEngCounterName (카운터 이름)
+      - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9   # [리코] ricohEngCounterValue (카운터 값: 총계/흑백/칼라 등)
+    metrics:
+
+      - name: prtMarkerLifeCount
+        oid: 1.3.6.1.2.1.43.10.2.1.4
+        type: counter
+        help: 누적 페이지(임프레션) 카운터
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+          - labelname: prtMarkerIndex
+            type: gauge
+
+      - name: prtMarkerSuppliesLevel
+        oid: 1.3.6.1.2.1.43.11.1.1.9
+        type: gauge
+        help: 현재 소모품(토너/잉크) 잔량
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+          - labelname: prtMarkerSuppliesIndex
+            type: gauge
+        lookups:
+          - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]
+            labelname: prtMarkerSuppliesDescription
+            oid: 1.3.6.1.2.1.43.11.1.1.6
+            type: DisplayString
+
+      - name: prtMarkerSuppliesMaxCapacity
+        oid: 1.3.6.1.2.1.43.11.1.1.8
+        type: gauge
+        help: 소모품 최대 용량 (잔량 % 계산용)
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+          - labelname: prtMarkerSuppliesIndex
+            type: gauge
+        lookups:
+          - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]
+            labelname: prtMarkerSuppliesDescription
+            oid: 1.3.6.1.2.1.43.11.1.1.6
+            type: DisplayString
+
+      - name: hrPrinterStatus
+        oid: 1.3.6.1.2.1.25.3.5.1.1
+        type: gauge
+        help: 프린터 상태 (3=대기,4=출력중,5=예열 등)
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+
+      - name: hrPrinterDetectedErrorState
+        oid: 1.3.6.1.2.1.25.3.5.1.2
+        type: OctetString
+        help: 감지된 오류 상태 비트 (용지걸림·도어열림·용지없음 등)
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+
+      - name: hrDeviceDescr
+        oid: 1.3.6.1.2.1.25.3.2.1.3
+        type: DisplayString
+        help: 장비 설명/모델명
+        indexes:
+          - labelname: hrDeviceIndex
+            type: gauge
+
+      # ---------------------------------------------------------------
+      #  [리코 전용] 페이지 카운터 (총계/흑백/칼라/프린트/카피/팩스)
+      #  값(.9)에 카운터 이름(.5)을 counterName 라벨로 붙임.
+      #  ※ 어떤 번호가 흑백/칼라인지는 모델마다 다르므로,
+      #    counterName 라벨을 보고 매핑을 확정한다.
+      # ---------------------------------------------------------------
+      - name: ricohCounterValue
+        oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9
+        type: counter
+        help: 리코 카운터 값 (counterName 라벨로 흑백/칼라/총계 구분)
+        indexes:
+          - labelname: ricohCounterIndex
+            type: gauge
+        lookups:
+          - labels: [ricohCounterIndex]
+            labelname: counterName
+            oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5
+            type: DisplayString
