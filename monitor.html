@@ -1329,121 +1329,59 @@ function downloadAgentForContract(){
     return;
   }
 
-  var psUrl = 'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1';
-  var statusEl = document.querySelector('#page-guide .info-row');
-  if(statusEl){ statusEl.textContent='최신 파일 다운로드 중...'; statusEl.style.display='block'; }
+  var ip   = _selectedContract.ip;
+  var name = _selectedContract.name;
+  var type = _selectedContract.type;
 
-  fetch(psUrl)
-    .then(function(r){
-      if(!r.ok) throw new Error('파일 로드 실패 ('+r.status+')');
-      return r.text();
-    })
-    .then(function(ps1){
-      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
+  // snmp_modules.yml
+  var snmpYml = 'auths:\r\n  public_v2:\r\n    community: public\r\n    version: 2\r\nmodules:\r\n  printer_mib:\r\n    max_repetitions: 25\r\n    retries: 1\r\n    timeout: 5s\r\n    walk:\r\n      - 1.3.6.1.2.1.43.10.2.1.4\r\n      - 1.3.6.1.2.1.43.11.1.1.6\r\n      - 1.3.6.1.2.1.43.11.1.1.8\r\n      - 1.3.6.1.2.1.43.11.1.1.9\r\n      - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5\r\n      - 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9\r\n    metrics:\r\n      - name: prtMarkerSuppliesLevel\r\n        oid: 1.3.6.1.2.1.43.11.1.1.9\r\n        type: gauge\r\n        help: toner level\r\n        indexes:\r\n          - labelname: hrDeviceIndex\r\n            type: gauge\r\n          - labelname: prtMarkerSuppliesIndex\r\n            type: gauge\r\n        lookups:\r\n          - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]\r\n            labelname: prtMarkerSuppliesDescription\r\n            oid: 1.3.6.1.2.1.43.11.1.1.6\r\n            type: DisplayString\r\n      - name: prtMarkerSuppliesMaxCapacity\r\n        oid: 1.3.6.1.2.1.43.11.1.1.8\r\n        type: gauge\r\n        help: toner max\r\n        indexes:\r\n          - labelname: hrDeviceIndex\r\n            type: gauge\r\n          - labelname: prtMarkerSuppliesIndex\r\n            type: gauge\r\n        lookups:\r\n          - labels: [hrDeviceIndex, prtMarkerSuppliesIndex]\r\n            labelname: prtMarkerSuppliesDescription\r\n            oid: 1.3.6.1.2.1.43.11.1.1.6\r\n            type: DisplayString\r\n      - name: ricohCounterValue\r\n        oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9\r\n        type: counter\r\n        help: ricoh counter\r\n        indexes:\r\n          - labelname: ricohCounterIndex\r\n            type: gauge\r\n        lookups:\r\n          - labels: [ricohCounterIndex]\r\n            labelname: counterName\r\n            oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5\r\n            type: DisplayString';
 
-      // MY_PRINTER_IPS에 선택된 거래처 IP 자동 입력
-      var ip    = _selectedContract.ip;
-      var name  = _selectedContract.name;
-      var type  = _selectedContract.type;
-      var model = _selectedContract.model||type;
+  // printers.alloy
+  var alloyConf = '// ' + name + ' - 프린터 모니터링\r\nlocal.file \"snmp_config\" {\r\n  filename = \"C:\\\\alloy\\\\snmp_modules.yml\"\r\n}\r\nprometheus.exporter.snmp \"printers\" {\r\n  config = local.file.snmp_config.content\r\n  target \"printer_1\" {\r\n    address     = \"' + ip + '\"\r\n    module      = \"printer_mib\"\r\n    auth        = \"public_v2\"\r\n    walk_params = \"default\"\r\n  }\r\n  walk_param \"default\" { retries = \"2\" }\r\n}\r\nprometheus.scrape \"printers\" {\r\n  targets         = prometheus.exporter.snmp.printers.targets\r\n  forward_to      = [prometheus.remote_write.central.receiver]\r\n  scrape_interval = \"300s\"\r\n  scrape_timeout  = \"30s\"\r\n}\r\nprometheus.remote_write \"central\" {\r\n  external_labels = {\r\n    customer = \"' + name + '\",\r\n  }\r\n  endpoint {\r\n    url = \"http://161.33.35.210:8428/api/v1/write\"\r\n  }\r\n}';
 
-      // MY_PRINTER_IPS 부분 교체
-      var oldIps = ps1.match(/\$MY_PRINTER_IPS[\s\S]*?@\([\s\S]*?\)/);
-      if(oldIps){
-        var newIps = '$MY_PRINTER_IPS = @(\r\n    "'+ip+'"  # '+name+'\r\n)';
-        ps1 = ps1.replace(oldIps[0], newIps);
-      }
+  // 배치파일
+  var bat = [
+    '@echo off',
+    'net session >nul 2>&1',
+    'if %errorLevel% neq 0 (',
+    '  echo [오류] 관리자 권한이 필요합니다!',
+    '  echo 우클릭 후 [관리자 권한으로 실행] 해주세요.',
+    '  pause',
+    '  exit /b 1',
+    ')',
+    'echo.',
+    'echo ===================================',
+    'echo  Printer Monitoring Install - Alloy',
+    'echo  ' + name,
+    'echo ===================================',
+    'echo.',
+    'if not exist "C:\alloy" mkdir "C:\alloy"',
+    'echo [Step 1] 설정 파일 생성...',
+    'powershell -ExecutionPolicy Bypass -Command "$yml = @\"\r\n' + snmpYml.replace(/"/g,'\"') + '\r\n\"@; Set-Content -Path \"C:\\alloy\\snmp_modules.yml\" -Value $yml -Encoding UTF8"',
+    'powershell -ExecutionPolicy Bypass -Command "$conf = @\"\r\n' + alloyConf.replace(/"/g,'\"') + '\r\n\"@; Set-Content -Path \"C:\\alloy\\printers.alloy\" -Value $conf -Encoding UTF8"',
+    'echo [Step 2] Alloy 다운로드 및 설치...',
+    'powershell -ExecutionPolicy Bypass -Command "if(!(Test-Path \"C:\\alloy\\alloy-installer.exe\")){Invoke-WebRequest -Uri \"https://github.com/grafana/alloy/releases/download/v1.7.0/alloy-installer-windows-amd64.exe\" -OutFile \"C:\\alloy\\alloy-installer.exe\" -UseBasicParsing}"',
+    '"C:\alloy\alloy-installer.exe" /S /CONFIG="C:\alloy\printers.alloy"',
+    'echo [Step 3] Alloy 서비스 재시작...',
+    'net stop Alloy >nul 2>&1',
+    'net start Alloy >nul 2>&1',
+    'echo.',
+    'echo ===================================',
+    'echo  설치 완료!',
+    'echo  services.msc 에서 Alloy 확인!',
+    'echo  http://localhost:12345 에서 상태 확인!',
+    'echo ===================================',
+    'pause'
+  ].join('\r\n');
 
-      // bat 파일 생성
-      var bat = [
-        '@echo off',
-        ':: 관리자 권한 확인',
-        'net session >nul 2>&1',
-        'if %errorLevel% neq 0 (',
-        '  echo.',
-        '  echo  [오류] 관리자 권한이 필요합니다!',
-        '  echo  이 파일을 우클릭 후 [관리자 권한으로 실행] 해주세요.',
-        '  echo.',
-        '  pause',
-        '  exit /b 1',
-        ')',
-        'cd /d "%~dp0"',
-        'set SCRIPT_PATH=%~dp0monitor.ps1',
-        '',
-        'if not exist "%SCRIPT_PATH%" (',
-        '  echo ERROR: monitor.ps1 file not found!',
-        '  echo Please put monitor.ps1 and this bat file in the same folder.',
-        '  pause',
-        '  exit /b 1',
-        ')',
-        '',
-        'echo.',
-        'echo  ===================================',
-        'echo   Printer Monitoring Install',
-        'echo   '+name,
-        'echo  ===================================',
-        'echo.',
-        'echo  [Step 0] Downloading latest monitor.ps1...',
-        'powershell -ExecutionPolicy Bypass -Command "' +
-          'Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/shinhwanwook/-/main/monitor.ps1\' -OutFile \'%~dp0monitor.ps1\' -UseBasicParsing; ' +
-          '(Get-Content \'%~dp0monitor.ps1\') -replace \'192\\.168\\.1\\.100\', \'' + ip + '\' | Set-Content \'%~dp0monitor.ps1\'"',
-        'echo  Download and IP setup complete!',
-        'echo.',
-        'echo  [Step 1] Registering scheduler...',
-        'schtasks /delete /tn "PrinterMonitor_10" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_16" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_Boot" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_Online" /f >nul 2>&1',
-        'schtasks /delete /tn "PrinterMonitor_30min" /f >nul 2>&1',
-        '',
-        'rem [1] PC 시작 후 30분 뒤 전체 수집 (로그인 시)',
-        'schtasks /create /tn "PrinterMonitor_Boot" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc onlogon /delay 0000:30 /f >nul 2>&1',
-        '',
-        'rem [2] 오후 4시 전체 수집',
-        'schtasks /create /tn "PrinterMonitor_16" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\"" /sc daily /st 16:00 /f >nul 2>&1',
-        '',
-        'rem [3] 30분마다 온라인 상태 갱신 (상시 온라인 유지)',
-        'schtasks /create /tn "PrinterMonitor_Online" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_PATH%\" -Mode online" /sc minute /mo 30 /f >nul 2>&1',
-        '',
-        'echo  Done! (Boot+30min / 16:00 / Online 30min - HIGHEST privilege)',
-        'echo.',
-        'echo  [Step 2] Checking printer connection...',
-        'echo  Check: Online : True = Connection OK!',
-        'echo  ===================================',
-        'echo.',
-        'powershell -ExecutionPolicy Bypass -File "%SCRIPT_PATH%"',
-        'echo.',
-        'echo  ===================================',
-        'echo  Install Complete!',
-        'echo  Check Online : True above.',
-        'echo  Firebase: OK = Server OK!',
-        'echo  ===================================',
-        'echo.',
-        'pause'
-      ].join('\r\n');
-
-      function doDownload(data, filename){
-        var a = document.createElement('a');
-        a.style.display='none';
-        document.body.appendChild(a);
-        var blob = new Blob([data],{type:'text/plain;charset=utf-8'});
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        a.click();
-        setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
-      }
-
-      doDownload(ps1, 'monitor.ps1');
-      setTimeout(function(){ doDownload(bat, name+'_설치.bat'); }, 800);
-      alert('다운로드 완료!\n\n1. monitor.ps1\n2. '+name+'_설치.bat\n\n두 파일을 같은 폴더에 놓고\n'+name+'_설치.bat 실행하세요!');
-    })
-    .catch(function(e){
-      if(statusEl){ statusEl.textContent=''; statusEl.style.display='none'; }
-      alert('다운로드 실패: '+e.message);
-    });
+  var blob = new Blob([bat], {type:'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + '_설치.bat';
+  a.click();
 }
 
-// 기존 downloadAgent (직접 다운로드용 유지)
+
 function downloadAgent(){
   downloadAgentForContract();
 }
