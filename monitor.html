@@ -1368,10 +1368,11 @@ function downloadAgentForContract(){
   // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
   var installBat = [
     '@echo off',
+    'chcp 65001 >nul',
     'net session >nul 2>&1',
     'if %errorLevel% neq 0 (',
     '  echo [Error] Administrator rights required!',
-    '  echo Right-click and select Run as administrator',
+    '  echo Right-click this file and select Run as administrator',
     '  pause & exit /b 1',
     ')',
     'set "ALLOY_DIR=C:\\alloy"',
@@ -1387,9 +1388,9 @@ function downloadAgentForContract(){
     'net start Alloy >nul 2>&1',
     'echo.',
     'echo ============================================================',
-    'echo  Done! - ' + name,
-    'echo  Check 1: services.msc - Alloy Running',
-    'echo  Check 2: http://localhost:12345',
+    'echo  Install Done!   IP: ' + ip,
+    'echo  Check 1: services.msc  -  Alloy = Running',
+    'echo  Check 2: http://localhost:12345  -  Graph tab',
     'echo ============================================================',
     'pause'
   ].join('\r\n');
@@ -1428,16 +1429,16 @@ function downloadAgentForContract(){
   ].join('\n');
 
   // 파일들 다운로드
-  // 1. install.bat
-  var blob1 = new Blob([installBat], {type:'text/plain;charset=windows-1252'});
+  // 1. install.bat (chcp 65001 사용 -> UTF-8 저장)
+  var blob1 = new Blob([installBat], {type:'text/plain;charset=utf-8'});
   var a1 = document.createElement('a');
   a1.href = URL.createObjectURL(blob1);
   a1.download = 'install.bat';
   a1.click();
 
-  // 2. printers.alloy
+  // 2. printers.alloy (한글 거래처명 포함 -> UTF-8 저장)
   setTimeout(function(){
-    var blob2 = new Blob([printersAlloy], {type:'text/plain'});
+    var blob2 = new Blob([printersAlloy], {type:'text/plain;charset=utf-8'});
     var a2 = document.createElement('a');
     a2.href = URL.createObjectURL(blob2);
     a2.download = 'printers.alloy';
