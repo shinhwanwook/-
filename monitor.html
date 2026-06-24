@@ -358,13 +358,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
       <!-- 거래처 검색 및 다운로드 -->
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:12px">🖨️ 거래처 선택 후 배치파일 다운로드</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px">🖨️ 한 PC에서 수집할 프린터를 모두 추가하세요</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:12px">한 거래처 PC에 장비가 여러 대면, 아래에서 하나씩 검색해 <b>＋추가</b> 한 뒤 배치파일을 받으세요. 한 배치파일에 모두 담깁니다.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 후 선택..."
+          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 후 목록에서 ＋추가..."
             oninput="searchGuideContract()" style="flex:1;min-width:200px">
-          <button class="btn btn-primary" onclick="downloadAgentForContract()">
-            ⬇ 배치파일 다운로드
-          </button>
           <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe"
             class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
             target="_blank">
@@ -377,20 +375,34 @@ tbody td{padding:9px 12px;vertical-align:middle}
         </div>
         <!-- 검색 결과 드롭다운 -->
         <div id="guide-search-result" style="display:none;margin-top:8px;border:1px solid #93c5fd;border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
-        <!-- 선택된 거래처 정보 -->
-        <div id="guide-selected" style="display:none;margin-top:10px;padding:10px;background:#dbeafe;border-radius:6px;font-size:13px"></div>
+
+        <!-- 추가된 프린터 목록 (이 PC에 설치할 장비들) -->
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:6px">📦 이 PC에 설치할 프린터 목록</div>
+          <div id="guide-cart" style="border:1px dashed #93c5fd;border-radius:6px;padding:6px;background:#fff;min-height:48px"></div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="downloadAgentForContract()">
+            ⬇ 배치파일 다운로드 (목록 전체)
+          </button>
+          <button class="btn" onclick="clearGuideCart()" style="background:#e2e8f0;color:#475569;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit">
+            목록 비우기
+          </button>
+        </div>
         <div style="font-size:12px;color:#64748b;margin-top:8px">
           ※ 임대관리에 IP가 등록된 거래처만 표시됩니다
         </div>
       </div>
 
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (3단계)</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법</div>
         <div style="font-size:13px;line-height:2;color:#1e3a5f">
-          <b>1단계.</b> 위에서 거래처 검색 후 선택<br>
-          <b>2단계.</b> "배치파일 다운로드" 클릭 → 파일 2개 자동 다운로드<br>
-          <b>3단계.</b> 고객사 PC 바탕화면에 파일 2개 복사<br>
-          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> 더블클릭 → Online: True 확인!
+          <b>1단계.</b> 그 PC에서 수집할 프린터를 <b>모두 ＋추가</b> (장비 여러 대면 다 추가)<br>
+          <b>2단계.</b> "배치파일 다운로드" 클릭 → install.bat + printers.alloy 다운로드<br>
+          <b>3단계.</b> alloy 설치파일 + snmp_modules.yml 포함 4개를 한 폴더에 모아 고객사 PC로 복사<br>
+          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">install.bat</code> 우클릭 → 관리자 권한으로 실행<br>
+          <b>5단계.</b> 5분 후 모니터링 화면에서 온라인 확인!
         </div>
       </div>
 
@@ -1303,8 +1315,8 @@ function renderGuideList(){
 // ══════════════════════════════════════════
 //  배치파일 다운로드 생성
 // ══════════════════════════════════════════
-// 선택된 거래처 정보
-var _selectedContract = null;
+// 이 PC에 설치할 프린터 목록 (장바구니)
+var _guideCart = [];
 var _allContractsForGuide = [];
 
 // 임대관리에서 IP 등록된 거래처 로드
@@ -1319,27 +1331,64 @@ function loadGuideContracts(){
   });
 }
 
-// 거래처 검색
-
-// 거래처 선택
+// 거래처를 목록에 추가
 function selectGuideContract(el){
-  _selectedContract = {
+  var item = {
     name:  el.getAttribute('data-name'),
     ip:    el.getAttribute('data-ip'),
     type:  el.getAttribute('data-type'),
-    model: el.getAttribute('data-model')
+    model: el.getAttribute('data-model'),
+    no:    el.getAttribute('data-no') || ''
   };
 
-  document.getElementById('guide-srch').value = _selectedContract.name;
-  document.getElementById('guide-search-result').style.display='none';
+  // 실수 방지 1: IP 없는 거래처 거르기
+  if(!item.ip){
+    alert('이 거래처는 IP가 등록되어 있지 않습니다.\n임대관리에서 프린터 IP를 먼저 등록하세요.');
+    return;
+  }
+  // 실수 방지 2: 같은 IP 중복 추가 막기
+  if(_guideCart.some(function(c){ return c.ip===item.ip; })){
+    alert('이미 추가된 프린터입니다: '+item.name+' ('+item.ip+')');
+    return;
+  }
+  // 실수 방지 3: 같은 거래처명 중복 경고
+  if(_guideCart.some(function(c){ return c.name===item.name; })){
+    if(!confirm('같은 거래처명이 이미 있습니다: '+item.name+'\n그래도 추가할까요? (다른 IP라면 추가하세요)')) return;
+  }
 
-  var sel = document.getElementById('guide-selected');
-  sel.style.display='block';
-  sel.innerHTML =
-    '<strong>✅ 선택됨:</strong> '+esc(_selectedContract.name)+
-    ' &nbsp;|&nbsp; IP: <code>'+esc(_selectedContract.ip)+'</code>'+
-    ' &nbsp;|&nbsp; 제조사: <strong>'+esc(_selectedContract.type)+'</strong>'+
-    (_selectedContract.model ? ' &nbsp;|&nbsp; 모델: '+esc(_selectedContract.model) : '');
+  _guideCart.push(item);
+  document.getElementById('guide-srch').value = '';
+  document.getElementById('guide-search-result').style.display='none';
+  renderGuideCart();
+}
+
+// 목록 렌더링
+function renderGuideCart(){
+  var el = document.getElementById('guide-cart');
+  if(!el) return;
+  if(!_guideCart.length){
+    el.innerHTML = '<div style="padding:10px;color:#94a3b8;font-size:12px;text-align:center">검색해서 ＋추가하면 여기에 표시됩니다</div>';
+    return;
+  }
+  el.innerHTML = _guideCart.map(function(c,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #eff6ff;font-size:13px">'+
+      '<span style="background:#1d4ed8;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">'+(i+1)+'</span>'+
+      '<strong style="flex-shrink:0">'+esc(c.name)+'</strong>'+
+      '<code style="color:#475569">'+esc(c.ip)+'</code>'+
+      '<span style="color:#2563eb;font-size:11px">'+esc(c.type||'ricoh')+'</span>'+
+      '<button onclick="removeGuideCart('+i+')" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;flex-shrink:0">삭제</button>'+
+      '</div>';
+  }).join('');
+}
+
+function removeGuideCart(i){
+  _guideCart.splice(i,1);
+  renderGuideCart();
+}
+function clearGuideCart(){
+  if(_guideCart.length && !confirm('목록을 모두 비울까요?')) return;
+  _guideCart = [];
+  renderGuideCart();
 }
 
 // 거래처별 배치파일 다운로드
@@ -1356,16 +1405,13 @@ function downloadSnmpModules(){
 }
 
 function downloadAgentForContract(){
-  if(!_selectedContract){
-    alert('거래처를 먼저 선택해 주세요!\n\n거래처명을 입력하면 목록이 표시됩니다.');
+  if(!_guideCart.length){
+    alert('먼저 이 PC에 설치할 프린터를 ＋추가 하세요.\n\n거래처명을 검색해서 목록에 추가하면 됩니다.');
     return;
   }
 
-  var ip   = _selectedContract.ip;
-  var name = _selectedContract.name;
-  var no   = _selectedContract.no || '';
-
-  // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
+  // install.bat: 설치할 프린터 목록을 주석으로 표시 (IP만, 한글 깨짐 방지)
+  var ipList = _guideCart.map(function(c){ return c.ip; }).join(', ');
   var installBat = [
     '@echo off',
     'chcp 65001 >nul',
@@ -1388,27 +1434,39 @@ function downloadAgentForContract(){
     'net start Alloy >nul 2>&1',
     'echo.',
     'echo ============================================================',
-    'echo  Install Done!   IP: ' + ip,
+    'echo  Install Done!   Printers: ' + _guideCart.length + '   IP: ' + ipList,
     'echo  Check 1: services.msc  -  Alloy = Running',
     'echo  Check 2: http://localhost:12345  -  Graph tab',
     'echo ============================================================',
     'pause'
   ].join('\r\n');
 
-  // printers.alloy 내용 생성
+  // printers.alloy: target 블록을 프린터 수만큼 생성, 각각 customer 라벨
+  var targets = _guideCart.map(function(c, idx){
+    var n = idx + 1;
+    return [
+      '  target "printer_' + n + '" {',
+      '    address     = "' + c.ip + '"',
+      '    module      = "printer_mib"',
+      '    auth        = "public_v2"',
+      '    walk_params = "default"',
+      '    labels = {',
+      '      customer  = "' + c.name + '",',
+      '      device_no = "' + (c.no||'') + '",',
+      '    }',
+      '  }'
+    ].join('\n');
+  }).join('\n');
+
   var printersAlloy = [
-    '// ' + name + ' - Printer Monitoring Agent',
+    '// Printer Monitoring Agent - ' + _guideCart.length + ' printer(s) on this PC',
+    '// Printers: ' + _guideCart.map(function(c){ return c.name+'('+c.ip+')'; }).join(', '),
     'local.file "snmp_config" {',
     '  filename = "C:\\\\alloy\\\\snmp_modules.yml"',
     '}',
     'prometheus.exporter.snmp "printers" {',
     '  config = local.file.snmp_config.content',
-    '  target "printer_1" {',
-    '    address     = "' + ip + '"',
-    '    module      = "printer_mib"',
-    '    auth        = "public_v2"',
-    '    walk_params = "default"',
-    '  }',
+    targets,
     '  walk_param "default" { retries = "2" }',
     '}',
     'prometheus.scrape "printers" {',
@@ -1418,10 +1476,6 @@ function downloadAgentForContract(){
     '  scrape_timeout  = "30s"',
     '}',
     'prometheus.remote_write "central" {',
-    '  external_labels = {',
-    '    customer = "' + name + '",',
-    '    device_no = "' + no + '",',
-    '  }',
     '  endpoint {',
     '    url = "http://161.33.35.210:8428/api/v1/write"',
     '  }',
@@ -1445,7 +1499,7 @@ function downloadAgentForContract(){
     a2.click();
   }, 500);
 
-  alert('install.bat + printers.alloy 다운로드!\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat 실행하세요!');
+  alert('배치파일 다운로드 완료! (프린터 '+_guideCart.length+'대)\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat을 관리자 권한으로 실행하세요!');
 }
 
 
@@ -1465,7 +1519,7 @@ function showPage(id){
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
   if(id==='devices') renderDeviceManager();
-  if(id==='guide'){ renderGuideList(); loadGuideContracts(); }
+  if(id==='guide'){ renderGuideList(); loadGuideContracts(); renderGuideCart(); }
   if(id==='usage'){
     renderUsagePage();
     // 날짜 기본값 세팅 후 자동 조회
@@ -2058,11 +2112,6 @@ function filterUsageTable(){
 function searchGuideContract(){
   var q = document.getElementById('guide-srch').value.trim().toLowerCase();
   var resultEl = document.getElementById('guide-search-result');
-  var selectedEl = document.getElementById('guide-selected');
-
-  // 선택 초기화
-  _selectedContract = null;
-  selectedEl.style.display='none';
 
   if(!q || q.length < 1){
     resultEl.style.display='none';
@@ -2087,13 +2136,15 @@ function searchGuideContract(){
     div.setAttribute('data-ip',c.printer_ip||'');
     div.setAttribute('data-type',c.printer_type||'ricoh');
     div.setAttribute('data-model',c.etc||'');
-    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px';
+    div.setAttribute('data-no',c.no||'');
+    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;align-items:center;gap:8px';
     div.onmouseover=function(){this.style.background='#eff6ff';};
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){selectGuideContract(this);};
-    div.innerHTML='<strong>'+esc(c.name||'-')+'</strong>'+
-      '<span style="color:var(--text3);margin-left:8px">'+esc(c.printer_ip||'')+'</span>'+
-      '<span style="color:var(--blue);margin-left:8px;font-size:11px">'+esc(c.printer_type||'ricoh')+'</span>';
+    div.innerHTML='<span style="color:#1d4ed8;font-weight:700">＋추가</span>'+
+      '<strong>'+esc(c.name||'-')+'</strong>'+
+      '<span style="color:var(--text3)">'+esc(c.printer_ip||'')+'</span>'+
+      '<span style="color:var(--blue);font-size:11px">'+esc(c.printer_type||'ricoh')+'</span>';
     resultEl.appendChild(div);
   });
 }
