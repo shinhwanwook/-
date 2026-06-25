@@ -2538,6 +2538,8 @@ function billCalc(){
     var bwAmt=bwEx*d.bwUnit, cAmt=cEx*d.colorUnit;
     var bwTax=bwAmt*_billData.vatRate, cTax=cAmt*_billData.vatRate;
     totalSupply+=bwAmt+cAmt; totalTax+=bwTax+cTax;
+    var bwTaxShow = mode==='included' ? billWon(bwTax) : '';
+    var cTaxShow  = mode==='included' ? billWon(cTax)  : '';
     rows+='<tr'+(bwEx>0?' class="bill-over"':'')+'>'+
       '<td class="bill-dev" rowspan="2"><textarea class="bill-modelinput" rows="1" onchange="billSet('+i+',\'model\',this.value)" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'">'+billEsc(d.model)+'</textarea></td>'+
       '<td>흑백</td>'+billMeter(i,'Bw',d.prevBw,d.curBw)+
@@ -2546,7 +2548,7 @@ function billCalc(){
       '<td class="bill-num bill-excess">'+billWon(bwEx)+'</td>'+
       '<td class="bill-num"><input class="bill-uinput" value="'+d.bwUnit+'" onchange="billSet('+i+',\'bwUnit\',this.value)">원</td>'+
       '<td class="bill-num" style="font-weight:700">'+billWon(bwAmt)+'</td>'+
-      '<td class="bill-num bill-tax">'+billWon(bwTax)+'</td>'+
+      '<td class="bill-num bill-tax">'+bwTaxShow+'</td>'+
       '<td rowspan="2"><button class="bill-del" onclick="billDel('+i+')">✕</button></td></tr>';
     rows+='<tr'+(cEx>0?' class="bill-over"':'')+'>'+
       '<td>컬러</td>'+billMeter(i,'Color',d.prevColor,d.curColor)+
@@ -2555,7 +2557,7 @@ function billCalc(){
       '<td class="bill-num bill-excess">'+billWon(cEx)+'</td>'+
       '<td class="bill-num"><input class="bill-uinput" value="'+d.colorUnit+'" onchange="billSet('+i+',\'colorUnit\',this.value)">원</td>'+
       '<td class="bill-num" style="font-weight:700">'+billWon(cAmt)+'</td>'+
-      '<td class="bill-num bill-tax">'+billWon(cTax)+'</td></tr>';
+      '<td class="bill-num bill-tax">'+cTaxShow+'</td></tr>';
   });
   document.getElementById('bill-body').innerHTML=rows;
   // 모델명 textarea 높이 자동 조정
@@ -2586,7 +2588,7 @@ function renderBillTerms(){
   _billData.devices.forEach(function(d){
     var parts=[];
     parts.push('기본제공 흑백 <b>'+(d.bwFree||0).toLocaleString()+'매</b>'+(d.colorFree?', 컬러 <b>'+(d.colorFree).toLocaleString()+'매</b>':''));
-    parts.push('추가 흑백 <b>'+(d.bwUnit||0)+'원</b>'+(d.colorUnit?', 컬러 <b>'+(d.colorUnit)+'원</b>':''));
+    parts.push('추가사용료(장당) 흑백 <b>'+(d.bwUnit||0)+'원</b>'+(d.colorUnit?', 컬러 <b>'+(d.colorUnit)+'원</b>':''));
     lines.push('· '+(d.model||'기종')+' : '+parts.join(' / '));
   });
   lines.push('<span style="color:#5a6a7f;font-size:11.5px">※ 부가세 별도 · 약정/단가는 표에서 수정 가능</span>');
@@ -2901,8 +2903,15 @@ function closeBillDetail(){ document.getElementById('bill-detail-modal').classLi
 function printBillDetail(){
   var content=document.getElementById('bill-detail-print').innerHTML;
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>청구 상세내역</title><style>body{font-family:Malgun Gothic,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc}</style></head><body>'+content+'</body></html>');
-  w.document.close(); w.print();
+  w.document.write('<html><head><title>청구 상세내역</title><style>'+
+    'body{font-family:Malgun Gothic,sans-serif;padding:20px;color:#1a1a1a}'+
+    'table{border-collapse:collapse;width:100%;font-size:12px}'+
+    'th,td{border:1px solid #999;padding:6px}'+
+    'th{background:#f0f0f0}'+
+    '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '</style></head><body>'+content+'</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 200);
 }
 
 // 이력 전체 출력
