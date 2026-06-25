@@ -2906,12 +2906,12 @@ function printBillDetail(){
   w.document.write('<html><head><title>청구 상세내역</title><style>'+
     'body{font-family:Malgun Gothic,sans-serif;padding:20px;color:#1a1a1a}'+
     'table{border-collapse:collapse;width:100%;font-size:12px}'+
-    'th,td{border:1px solid #999;padding:6px}'+
-    'th{background:#f0f0f0}'+
+    'th,td{border:1px solid #999 !important;padding:6px !important}'+
+    'th{background:#f0f0f0 !important}'+
     '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
     '</style></head><body>'+content+'</body></html>');
   w.document.close();
-  setTimeout(function(){ w.print(); }, 200);
+  setTimeout(function(){ w.print(); }, 250);
 }
 
 // 이력 전체 출력
