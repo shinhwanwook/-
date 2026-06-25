@@ -2391,15 +2391,29 @@ function selectBillContract(c){
   _billContract=c;
   document.getElementById('bill-srch').value=c.name||'';
   document.getElementById('bill-search-result').style.display='none';
-  // 거래처 정보 채우기 (rental 실제 필드: name, address, manager / 사업자번호·대표자는 없으면 직접입력)
+  fillContractInfo(c);
+  loadBillHistory(c.name);
+}
+
+// 거래처 정보를 청구서에 채우기 (등록된 것만, 없으면 공란)
+function fillContractInfo(c){
+  if(!c) return;
   document.getElementById('bill-name').textContent=c.name||'';
-  document.getElementById('bill-bizno').textContent=c.biz_no||c.business_no||'';
+  document.getElementById('bill-bizno').textContent=c.biz_no||c.business_no||c.bizno||'';
   document.getElementById('bill-ceo').textContent=c.ceo||c.representative||c.manager||'';
   document.getElementById('bill-addr').textContent=c.address||'';
-  // 청구번호 자동 생성
-  var t=new Date();
-  document.getElementById('bill-no').textContent=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-001';
-  loadBillHistory(c.name);
+  // 청구번호 자동 생성 (비어있을 때만)
+  var noEl=document.getElementById('bill-no');
+  if(!noEl.textContent || noEl.textContent==='-'){
+    var t=new Date();
+    noEl.textContent=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-001';
+  }
+}
+
+// device의 거래처명으로 rental에서 거래처 찾기
+function findContractByName(name){
+  if(!name) return null;
+  return _allBillContracts.find(function(c){ return (c.name||'')===name; }) || null;
 }
 
 // 사용량조회 로직을 재사용해서 검침값 자동 채우기
@@ -2534,6 +2548,7 @@ var _billAllDevices = [];
 
 function openBillDevicePicker(){
   if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  if(!_allBillContracts.length) loadBillContracts();
   document.getElementById('bill-picker-modal').classList.add('open');
   document.getElementById('bill-picker-srch').value = _billContract ? (_billContract.name||'') : '';
   // 모든 모니터링 장비 로드
@@ -2593,6 +2608,22 @@ function addDeviceFromMonitoring(dev){
   var startDate=document.getElementById('bill-start').value;
   var endDate=document.getElementById('bill-end').value;
   var no=dev._id.replace('device_','');
+
+  // 거래처 정보 자동 채우기 (아직 거래처 미선택이거나, 이 장비의 거래처로 채우기)
+  if(!_billContract || !document.getElementById('bill-name').textContent || document.getElementById('bill-name').textContent==='-'){
+    var c=findContractByName(dev.name);
+    if(c){ _billContract=c; fillContractInfo(c); document.getElementById('bill-srch').value=c.name||''; loadBillHistory(c.name); }
+    else {
+      // rental에 없으면 장비 이름만이라도 상호에 채움
+      if(!document.getElementById('bill-name').textContent || document.getElementById('bill-name').textContent==='-')
+        document.getElementById('bill-name').textContent=dev.name||'';
+    }
+  }
+  // 청구기간 표시 (비어있으면)
+  if(startDate && endDate){
+    var pEl=document.getElementById('bill-period');
+    if(!pEl.textContent || pEl.textContent==='-') pEl.textContent=startDate+' ~ '+endDate;
+  }
 
   function pushRow(prevBw,curBw,prevColor,curColor){
     _billData.devices.push({
