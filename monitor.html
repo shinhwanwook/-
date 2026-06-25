@@ -186,7 +186,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-uinput:focus{outline:none;border-color:var(--blue);background:#fafcff}
 .bill-minput{width:66px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:right;font-size:12px;font-family:inherit;font-variant-numeric:tabular-nums}
 .bill-minput:focus{outline:none;border-color:var(--blue);background:#fafcff}
-.bill-modelinput{width:120px;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-size:12px;font-weight:600;font-family:inherit;background:transparent}
+.bill-modelinput{width:120px;min-height:30px;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;resize:none;overflow:hidden;line-height:1.3;white-space:pre-wrap;word-break:break-all}
 .bill-modelinput:hover{border-color:var(--border)}
 .bill-modelinput:focus{outline:none;border-color:var(--blue);background:#fafcff}
 .bill-tax{color:#555;font-variant-numeric:tabular-nums}
@@ -663,7 +663,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <option value="included">포함</option>
         </select>
       </label>
-      <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 수동으로 추가">＋ 기종 수동추가</button>
+      <button class="btn-bill btn-bill-ghost" onclick="openBillDevicePicker()" title="모니터링에서 수집 중인 장비를 검색해 추가">＋ 기종 자동추가</button>
+      <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 직접 입력">＋ 기종 수동추가</button>
       <button class="btn-bill btn-bill-ghost" onclick="saveBillHistory()">💾 청구 저장</button>
       <button class="btn-bill btn-bill-print" onclick="printBill()">🖨 인쇄 / PDF</button>
     </div>
@@ -726,6 +727,21 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📋 거래처별 청구 이력</span>
     </div>
     <div id="bill-history-list" style="font-size:13px;color:var(--text3);padding:8px 0">거래처를 선택하면 청구 이력이 표시됩니다.</div>
+  </div>
+
+  <!-- 기종 자동추가 팝업 -->
+  <div class="modal-bg" id="bill-picker-modal">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <span>🖨️ 모니터링 장비에서 추가</span>
+        <button onclick="closeBillDevicePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      </div>
+      <div style="padding:16px">
+        <input class="inp" id="bill-picker-srch" placeholder="🔍 거래처명 또는 기기명 검색..." oninput="renderBillDevicePicker()" style="width:100%;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">추가할 장비를 클릭하세요. 이미 추가된 장비는 표시됩니다.</div>
+        <div id="bill-picker-list" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2433,6 +2449,7 @@ function loadBillFromUsage(){
         }
         return {
           model: dev.model||dev.name||'기종',
+          _src: dev._id,
           prevBw: sData?parseInt(sData.bw_count||0):0,
           curBw:  eData?parseInt(eData.bw_count||0):0,
           prevColor: sData?parseInt(sData.color_count||0):0,
@@ -2452,7 +2469,7 @@ function loadBillFromUsage(){
 }
 
 function billWon(n){ return Math.round(n).toLocaleString('ko-KR'); }
-function billEsc(s){ return String(s||'').replace(/"/g,'&quot;'); }
+function billEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function billCalc(){
   var rows='', totalSupply=0, totalTax=0;
@@ -2464,7 +2481,7 @@ function billCalc(){
     var bwTax=bwAmt*_billData.vatRate, cTax=cAmt*_billData.vatRate;
     totalSupply+=bwAmt+cAmt; totalTax+=bwTax+cTax;
     rows+='<tr'+(bwEx>0?' class="bill-over"':'')+'>'+
-      '<td class="bill-dev" rowspan="2"><input class="bill-modelinput" value="'+billEsc(d.model)+'" onchange="billSet('+i+',\'model\',this.value)"></td>'+
+      '<td class="bill-dev" rowspan="2"><textarea class="bill-modelinput" rows="1" onchange="billSet('+i+',\'model\',this.value)" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'">'+billEsc(d.model)+'</textarea></td>'+
       '<td>흑백</td>'+billMeter(i,'Bw',d.prevBw,d.curBw)+
       '<td class="bill-num">'+billWon(bwUse)+'</td>'+
       '<td class="bill-num"><input class="bill-uinput" style="width:58px" value="'+d.bwFree+'" onchange="billSet('+i+',\'bwFree\',this.value)"></td>'+
@@ -2483,6 +2500,10 @@ function billCalc(){
       '<td class="bill-num bill-tax">'+billWon(cTax)+'</td></tr>';
   });
   document.getElementById('bill-body').innerHTML=rows;
+  // 모델명 textarea 높이 자동 조정
+  document.querySelectorAll('.bill-modelinput').forEach(function(ta){
+    ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+  });
   var note=document.getElementById('bill-vat-note');
   if(mode==='included'){
     document.getElementById('bill-total').innerHTML=billWon(totalSupply+totalTax)+'<small> 원</small>';
@@ -2506,6 +2527,119 @@ function billSet(idx,key,v){
 function billAddDevice(){
   _billData.devices.push({model:'새 기종',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80});
   billCalc();
+}
+
+// ===== 기종 자동추가: 모니터링 장비 검색 팝업 =====
+var _billAllDevices = [];
+
+function openBillDevicePicker(){
+  if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  document.getElementById('bill-picker-modal').classList.add('open');
+  document.getElementById('bill-picker-srch').value = _billContract ? (_billContract.name||'') : '';
+  // 모든 모니터링 장비 로드
+  db.collection('device_status').get().then(function(snap){
+    _billAllDevices=[];
+    snap.forEach(function(doc){
+      if(!doc.id.startsWith('hist_')){
+        var d=doc.data(); d._id=doc.id;
+        if(d.name) _billAllDevices.push(d);
+      }
+    });
+    renderBillDevicePicker();
+  });
+}
+
+function closeBillDevicePicker(){
+  document.getElementById('bill-picker-modal').classList.remove('open');
+}
+
+function renderBillDevicePicker(){
+  var q=document.getElementById('bill-picker-srch').value.trim().toLowerCase();
+  var list=document.getElementById('bill-picker-list');
+  var filtered=_billAllDevices.filter(function(d){
+    var hay=((d.name||'')+' '+(d.model||'')).toLowerCase();
+    return !q || hay.includes(q);
+  });
+  if(!filtered.length){ list.innerHTML='<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">검색 결과 없음</div>'; return; }
+  // 이미 추가된 장비(모델명+거래처로 판단)
+  var already={};
+  _billData.devices.forEach(function(d){ already[(d._src||'')]=true; });
+  list.innerHTML='';
+  filtered.forEach(function(d){
+    var srcKey=d._id;
+    var isAdded=already[srcKey];
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;'+(isAdded?'opacity:.5':'cursor:pointer');
+    if(!isAdded){
+      div.onmouseover=function(){this.style.background='#eff6ff';};
+      div.onmouseout=function(){this.style.background='';};
+      div.onclick=function(){ addDeviceFromMonitoring(d); };
+    }
+    var online=String(d.is_online)==='True';
+    div.innerHTML=
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+(online?'#16a34a':'#9ca3af')+';flex-shrink:0"></span>'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
+        '<div style="color:var(--text3);font-size:11.5px">'+esc(d.model||'')+' · '+esc(d.ip||'')+'</div>'+
+      '</div>'+
+      (isAdded?'<span style="color:var(--green);font-size:12px;font-weight:600">✓ 추가됨</span>'
+              :'<span style="color:var(--blue);font-size:12px;font-weight:600">＋ 추가</span>');
+    list.appendChild(div);
+  });
+}
+
+// 모니터링 장비를 청구서 행으로 추가 (검침값 자동 조회)
+function addDeviceFromMonitoring(dev){
+  var startDate=document.getElementById('bill-start').value;
+  var endDate=document.getElementById('bill-end').value;
+  var no=dev._id.replace('device_','');
+
+  function pushRow(prevBw,curBw,prevColor,curColor){
+    _billData.devices.push({
+      model: (dev.model||dev.name||'기종'),
+      _src: dev._id,
+      prevBw:prevBw, curBw:curBw, prevColor:prevColor, curColor:curColor,
+      bwFree: parseInt(dev.quota_bw||0)||0,
+      colorFree: parseInt(dev.quota_color||0)||0,
+      bwUnit:10, colorUnit:80
+    });
+    // 첫 추가 시 비어있던 기본 행 제거
+    if(_billData.devices.length===2 && _billData.devices[0].model==='기종명 입력' && !_billData.devices[0]._src){
+      _billData.devices.shift();
+    }
+    billCalc();
+    renderBillDevicePicker();
+  }
+
+  if(!startDate||!endDate){
+    // 기간 없으면 현재값만
+    pushRow(parseInt(dev.start_bw||0)||0, parseInt(dev.bw_count||0)||0,
+            parseInt(dev.start_color||0)||0, parseInt(dev.color_count||0)||0);
+    return;
+  }
+
+  var startStr=startDate.replace(/-/g,''), endStr=endDate.replace(/-/g,'');
+  var sP=db.collection('device_status')
+    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
+    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359').get();
+  var eP=db.collection('device_status')
+    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
+    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359').get();
+  Promise.all([sP,eP]).then(function(r){
+    var sRows=[],eRows=[];
+    r[0].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) sRows.push(d); });
+    r[1].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) eRows.push(d); });
+    sRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+    eRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+    var sData=sRows[0]||null, eData=eRows[0]||null;
+    if(!eData && parseInt(dev.bw_count||0)>0) eData=dev;
+    if(!sData && (parseInt(dev.start_bw||0)>0||parseInt(dev.start_color||0)>0))
+      sData={bw_count:parseInt(dev.start_bw)||0,color_count:parseInt(dev.start_color)||0};
+    pushRow(
+      sData?parseInt(sData.bw_count||0):0, eData?parseInt(eData.bw_count||0):0,
+      sData?parseInt(sData.color_count||0):0, eData?parseInt(eData.color_count||0):0
+    );
+  });
 }
 function billDel(idx){
   if(_billData.devices.length<=1){ alert('최소 1대는 있어야 합니다.'); return; }
