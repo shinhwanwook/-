@@ -215,8 +215,15 @@ tbody td{padding:9px 12px;vertical-align:middle}
   #bill-sheet, #bill-sheet * { visibility:visible; }
   #bill-sheet{position:absolute;left:0;top:0;width:100%;padding:20px 24px;max-width:100%}
   .bill-uinput,.bill-minput,.bill-modelinput{border:none;background:transparent;padding:0}
+  /* 인쇄 시 단가/숫자 셀 줄바꿈 방지 */
+  .bill-table td, .bill-table th{white-space:nowrap}
+  .bill-table td.bill-dev{white-space:normal}
+  .bill-uinput{width:auto !important;min-width:24px;max-width:46px;text-align:right}
+  .bill-minput{width:auto !important;min-width:40px;max-width:62px}
+  .bill-modelinput{width:100% !important}
+  /* 삭제 버튼만 숨김 (칸은 유지해 rowspan 구조 보존) */
   .bill-del{display:none}
-  @page{margin:14mm}
+  @page{margin:12mm}
 }
 </style>
 </head>
@@ -2890,8 +2897,17 @@ function showBillDetail(idx){
     '<div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--text);padding-bottom:10px;margin-bottom:12px">'+
     '<div><div style="font-size:17px;font-weight:800">'+esc(r.contract||'')+'</div><div style="font-size:12px;color:var(--text3);margin-top:3px">청구번호 '+esc(r.bill_no||'')+'</div></div>'+
     '<div style="text-align:right;font-size:12px;color:var(--text3)">청구기간 '+esc(r.period||'')+'<br>발행일 '+esc(r.date||'')+'</div></div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:12px">'+
-    '<thead><tr style="background:var(--gray-bg)"><th style="padding:6px">기종명</th><th style="padding:6px">구분</th><th style="padding:6px">이전</th><th style="padding:6px">현재</th><th style="padding:6px">사용량</th><th style="padding:6px">기본제공</th><th style="padding:6px">초과분</th><th style="padding:6px">단가</th><th style="padding:6px">금액</th></tr></thead>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'+
+    '<thead><tr style="background:var(--gray-bg)">'+
+    '<th style="padding:6px;width:18%">기종명</th>'+
+    '<th style="padding:6px;width:7%">구분</th>'+
+    '<th style="padding:6px;width:11%">이전검침</th>'+
+    '<th style="padding:6px;width:11%">현재검침</th>'+
+    '<th style="padding:6px;width:10%">사용량</th>'+
+    '<th style="padding:6px;width:10%">기본제공</th>'+
+    '<th style="padding:6px;width:9%">초과분</th>'+
+    '<th style="padding:6px;width:8%">단가</th>'+
+    '<th style="padding:6px;width:16%">금액</th></tr></thead>'+
     '<tbody>'+rowsHtml+'</tbody></table>'+
     '<div style="text-align:right;margin-top:12px;font-size:14px">공급가액 <b>'+(r.supply||0).toLocaleString()+'원</b> · 세액 '+(r.tax||0).toLocaleString()+'원 · 합계 <b style="color:var(--blue);font-size:17px">'+(r.total||0).toLocaleString()+'원</b></div>'+
     '</div>'+
@@ -2905,8 +2921,9 @@ function printBillDetail(){
   var w=window.open('','_blank');
   w.document.write('<html><head><title>청구 상세내역</title><style>'+
     'body{font-family:Malgun Gothic,sans-serif;padding:20px;color:#1a1a1a}'+
-    'table{border-collapse:collapse;width:100%;font-size:12px}'+
-    'th,td{border:1px solid #999 !important;padding:6px !important}'+
+    'table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}'+
+    'th,td{border:1px solid #999 !important;padding:6px !important;white-space:nowrap;text-align:center}'+
+    'td:first-child{white-space:normal;word-break:break-all}'+
     'th{background:#f0f0f0 !important}'+
     '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
     '</style></head><body>'+content+'</body></html>');
