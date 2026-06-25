@@ -1548,7 +1548,10 @@ function loadGuideContracts(){
     if(!snap.exists) return;
     var contracts = snap.data().CONTRACTS||[];
     _allContractsForGuide = contracts.filter(function(c){
-      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
+      if(c.terminated) return false;
+      if(!(c.printer_ip && c.printer_ip.trim()!=='')) return false;
+      // monitoring_on 체크된 것만 (기존 거래처는 필드 없으면 IP 있으니 표시)
+      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
     });
   });
 }
@@ -2405,7 +2408,10 @@ function loadBillContracts(){
   db.collection('rental').doc('main').get().then(function(snap){
     if(!snap.exists) return;
     var contracts=snap.data().CONTRACTS||[];
-    _allBillContracts=contracts.filter(function(c){ return !c.terminated; });
+    _allBillContracts=contracts.filter(function(c){
+      if(c.terminated) return false;
+      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
+    });
   });
 }
 
