@@ -2418,6 +2418,15 @@ function findContractByName(name){
   return _allBillContracts.find(function(c){ return (c.name||'')===name; }) || null;
 }
 
+// 거래처 추가단가 가져오기 (없으면 기본값)
+function getContractUnit(name){
+  var c=findContractByName(name);
+  return {
+    bwUnit:  c && c.extra_bw!=null && c.extra_bw!=='' ? parseFloat(c.extra_bw)||0 : 10,
+    colorUnit: c && c.extra_color!=null && c.extra_color!=='' ? parseFloat(c.extra_color)||0 : 80
+  };
+}
+
 // 사용량조회 로직을 재사용해서 검침값 자동 채우기
 function loadBillFromUsage(){
   var startDate=document.getElementById('bill-start').value;
@@ -2463,6 +2472,7 @@ function loadBillFromUsage(){
         if(!sData && (parseInt(dev.start_bw||0)>0||parseInt(dev.start_color||0)>0)){
           sData={bw_count:parseInt(dev.start_bw)||0,color_count:parseInt(dev.start_color)||0};
         }
+        var u=getContractUnit(dev.name);
         return {
           model: dev.model||dev.name||'기종',
           _src: dev._id,
@@ -2472,7 +2482,7 @@ function loadBillFromUsage(){
           curColor:  eData?parseInt(eData.color_count||0):0,
           bwFree: parseInt(dev.quota_bw||0)||0,
           colorFree: parseInt(dev.quota_color||0)||0,
-          bwUnit:10, colorUnit:80
+          bwUnit:u.bwUnit, colorUnit:u.colorUnit
         };
       });
     });
@@ -2541,7 +2551,8 @@ function billSet(idx,key,v){
   billCalc();
 }
 function billAddDevice(){
-  _billData.devices.push({model:'새 기종',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80});
+  var u = _billContract ? getContractUnit(_billContract.name) : {bwUnit:10,colorUnit:80};
+  _billData.devices.push({model:'새 기종',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:u.bwUnit,colorUnit:u.colorUnit});
   billCalc();
 }
 
@@ -2628,13 +2639,14 @@ function addDeviceFromMonitoring(dev){
   }
 
   function pushRow(prevBw,curBw,prevColor,curColor){
+    var u=getContractUnit(dev.name);
     _billData.devices.push({
       model: (dev.model||dev.name||'기종'),
       _src: dev._id,
       prevBw:prevBw, curBw:curBw, prevColor:prevColor, curColor:curColor,
       bwFree: parseInt(dev.quota_bw||0)||0,
       colorFree: parseInt(dev.quota_color||0)||0,
-      bwUnit:10, colorUnit:80
+      bwUnit:u.bwUnit, colorUnit:u.colorUnit
     });
     // 첫 추가 시 비어있던 기본 행 제거
     if(_billData.devices.length===2 && _billData.devices[0].model==='기종명 입력' && !_billData.devices[0]._src){
