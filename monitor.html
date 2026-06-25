@@ -663,7 +663,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <option value="included">포함</option>
         </select>
       </label>
-      <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()">＋ 기종 추가</button>
+      <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 수동으로 추가">＋ 기종 수동추가</button>
       <button class="btn-bill btn-bill-ghost" onclick="saveBillHistory()">💾 청구 저장</button>
       <button class="btn-bill btn-bill-print" onclick="printBill()">🖨 인쇄 / PDF</button>
     </div>
@@ -2366,7 +2366,7 @@ function searchBillContract(){
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){ selectBillContract(c); };
     div.innerHTML='<strong>'+esc(c.name||'-')+'</strong>'+
-      '<span style="color:var(--text3);margin-left:8px">'+esc(c.biz_no||'')+'</span>';
+      '<span style="color:var(--text3);margin-left:8px;font-size:12px">'+esc(c.address||'')+'</span>';
     el.appendChild(div);
   });
 }
@@ -2375,11 +2375,11 @@ function selectBillContract(c){
   _billContract=c;
   document.getElementById('bill-srch').value=c.name||'';
   document.getElementById('bill-search-result').style.display='none';
-  // 거래처 정보 채우기
-  document.getElementById('bill-name').textContent=c.name||'-';
-  document.getElementById('bill-bizno').textContent=c.biz_no||'-';
-  document.getElementById('bill-ceo').textContent=c.ceo||'-';
-  document.getElementById('bill-addr').textContent=c.addr||'-';
+  // 거래처 정보 채우기 (rental 실제 필드: name, address, manager / 사업자번호·대표자는 없으면 직접입력)
+  document.getElementById('bill-name').textContent=c.name||'';
+  document.getElementById('bill-bizno').textContent=c.biz_no||c.business_no||'';
+  document.getElementById('bill-ceo').textContent=c.ceo||c.representative||c.manager||'';
+  document.getElementById('bill-addr').textContent=c.address||'';
   // 청구번호 자동 생성
   var t=new Date();
   document.getElementById('bill-no').textContent=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-001';
@@ -2437,8 +2437,8 @@ function loadBillFromUsage(){
           curBw:  eData?parseInt(eData.bw_count||0):0,
           prevColor: sData?parseInt(sData.color_count||0):0,
           curColor:  eData?parseInt(eData.color_count||0):0,
-          bwFree: parseInt(dev.committed_bw||dev.bw_committed||0)||0,
-          colorFree: parseInt(dev.committed_color||dev.color_committed||0)||0,
+          bwFree: parseInt(dev.quota_bw||0)||0,
+          colorFree: parseInt(dev.quota_color||0)||0,
           bwUnit:10, colorUnit:80
         };
       });
