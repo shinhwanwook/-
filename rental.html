@@ -554,6 +554,10 @@ body.locked { overflow:hidden; }
             <input type="checkbox" id="f-monitoring-on" style="width:17px;height:17px;cursor:pointer">
             ✅ 모니터링 연동 사용 (체크하면 프린터 모니터링 목록에 표시됩니다)
           </label>
+          <div id="f-replace-area" style="margin-top:12px;display:none">
+            <button type="button" onclick="openDeviceReplace()" style="background:#fff7ed;border:1px solid #fdba74;color:#c2410c;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🔄 장비 교체 (IP 변경 / 기기 교체)</button>
+            <div id="f-replace-info" style="font-size:11.5px;color:#9a6a3a;margin-top:6px"></div>
+          </div>
         </div>
 
         <!-- 약정매수 / 추가장당 단가 -->
@@ -1911,6 +1915,8 @@ function clearForm(){
   document.getElementById('f-printer-ip').value='';
   document.getElementById('f-printer-type').value='';
   document.getElementById('f-monitoring-on').checked=false;
+  var _repArea=document.getElementById('f-replace-area');
+  if(_repArea) _repArea.style.display='none';
   document.getElementById('f-quota-bw').value='0';
   document.getElementById('f-quota-color').value='0';
   document.getElementById('f-extra-bw').value='0';
@@ -1927,6 +1933,63 @@ function clearForm(){
   renderPendingFiles();
   editingNo=null;
 }
+// 장비 교체: 현재 device 카운터를 조회해 교체 이력으로 저장 + 새 IP 입력
+function openDeviceReplace(){
+  if(!editingNo){ alert('편집 중인 거래처가 없습니다.'); return; }
+  var c=CONTRACTS.find(x=>x.no===editingNo);
+  if(!c){ alert('거래처를 찾을 수 없습니다.'); return; }
+
+  var newIp=prompt('새 장비의 IP 주소를 입력하세요.\n(거래처는 그대로, 장비만 교체됩니다)\n\n현재 IP: '+(c.printer_ip||'없음'), c.printer_ip||'');
+  if(newIp===null) return;
+  newIp=newIp.trim();
+  if(!newIp){ alert('새 IP를 입력해 주세요.'); return; }
+
+  var db=window._db;
+  if(!db){ alert('Firebase 연결을 찾을 수 없습니다.'); return; }
+
+  // 현재 device_status에서 이 거래처(no)의 카운터 조회
+  db.collection('device_status').get().then(function(snap){
+    var cur=null;
+    snap.forEach(function(doc){
+      if(doc.id.startsWith('hist_')) return;
+      var d=doc.data();
+      if(String(d.contract_no||'')===String(c.no)){ cur=d; }
+    });
+    var oldBw = cur?parseInt(cur.bw_count||0):0;
+    var oldColor = cur?parseInt(cur.color_count||0):0;
+    var today=new Date().toISOString().slice(0,10);
+
+    var msg='장비 교체를 진행합니다.\n\n'+
+      '거래처: '+c.name+' (No.'+c.no+')\n'+
+      '교체 전 카운터: 흑백 '+oldBw.toLocaleString()+' / 컬러 '+oldColor.toLocaleString()+'\n'+
+      '이전 IP: '+(c.printer_ip||'없음')+'\n'+
+      '새 IP: '+newIp+'\n\n'+
+      '※ 교체 전 카운터가 저장되어 청구 시 합산됩니다.\n진행할까요?';
+    if(!confirm(msg)) return;
+
+    // 교체 이력 추가
+    if(!c.replacements) c.replacements=[];
+    c.replacements.push({
+      date: today,
+      old_ip: c.printer_ip||'',
+      old_bw: oldBw,
+      old_color: oldColor,
+      new_ip: newIp
+    });
+    // IP 업데이트 (no는 그대로)
+    c.printer_ip=newIp;
+    document.getElementById('f-printer-ip').value=newIp;
+
+    // 교체 안내 갱신
+    var info=document.getElementById('f-replace-info');
+    if(info) info.textContent='교체 완료: '+today+' (이전 IP '+(c.replacements[c.replacements.length-1].old_ip||'')+' → 흑백 '+oldBw.toLocaleString()+'/컬러 '+oldColor.toLocaleString()+' 저장) · 저장 버튼을 눌러 확정하세요.';
+
+    alert('장비 교체 정보가 입력되었습니다.\n\n반드시 아래 "💾 저장" 버튼을 눌러 확정하세요.\n저장 후 새 장비에 배치파일을 설치하면 됩니다.');
+  }).catch(function(e){
+    alert('카운터 조회 실패: '+e.message);
+  });
+}
+
 function editContract(no){
   const c=CONTRACTS.find(x=>x.no===no);
   if(!c) return;
@@ -1976,6 +2039,19 @@ function editContract(no){
   // monitoring_on: 필드 있으면 그 값, 없으면(기존 거래처) IP가 있으면 ON
   document.getElementById('f-monitoring-on').checked =
     (c.monitoring_on!==undefined) ? !!c.monitoring_on : !!(c.printer_ip && c.printer_ip.trim());
+  // 편집 모드: 장비 교체 버튼 표시 + 교체 이력 안내
+  var repArea=document.getElementById('f-replace-area');
+  if(repArea){
+    repArea.style.display='block';
+    var reps=c.replacements||[];
+    var info=document.getElementById('f-replace-info');
+    if(reps.length){
+      var last=reps[reps.length-1];
+      info.textContent='최근 교체: '+(last.date||'')+' (이전 IP '+(last.old_ip||'')+' → 흑백 '+(last.old_bw||0).toLocaleString()+'/컬러 '+(last.old_color||0).toLocaleString()+' 시점 저장됨) · 총 '+reps.length+'회';
+    } else {
+      info.textContent='장비를 교체하면 교체 시점 카운터가 저장되어 청구 시 합산됩니다.';
+    }
+  }
   document.getElementById('f-gdrive').value=c.gdrive||'';
   document.getElementById('f-extra-bw').value=c.extra_bw||0;
   document.getElementById('f-extra-color').value=c.extra_color||0;
