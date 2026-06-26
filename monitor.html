@@ -1657,9 +1657,17 @@ function downloadAgentForContract(){
     'echo [4/4] Restart Alloy service',
     'net stop Alloy >nul 2>&1',
     'net start Alloy >nul 2>&1',
+    'echo [5/5] Power settings - prevent sleep (monitoring stays alive)',
+    'powercfg /change standby-timeout-ac 0',
+    'powercfg /change standby-timeout-dc 0',
+    'powercfg /change hibernate-timeout-ac 0',
+    'powercfg /change hibernate-timeout-dc 0',
+    'powercfg /change monitor-timeout-ac 10',
+    'powercfg /change monitor-timeout-dc 10',
     'echo.',
     'echo ============================================================',
     'echo  Install Done!   Printers: ' + _guideCart.length + '   IP: ' + ipList,
+    'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
     'echo  Check 1: services.msc  -  Alloy = Running',
     'echo  Check 2: http://localhost:12345  -  Graph tab',
     'echo ============================================================',
@@ -1876,11 +1884,15 @@ function importFromRental(){
 
     db.collection('device_status').get().then(function(devSnap){
       var existingByIp={};
+      var existingByNo={};   // 거래처 no(contract_no)로 기존 device 찾기
       var maxNo=0;
       devSnap.forEach(function(d){
         if(!d.id.startsWith('hist_')){
           var dd=d.data();
           if(dd.ip) existingByIp[dd.ip]=d.id;
+          if(dd.contract_no!==undefined && dd.contract_no!==null && String(dd.contract_no)!=='' && String(dd.contract_no)!=='0'){
+            existingByNo[String(dd.contract_no)]=d.id;
+          }
           var n=parseInt(d.id.replace('device_',''))||0;
           if(n>maxNo) maxNo=n;
         }
@@ -1891,8 +1903,11 @@ function importFromRental(){
 
       contracts.forEach(function(c){
         var ip=c.printer_ip.trim();
-        var isNew=!existingByIp[ip];
-        var docId=existingByIp[ip]||('device_'+(++maxNo));
+        var cno=String(c.no||'');
+        // 매칭 우선순위: 거래처 no -> IP -> 신규
+        // no로 찾으면 장비 교체(IP 변경)해도 같은 문서 유지 (데이터 이어짐)
+        var docId = (cno && existingByNo[cno]) || existingByIp[ip] || ('device_'+(++maxNo));
+        var isNew = !((cno && existingByNo[cno]) || existingByIp[ip]);
         var deviceData={
           name:c.name||'', model:c.etc||'', ip:ip,
           printer_type:c.printer_type||'ricoh',
