@@ -2797,8 +2797,21 @@ function resetBill(){
 
 // 청구 이력 저장
 function saveBillHistory(){
-  if(!_billContract){ alert('거래처를 먼저 선택해 주세요.'); return; }
   if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  // 거래처명: 선택된 거래처가 있으면 그 이름, 없으면 청구서 상호칸 사용 (단기임대 등)
+  var billName = (_billContract && _billContract.name) ? _billContract.name : '';
+  if(!billName){
+    var nm=(document.getElementById('bill-name').textContent||'').trim();
+    if(nm && nm!=='-') billName=nm;
+  }
+  if(!billName){
+    billName = prompt('청구서에 표시할 거래처/상호를 입력하세요.\n(단기 임대 등 등록되지 않은 거래처도 가능)','');
+    if(billName===null) return;
+    billName=billName.trim();
+    if(!billName){ alert('거래처/상호를 입력해 주세요.'); return; }
+    // 입력한 상호를 청구서 상호칸에도 반영
+    document.getElementById('bill-name').textContent=billName;
+  }
   var mode=document.getElementById('bill-vat-mode').value;
   var totalSupply=0,totalTax=0;
   _billData.devices.forEach(function(d){
@@ -2807,7 +2820,7 @@ function saveBillHistory(){
     totalSupply+=amt; totalTax+=amt*_billData.vatRate;
   });
   var rec={
-    contract: _billContract.name,
+    contract: billName,
     period: document.getElementById('bill-period').textContent,
     bill_no: document.getElementById('bill-no').textContent,
     date: document.getElementById('bill-date').textContent,
@@ -2818,10 +2831,10 @@ function saveBillHistory(){
     devices: JSON.stringify(_billData.devices),
     created: Date.now()
   };
-  var docId='bill_'+_billContract.name+'_'+Date.now();
+  var docId='bill_'+billName+'_'+Date.now();
   db.collection('billing').doc(docId).set(rec).then(function(){
     alert('청구 내역이 저장되었습니다.');
-    loadBillHistory(_billContract.name);
+    loadBillHistory(billName);
   }).catch(function(e){ alert('저장 실패: '+e.message); });
 }
 
