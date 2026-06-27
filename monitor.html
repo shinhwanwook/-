@@ -2832,15 +2832,12 @@ function saveBillHistory(){
     devices: JSON.stringify(_billData.devices),
     created: Date.now()
   };
-  var docId='bill_'+billName+'_'+Date.now();
-  var _oldDocId=_editingBillDocId; // 수정 모드면 기존 건 삭제용
+  // 수정 모드면 기존 docId 그대로 덮어쓰기(이력 추가 안 됨), 신규면 새 docId
+  var isEdit=!!_editingBillDocId;
+  var docId=isEdit ? _editingBillDocId : ('bill_'+billName+'_'+Date.now());
   db.collection('billing').doc(docId).set(rec).then(function(){
-    // 수정 모드: 기존 이력 삭제 (docId가 다를 때만)
-    if(_oldDocId && _oldDocId!==docId){
-      db.collection('billing').doc(_oldDocId).delete().catch(function(){});
-    }
     _editingBillDocId=null;
-    alert(_oldDocId ? '청구 내역이 수정되었습니다.' : '청구 내역이 저장되었습니다.');
+    alert(isEdit ? '청구 내역이 수정되었습니다.' : '청구 내역이 저장되었습니다.');
     loadBillHistory(billName);
   }).catch(function(e){ alert('저장 실패: '+e.message); });
 }
