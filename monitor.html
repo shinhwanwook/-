@@ -541,6 +541,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="">전체 상태</option>
         <option value="online">🟢 온라인</option>
         <option value="offline">🔴 오프라인</option>
+        <option value="archived">⏸ 해지 보기</option>
       </select>
     </div>
     <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
@@ -1170,6 +1171,7 @@ function renderDevices(){
 
   // 필터링
   var list = _devices.filter(function(d){
+    if(d.archived===true) return false;  // 해지된 거래처는 메인 화면에서 제외
     if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
     if(filter==='online'  && !isOnline(d))    return false;
     if(filter==='offline' && isOnline(d))     return false;
@@ -1803,6 +1805,15 @@ function renderDeviceManager(){
     devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
 
     var total = devices.length;
+    var archivedCount = devices.filter(function(d){ return d.archived===true; }).length;
+
+    // 해지(archived) 필터: 기본은 숨김, "해지 보기" 선택 시만 표시
+    var showArchived = (statF==='archived');
+    if(showArchived){
+      devices = devices.filter(function(d){ return d.archived===true; });
+    } else {
+      devices = devices.filter(function(d){ return d.archived!==true; });
+    }
 
     // 검색 필터 적용
     if(srch){
@@ -1815,7 +1826,7 @@ function renderDeviceManager(){
         return (d.printer_type||d.type||'') === typeF;
       });
     }
-    if(statF){
+    if(statF==='online' || statF==='offline'){
       devices = devices.filter(function(d){
         var on = (d.is_online||'').toLowerCase()==='true';
         return statF==='online' ? on : !on;
@@ -1823,19 +1834,30 @@ function renderDeviceManager(){
     }
 
     document.getElementById('device-mgr-info').textContent=
-      '총 '+total+'대 등록 / '+devices.length+'대 표시';
+      '총 '+(total-archivedCount)+'대 운영 / '+devices.length+'대 표시'+(archivedCount?' (해지 '+archivedCount+'대)':'');
 
     if(!devices.length){
       document.getElementById('device-mgr-tbody').innerHTML=
-        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
+        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">'+(showArchived?'해지된 거래처가 없습니다.':'등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small>')+'</td></tr>';
       return;
     }
 
     document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
       var online = (d.is_online||'').toLowerCase()==='true';
-      return '<tr>'+
+      var actionBtns;
+      if(d.archived===true){
+        // 해지 상태: 복원 / 영구삭제
+        actionBtns='<button class="btn btn-ghost btn-xs" style="color:#16a34a" onclick="restoreDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="복원">♻️ 복원</button> '+
+                   '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="영구삭제">🗑️</button>';
+      } else {
+        // 운영 상태: 편집 / 해지 / 삭제
+        actionBtns='<button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'" title="편집">✏️</button> '+
+                   '<button class="btn btn-ghost btn-xs" style="color:#d97706" onclick="archiveDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="해지(숨김)">🔕 해지</button> '+
+                   '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="영구삭제">🗑️</button>';
+      }
+      return '<tr'+(d.archived===true?' style="background:#fafafa;color:#9ca3af"':'')+'>'+
         '<td style="color:var(--text3)">'+(i+1)+'</td>'+
-        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+        '<td style="font-weight:600">'+esc(d.name||'-')+(d.archived===true?' <span class="badge b-gray" style="font-size:10px">해지</span>':'')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
         '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
         '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
@@ -1843,15 +1865,36 @@ function renderDeviceManager(){
         '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right;color:var(--text3)">'+(d.start_bw?parseInt(d.start_bw).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right;color:var(--text3)">'+(d.start_color?parseInt(d.start_color).toLocaleString():'-')+'</td>'+
-        '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
-        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'">✏️</button> '+
-            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'">🗑️</button></td>'+
+        '<td>'+(d.archived===true?'<span class="badge b-gray">⏸ 해지</span>':(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>'))+'</td>'+
+        '<td style="white-space:nowrap">'+actionBtns+'</td>'+
         '</tr>';
     }).join('');
   }).catch(function(e){
     document.getElementById('device-mgr-tbody').innerHTML=
       '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
   });
+}
+
+// 거래처 해지 (숨김 - 데이터 보존, 복원 가능)
+function archiveDevice(btn){
+  var id=btn.getAttribute('data-id'); var name=btn.getAttribute('data-name')||'';
+  if(!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  if(!confirm('["'+name+'"] 거래처를 해지(숨김) 처리할까요?\n\n· 모니터링 목록에서 안 보이게 됩니다.\n· 데이터는 보존되며, 나중에 복원할 수 있습니다.\n· 동기화 시 카운터 업데이트도 멈춥니다.')) return;
+  db.collection('device_status').doc(id).update({archived:true}).then(function(){
+    alert('해지 처리되었습니다.\n"상태: 해지 보기"에서 복원할 수 있습니다.');
+    renderDeviceManager();
+  }).catch(function(e){ alert('해지 실패: '+e.message); });
+}
+
+// 거래처 복원 (해지 해제)
+function restoreDevice(btn){
+  var id=btn.getAttribute('data-id'); var name=btn.getAttribute('data-name')||'';
+  if(!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  if(!confirm('["'+name+'"] 거래처를 복원할까요?\n\n다시 모니터링 목록에 표시됩니다.')) return;
+  db.collection('device_status').doc(id).update({archived:false}).then(function(){
+    alert('복원되었습니다.');
+    renderDeviceManager();
+  }).catch(function(e){ alert('복원 실패: '+e.message); });
 }
 
 // 임대관리에서 가져오기
