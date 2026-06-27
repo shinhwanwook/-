@@ -2779,6 +2779,7 @@ function printBill(){ window.print(); }
 function resetBill(){
   if(!confirm('작성 중인 청구서를 모두 비우고 새로 시작할까요?')) return;
   _billContract=null;
+  _editingBillDocId=null;
   _billData={ vatRate:0.10, devices:[{model:'기종명 입력',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80}] };
   // 거래처 정보 비우기
   ['bill-name','bill-bizno','bill-ceo','bill-period','bill-addr','bill-no'].forEach(function(id){
@@ -2832,13 +2833,20 @@ function saveBillHistory(){
     created: Date.now()
   };
   var docId='bill_'+billName+'_'+Date.now();
+  var _oldDocId=_editingBillDocId; // 수정 모드면 기존 건 삭제용
   db.collection('billing').doc(docId).set(rec).then(function(){
-    alert('청구 내역이 저장되었습니다.');
+    // 수정 모드: 기존 이력 삭제 (docId가 다를 때만)
+    if(_oldDocId && _oldDocId!==docId){
+      db.collection('billing').doc(_oldDocId).delete().catch(function(){});
+    }
+    _editingBillDocId=null;
+    alert(_oldDocId ? '청구 내역이 수정되었습니다.' : '청구 내역이 저장되었습니다.');
     loadBillHistory(billName);
   }).catch(function(e){ alert('저장 실패: '+e.message); });
 }
 
 var _billHistoryRecs = [];   // 현재 거래처의 청구 이력 캐시
+var _editingBillDocId = null; // 수정 중인 청구 이력 docId (있으면 저장 시 기존 건 삭제)
 
 function clearHistFilter(){
   document.getElementById('hist-start').value='';
@@ -2873,31 +2881,78 @@ function loadBillHistory(cname){
     var sumTotal=recs.reduce(function(a,r){ return a+(r.total||0); },0);
     var html='<table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
       '<thead><tr style="background:var(--gray-bg)">'+
+      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">거래처</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">청구번호</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">청구기간</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">발행일</th>'+
       '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">공급가액</th>'+
       '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">세액</th>'+
       '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">합계</th>'+
-      '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">상세</th>'+
+      '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">관리</th>'+
       '</tr></thead><tbody>';
     recs.forEach(function(r,i){
       html+='<tr>'+
+        '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.contract||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.bill_no||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.period||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.date||'-')+'</td>'+
         '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">'+(r.supply||0).toLocaleString()+'</td>'+
         '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border);color:var(--text3)">'+(r.tax||0).toLocaleString()+'</td>'+
         '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border);font-weight:700">'+(r.total||0).toLocaleString()+'원</td>'+
-        '<td style="padding:8px;text-align:center;border-bottom:1px solid var(--border)"><button class="btn-bill btn-bill-ghost" style="padding:4px 10px;font-size:12px" onclick="showBillDetail('+i+')">보기</button></td>'+
+        '<td style="padding:8px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap">'+
+          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px" onclick="showBillDetail('+i+')">보기</button> '+
+          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px" onclick="editBillHistory('+i+')">수정</button> '+
+          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px;color:var(--red)" onclick="deleteBillHistory('+i+')">삭제</button>'+
+        '</td>'+
         '</tr>';
     });
     html+='</tbody><tfoot><tr style="background:var(--gray-bg);font-weight:700">'+
-      '<td colspan="5" style="padding:8px;text-align:right;border-top:2px solid var(--text)">기간 합계</td>'+
+      '<td colspan="6" style="padding:8px;text-align:right;border-top:2px solid var(--text)">기간 합계</td>'+
       '<td style="padding:8px;text-align:right;border-top:2px solid var(--text);color:var(--blue)">'+sumTotal.toLocaleString()+'원</td>'+
       '<td style="border-top:2px solid var(--text)"></td></tr></tfoot></table>';
     el.innerHTML=html;
   }).catch(function(e){ el.innerHTML='<span style="color:var(--red)">이력 조회 실패: '+e.message+'</span>'; });
+}
+
+// 청구 이력 삭제
+function deleteBillHistory(idx){
+  var r=_billHistoryRecs[idx];
+  if(!r||!r._docId){ alert('삭제할 청구를 찾을 수 없습니다.'); return; }
+  if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
+  var msg='이 청구 이력을 삭제할까요?\n\n'+
+    '거래처: '+(r.contract||'')+'\n'+
+    '청구번호: '+(r.bill_no||'')+'\n'+
+    '청구기간: '+(r.period||'')+'\n'+
+    '합계: '+(r.total||0).toLocaleString()+'원\n\n'+
+    '※ 삭제하면 되돌릴 수 없습니다.';
+  if(!confirm(msg)) return;
+  db.collection('billing').doc(r._docId).delete().then(function(){
+    alert('청구 이력이 삭제되었습니다.');
+    loadBillHistory(r.contract||(_billContract?_billContract.name:null));
+  }).catch(function(e){ alert('삭제 실패: '+e.message); });
+}
+
+// 청구 이력 수정: 저장된 청구를 청구서 양식으로 불러와 재작성 (저장 시 기존 건 삭제 후 새로 저장)
+function editBillHistory(idx){
+  var r=_billHistoryRecs[idx];
+  if(!r){ alert('수정할 청구를 찾을 수 없습니다.'); return; }
+  if(!confirm('이 청구를 수정하시겠습니까?\n\n청구서 양식으로 불러온 뒤 수정하고 다시 저장하면\n기존 이력은 새 내용으로 교체됩니다.')) return;
+  // 청구서 양식에 값 채우기
+  document.getElementById('bill-name').textContent=r.contract||'';
+  document.getElementById('bill-no').textContent=r.bill_no||'';
+  document.getElementById('bill-period').textContent=r.period||'';
+  document.getElementById('bill-date').textContent=r.date||'';
+  document.getElementById('bill-vat-mode').value=r.vat_mode||'separate';
+  var devs=[]; try{ devs=JSON.parse(r.devices||'[]'); }catch(e){}
+  _billData={devices:devs, vatRate:0.10};
+  // 수정 중인 원본 docId 기억 (저장 시 기존 건 삭제)
+  _editingBillDocId=r._docId;
+  renderBillTerms();
+  billCalc();
+  // 청구서 양식으로 스크롤
+  var sheet=document.getElementById('bill-sheet');
+  if(sheet) sheet.scrollIntoView({behavior:'smooth',block:'center'});
+  alert('청구서 양식에 불러왔습니다.\n수정 후 "💾 청구 저장"을 누르면 기존 이력이 교체됩니다.');
 }
 
 // 청구 상세 모달
@@ -2968,16 +3023,19 @@ function printBillDetail(){
 // 이력 전체 출력
 function printHistory(){
   if(!_billHistoryRecs.length){ alert('출력할 이력이 없습니다.'); return; }
+  // 거래처명: 선택된 거래처 우선, 없으면 이력 레코드의 contract 값 사용
   var cname=_billContract?_billContract.name:'';
+  if(!cname && _billHistoryRecs.length){ cname=_billHistoryRecs[0].contract||''; }
+  var title=(cname||'거래처')+' 청구 이력';
   var rows=_billHistoryRecs.map(function(r){
-    return '<tr><td>'+esc(r.bill_no||'')+'</td><td>'+esc(r.period||'')+'</td><td>'+esc(r.date||'')+'</td><td style="text-align:right">'+(r.supply||0).toLocaleString()+'</td><td style="text-align:right">'+(r.tax||0).toLocaleString()+'</td><td style="text-align:right">'+(r.total||0).toLocaleString()+'원</td></tr>';
+    return '<tr><td>'+esc(r.contract||cname||'')+'</td><td>'+esc(r.bill_no||'')+'</td><td>'+esc(r.period||'')+'</td><td>'+esc(r.date||'')+'</td><td style="text-align:right">'+(r.supply||0).toLocaleString()+'</td><td style="text-align:right">'+(r.tax||0).toLocaleString()+'</td><td style="text-align:right">'+(r.total||0).toLocaleString()+'원</td></tr>';
   }).join('');
   var sum=_billHistoryRecs.reduce(function(a,r){return a+(r.total||0);},0);
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>'+cname+' 청구 이력</title><style>body{font-family:Malgun Gothic,sans-serif;padding:24px}h2{margin-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:12px}th,td{border:1px solid #ccc;padding:7px}th{background:#f0f0f0}</style></head><body>'+
-    '<h2>'+cname+' 청구 이력</h2><div style="color:#666;font-size:12px">출력일 '+new Date().toLocaleDateString()+'</div>'+
-    '<table><thead><tr><th>청구번호</th><th>청구기간</th><th>발행일</th><th>공급가액</th><th>세액</th><th>합계</th></tr></thead><tbody>'+rows+
-    '<tr style="font-weight:700;background:#f8f8f8"><td colspan="5" style="text-align:right">합계</td><td style="text-align:right">'+sum.toLocaleString()+'원</td></tr>'+
+  w.document.write('<html><head><title>'+title+'</title><style>body{font-family:Malgun Gothic,sans-serif;padding:24px}h2{margin-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:12px}th,td{border:1px solid #ccc;padding:7px}th{background:#f0f0f0}</style></head><body>'+
+    '<h2>'+title+'</h2><div style="color:#666;font-size:12px">출력일 '+new Date().toLocaleDateString()+'</div>'+
+    '<table><thead><tr><th>거래처</th><th>청구번호</th><th>청구기간</th><th>발행일</th><th>공급가액</th><th>세액</th><th>합계</th></tr></thead><tbody>'+rows+
+    '<tr style="font-weight:700;background:#f8f8f8"><td colspan="6" style="text-align:right">합계</td><td style="text-align:right">'+sum.toLocaleString()+'원</td></tr>'+
     '</tbody></table></body></html>');
   w.document.close(); w.print();
 }
@@ -2985,15 +3043,16 @@ function printHistory(){
 // CSV 다운로드
 function downloadHistoryCsv(){
   if(!_billHistoryRecs.length){ alert('다운로드할 이력이 없습니다.'); return; }
-  var cname=_billContract?_billContract.name:'거래처';
-  var lines=['청구번호,청구기간,발행일,공급가액,세액,합계'];
+  var cname=_billContract?_billContract.name:'';
+  if(!cname && _billHistoryRecs.length){ cname=_billHistoryRecs[0].contract||'거래처'; }
+  var lines=['거래처,청구번호,청구기간,발행일,공급가액,세액,합계'];
   _billHistoryRecs.forEach(function(r){
-    lines.push('"'+(r.bill_no||'')+'","'+(r.period||'')+'","'+(r.date||'')+'",'+(r.supply||0)+','+(r.tax||0)+','+(r.total||0));
+    lines.push('"'+(r.contract||cname||'')+'","'+(r.bill_no||'')+'","'+(r.period||'')+'","'+(r.date||'')+'",'+(r.supply||0)+','+(r.tax||0)+','+(r.total||0));
   });
   var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=cname+'_청구이력.csv';
+  a.download=(cname||'거래처')+'_청구이력.csv';
   a.click();
 }
 
