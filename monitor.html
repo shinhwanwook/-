@@ -1623,14 +1623,10 @@ function downloadAgentForContract(){
 
   // 각 프린터 IP로 ping 자동 테스트 (설치 직후 연결 확인)
   var pingChecks = _guideCart.map(function(c){
-    var safeName = (c.name||'').replace(/[<>|&"^%]/g,'');
+    // echo 안에서 깨질 수 있는 특수문자 제거: ( ) < > | & ^ % -
+    var safeName = (c.name||'').replace(/[<>|&"^%()\-]/g,' ').trim();
     return [
-      'ping -n 2 -w 1000 ' + c.ip + ' >nul 2>&1',
-      'if %errorLevel%==0 (',
-      '  echo   [ OK ]  ' + c.ip + '  (' + safeName + ')  - connected',
-      ') else (',
-      '  echo   [FAIL]  ' + c.ip + '  (' + safeName + ')  - NO RESPONSE, check printer/IP',
-      ')'
+      'ping -n 2 -w 1000 ' + c.ip + ' >nul 2>&1 && (echo   [ OK ]  ' + c.ip + '  ' + safeName + '  connected) || (echo   [FAIL]  ' + c.ip + '  ' + safeName + '  NO RESPONSE check printer/IP)'
     ].join('\r\n');
   }).join('\r\n');
 
