@@ -371,7 +371,7 @@ body.locked { overflow:hidden; }
     </button>
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
     <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
-    <a href="monitor.html" target="_blank" title="프린터 모니터링 열기" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
+    <a href="#" onclick="openMonitor();return false;" title="프린터 모니터링 열기 (자동 로그인)" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
     <label title="JSON 파일에서 복원" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:4px">
       📂 불러오기<input type="file" accept=".json" id="restore-input" style="display:none" onchange="restoreData(this)">
     </label>
@@ -2242,6 +2242,19 @@ function setPermToForm(perm){
   document.getElementById('perm-monitor').checked        = !!p.monitor;
 }
 var _currentUserId = '';
+// 모니터링 자동 로그인: 현재 로그인 ID를 토큰으로 넘겨 ink79.kr/m 열기
+function openMonitor(){
+  var base = 'https://ink79.kr/m';
+  if(_currentUserId){
+    // 간단 토큰(ID + 시각)을 base64로 인코딩해 URL에 전달
+    var token = '';
+    try{ token = btoa(unescape(encodeURIComponent(JSON.stringify({u:_currentUserId,t:Date.now()})))); }catch(e){ token=''; }
+    var url = base + '?auth=' + encodeURIComponent(token);
+    window.open(url, '_blank');
+  }else{
+    window.open(base, '_blank');
+  }
+}
 function hasPerm(key){
   if(window.isAdmin) return true;
   var acctKey = Object.keys(ACCOUNTS).find(function(k){

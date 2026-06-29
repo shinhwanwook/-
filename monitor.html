@@ -881,6 +881,11 @@ function initFirebase() {
 }
 initFirebase();
 
+// 페이지 로드 시: 임대관리에서 넘어온 auth 토큰 있으면 자동 로그인 시도
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){ if(typeof tryAutoLogin==='function') tryAutoLogin(); }, 400);
+});
+
 // ══════════════════════════════════════════
 //  계정 정보 (Firebase 연동)
 // ══════════════════════════════════════════
@@ -957,18 +962,53 @@ function doLogin(){
       }
       _currentUser = matched;
       errEl.style.display = 'none';
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-wrapper').style.display  = 'block';
-      applyPermissions();
-      loadAllDevices();
-      setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
-      startAutoLogout();
+      enterApp();
     } else {
       errEl.textContent = '아이디 또는 비밀번호가 틀립니다.';
       errEl.style.display = 'block';
       document.getElementById('login-pw').value = '';
       document.getElementById('login-pw').focus();
     }
+  });
+}
+
+// 로그인 성공 후 앱 진입 (수동/자동 공통)
+function enterApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-wrapper').style.display  = 'block';
+  applyPermissions();
+  loadAllDevices();
+  setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
+  startAutoLogout();
+}
+
+// 임대관리에서 넘어온 auth 토큰으로 자동 로그인
+function tryAutoLogin(){
+  var params = new URLSearchParams(location.search);
+  var auth = params.get('auth');
+  if(!auth) return;
+  var uid = '';
+  try{
+    var obj = JSON.parse(decodeURIComponent(escape(atob(auth))));
+    uid = obj && obj.u ? obj.u : '';
+    // 토큰 유효시간 10분 제한 (오래된 링크 재사용 방지)
+    if(obj && obj.t && (Date.now() - obj.t > 10*60*1000)) uid = '';
+  }catch(e){ uid=''; }
+  if(!uid) return;
+  // URL에서 토큰 제거 (주소창에 안 남기고 새로고침 시 재시도 방지)
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  loadAccounts(function(){
+    var matched = null;
+    var keys = Object.keys(ACCOUNTS);
+    for(var i=0;i<keys.length;i++){
+      if(ACCOUNTS[keys[i]].id === uid){ matched = ACCOUNTS[keys[i]]; break; }
+    }
+    if(!matched) return; // 계정 못 찾으면 일반 로그인 화면 유지
+    var isAdmin = matched.role === 'admin';
+    var hasMonitorPerm = isAdmin || !!(matched.permissions && matched.permissions.monitor);
+    if(!hasMonitorPerm) return; // 권한 없으면 자동 로그인 안 함
+    _currentUser = matched;
+    enterApp();
   });
 }
 
@@ -1716,13 +1756,13 @@ function downloadAgentForContract(){
     'prometheus.exporter.snmp "printers" {',
     '  config = local.file.snmp_config.content',
     targets,
-    '  walk_param "default" { retries = "2" }',
+    '  walk_param "default" { retries = "3" timeout = "20s" }',
     '}',
     'prometheus.scrape "printers" {',
     '  targets         = prometheus.exporter.snmp.printers.targets',
     '  forward_to      = [prometheus.remote_write.central.receiver]',
     '  scrape_interval = "300s"',
-    '  scrape_timeout  = "30s"',
+    '  scrape_timeout  = "90s"',
     '}',
     'prometheus.remote_write "central" {',
     '  endpoint {',
