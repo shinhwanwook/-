@@ -2235,8 +2235,7 @@ function renderUsageReport(){
       _usageRows = results.filter(function(r){ return r.startData||r.endData; });
       document.getElementById('usage-info').textContent=
         startDate+' ~ '+endDate+' | 총 '+_usageRows.length+'대';
-      // 검색 필터 초기화 후 표시
-      if(document.getElementById('usage-srch')) document.getElementById('usage-srch').value='';
+      // 검색 필터 초기화 후 표시 (거래처명 검색칸은 유지 - 입력한 거래처만 조회되게)
       if(document.getElementById('usage-type-filter')) document.getElementById('usage-type-filter').value='';
       if(document.getElementById('usage-filter')) document.getElementById('usage-filter').value='';
       filterUsageTable();
