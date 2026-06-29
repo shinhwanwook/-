@@ -1620,6 +1620,20 @@ function downloadAgentForContract(){
 
   // install.bat: 설치할 프린터 목록을 주석으로 표시 (IP만, 한글 깨짐 방지)
   var ipList = _guideCart.map(function(c){ return c.ip; }).join(', ');
+
+  // 각 프린터 IP로 ping 자동 테스트 (설치 직후 연결 확인)
+  var pingChecks = _guideCart.map(function(c){
+    var safeName = (c.name||'').replace(/[<>|&"^%]/g,'');
+    return [
+      'ping -n 2 -w 1000 ' + c.ip + ' >nul 2>&1',
+      'if %errorLevel%==0 (',
+      '  echo   [ OK ]  ' + c.ip + '  (' + safeName + ')  - connected',
+      ') else (',
+      '  echo   [FAIL]  ' + c.ip + '  (' + safeName + ')  - NO RESPONSE, check printer/IP',
+      ')'
+    ].join('\r\n');
+  }).join('\r\n');
+
   var installBat = [
     '@echo off',
     'chcp 65001 >nul',
@@ -1649,11 +1663,21 @@ function downloadAgentForContract(){
     'powercfg /change monitor-timeout-dc 10',
     'echo.',
     'echo ============================================================',
+    'echo  [Auto Check] Printer network connection test (PING)',
+    'echo ============================================================',
+    pingChecks,
+    'echo.',
+    'echo ============================================================',
     'echo  Install Done!   Printers: ' + _guideCart.length + '   IP: ' + ipList,
     'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
     'echo  Check 1: services.msc  -  Alloy = Running',
     'echo  Check 2: http://localhost:12345  -  Graph tab',
     'echo ============================================================',
+    'echo.',
+    'echo  * If any printer shows [FAIL] above:',
+    'echo    - Check printer power / IP address',
+    'echo    - Check PC and printer are on same network',
+    'echo.',
     'pause'
   ].join('\r\n');
 
