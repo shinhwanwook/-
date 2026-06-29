@@ -341,6 +341,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <table>
           <thead>
             <tr>
+              <th>No</th>
               <th>거래처 / 기기명</th>
               <th>IP</th>
               <th>상태</th>
@@ -549,7 +550,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
-            <th>No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
+            <th>거래처No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
             <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>시작(흑백)</th><th>시작(컬러)</th><th>상태</th><th>관리</th>
           </tr>
         </thead>
@@ -598,29 +599,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
-            <th>거래처명</th>
-            <th>기기명</th>
-            <th style="text-align:right">흑백(시작)</th>
-            <th style="text-align:right">흑백(현재)</th>
-            <th style="text-align:right">흑백약정</th>
-            <th style="text-align:right">흑백사용량</th>
-            <th style="text-align:right">컬러(시작)</th>
-            <th style="text-align:right">컬러(현재)</th>
-            <th style="text-align:right">컬러약정</th>
-            <th style="text-align:right">컬러사용량</th>
-            <th style="text-align:center">상태</th>
-            <th style="text-align:center">상세</th>
-          </tr>
-        </thead>
-        <tbody id="usage-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-<div class="info-row" id="usage-info"></div>
-    <div class="tbl-wrap">
-      <table>
-        <thead>
-          <tr>
+            <th>No</th>
             <th>거래처명</th>
             <th>기기명</th>
             <th style="text-align:right">흑백(시작)</th>
@@ -1209,7 +1188,7 @@ function renderDevices(){
         // 헤더
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
           '<div>'+
-            '<div style="font-size:14px;font-weight:700">'+esc(d.name||'-')+'</div>'+
+            '<div style="font-size:14px;font-weight:700">'+((d.contract_no&&String(d.contract_no)!=='0')?'<span style="display:inline-block;background:#eef2ff;color:#4338ca;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;margin-right:5px;vertical-align:middle">No.'+esc(String(d.contract_no))+'</span>':'')+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(d.model||'-')+' · '+esc(d.ip||'-')+'</div>'+
           '</div>'+
           '<span style="background:'+statusBg+';color:'+statusColor+';font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">'+
@@ -1256,6 +1235,7 @@ function renderDevices(){
         ? '<span class="badge b-ok">🟢 온라인</span>'
         : '<span class="badge b-late">🔴 오프라인</span>';
       return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
+        '<td style="font-weight:600;color:var(--text2)">'+((d.contract_no&&String(d.contract_no)!=='0')?esc(String(d.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
         '<td><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3)">'+esc(d.model||'-')+'</div></td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.ip||'-')+'</td>'+
@@ -1266,7 +1246,7 @@ function renderDevices(){
         '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
         '</tr>';
     }).join('') :
-    '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
+    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
 }
 
 // ══════════════════════════════════════════
@@ -1281,6 +1261,7 @@ function openDetail(id){
   document.getElementById('detail-title').textContent = (d.name||'-') + ' 상세 정보';
   document.getElementById('detail-body').innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
+      '<div><span style="color:var(--text3)">거래처No</span><br><b>'+((d.contract_no&&String(d.contract_no)!=='0')?esc(String(d.contract_no)):'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">기기명</span><br><b>'+esc(d.name||'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">모델</span><br><b>'+esc(d.model||'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">IP주소</span><br><b>'+esc(d.ip||'-')+'</b></div>'+
@@ -1856,7 +1837,7 @@ function renderDeviceManager(){
                    '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="영구삭제">🗑️</button>';
       }
       return '<tr'+(d.archived===true?' style="background:#fafafa;color:#9ca3af"':'')+'>'+
-        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td style="color:var(--text2);font-weight:600">'+(d.contract_no&&String(d.contract_no)!=='0'?esc(String(d.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
         '<td style="font-weight:600">'+esc(d.name||'-')+(d.archived===true?' <span class="badge b-gray" style="font-size:10px">해지</span>':'')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
         '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
@@ -2299,7 +2280,7 @@ function filterUsageTable(){
 
   var filtered = _usageRows.filter(function(r){
     var dev = r.device;
-    if(srch && !((dev.name||'')+(dev.model||'')).toLowerCase().includes(srch)) return false;
+    if(srch && !((dev.name||'')+(dev.model||'')+(dev.contract_no||'')).toLowerCase().includes(srch)) return false;
     if(typeF && (dev.printer_type||dev.type||'') !== typeF) return false;
     if(statF){
       var sd = r.startData||{};
@@ -2361,6 +2342,7 @@ function filterUsageTable(){
     }
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
+      '<td style="font-weight:600;color:var(--text2)">'+((dev.contract_no&&String(dev.contract_no)!=='0')?esc(String(dev.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
       '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
       // 흑백
