@@ -478,7 +478,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <b>2단계.</b> "배치파일 다운로드" 클릭 → install.bat + printers.alloy 다운로드<br>
           <b>3단계.</b> alloy 설치파일 + snmp_modules.yml 포함 4개를 한 폴더에 모아 고객사 PC로 복사<br>
           <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">install.bat</code> 우클릭 → 관리자 권한으로 실행<br>
-          <b>5단계.</b> 5분 후 모니터링 화면에서 온라인 확인!
+          <b>5단계.</b> 약 15~20분 후 모니터링 화면에서 온라인 확인!
         </div>
       </div>
 
@@ -1003,10 +1003,12 @@ function tryAutoLogin(){
     for(var i=0;i<keys.length;i++){
       if(ACCOUNTS[keys[i]].id === uid){ matched = ACCOUNTS[keys[i]]; break; }
     }
-    if(!matched) return; // 계정 못 찾으면 일반 로그인 화면 유지
-    var isAdmin = matched.role === 'admin';
-    var hasMonitorPerm = isAdmin || !!(matched.permissions && matched.permissions.monitor);
-    if(!hasMonitorPerm) return; // 권한 없으면 자동 로그인 안 함
+    // 임대관리에서 로그인한 사용자가 넘어온 것이므로, 계정만 확인되면
+    // 관리자/사용자 구분·권한 체크 없이 바로 입장 (모니터링 재로그인 불필요)
+    if(!matched){
+      // 계정 정보를 못 찾아도, 토큰이 유효하면 임시 사용자로 입장
+      matched = { id: uid, role: 'user', permissions: { monitor:true } };
+    }
     _currentUser = matched;
     enterApp();
   });
@@ -1030,13 +1032,13 @@ function doLogout(){
 //  5분 자동 로그아웃
 // ══════════════════════════════════════
 var _autoLogoutTimer = null;
-var _AUTO_LOGOUT_MS  = 5 * 60 * 1000; // 5분
+var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
 
 function resetAutoLogout(){
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
   _autoLogoutTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
-      alert('5분 동안 활동이 없어 자동 로그아웃 됩니다.');
+      alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
       doLogout();
     }
   }, _AUTO_LOGOUT_MS);
