@@ -240,15 +240,28 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div id="login-box">
     <div class="logo">🖨️</div>
     <h2>프린터 모니터링</h2>
-    <p>아이디와 비밀번호를 입력하세요</p>
+    <p id="login-msg">아이디와 비밀번호를 입력하세요</p>
+    <div id="login-fields">
     <input type="text" id="login-id" placeholder="아이디"
       onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
     <input type="password" id="login-pw" placeholder="비밀번호"
       onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-err" id="login-err">아이디 또는 비밀번호가 틀립니다.</div>
+    </div>
   </div>
 </div>
+<script>
+// 자동로그인 토큰(?auth=)이 있으면 로그인 입력칸 숨기고 "로그인 중" 표시 (깜빡임 방지)
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get('auth')){
+      var f=document.getElementById('login-fields'); if(f) f.style.display='none';
+      var m=document.getElementById('login-msg'); if(m) m.textContent='로그인 중입니다...';
+    }
+  }catch(e){}
+})();
+</script>
 
 <!-- ══ 앱 본체 ══ -->
 <div id="app-wrapper" style="display:none">
