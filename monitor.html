@@ -1970,7 +1970,9 @@ function importFromRental(){
     }
     var allContracts = (doc.data().CONTRACTS)||[];
     var contracts = allContracts.filter(function(c){
-      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
+      if(!(c.printer_ip && c.printer_ip.trim()!=='') || c.terminated) return false;
+      // 모니터링 연동 체크된 것만 (기존 거래처는 필드 없으면 IP 있으니 포함)
+      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
     });
 
     if(!contracts.length){
@@ -2025,8 +2027,25 @@ function importFromRental(){
       });
 
       batch.commit().then(function(){
+        // 연동 해제 감지: device_status엔 있지만(no 보유) 이번 가져온 목록엔 없는 거래처
+        var importedNos = {};
+        contracts.forEach(function(c){ if(c.no) importedNos[String(c.no)]=true; });
+        var orphans = [];
+        devSnap.forEach(function(d){
+          if(d.id.startsWith('hist_')) return;
+          var dd=d.data();
+          var dno = (dd.contract_no!==undefined && dd.contract_no!==null) ? String(dd.contract_no) : '';
+          if(dno && dno!=='0' && !importedNos[dno]){
+            orphans.push((dd.name||d.id)+' (No.'+dno+')');
+          }
+        });
         var msg = '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
-        if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent=msg;
+        if(orphans.length){
+          msg += '\n\n⚠️ 연동 해제된 거래처 '+orphans.length+'개가 목록에 남아있습니다:\n'
+               + orphans.join(', ')
+               + '\n\n→ 모니터링에서 빼려면 기기관리에서 직접 삭제하세요.';
+        }
+        if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent='완료! 신규 '+added+'대 / 업데이트 '+updated+'대'+(orphans.length?' / 연동해제 '+orphans.length+'대(수동삭제 필요)':'');
         alert(msg);
         renderDeviceManager();
         loadAllDevices(true);
