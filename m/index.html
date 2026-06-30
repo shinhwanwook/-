@@ -2,9 +2,12 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=../monitor.html">
 <title>잉크스테이션 모니터링</title>
-<script>location.replace('../monitor.html');</script>
+<script>
+// ?auth=... 같은 쿼리스트링을 monitor.html로 그대로 전달 (자동로그인 토큰 보존)
+var qs = location.search || '';
+location.replace('../monitor.html' + qs);
+</script>
 </head>
 <body>
 <p>모니터링으로 이동 중... <a href="../monitor.html">자동 이동이 안 되면 여기를 클릭</a></p>
