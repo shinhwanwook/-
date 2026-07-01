@@ -2865,7 +2865,7 @@ function renderPayment(){
     var isActive = (window._paySelectedMonth === k && window._payFilterType && window._payFilterType !== 'all') ? ' pay-month-active' : '';
     return `<th id="pay-th-m-${k}" class="${isActive}" style="white-space:nowrap;min-width:46px;cursor:pointer" onclick="openPayMonthFilter('${k}')">${label}</th>`;
   }).join('');
-  theadRow.innerHTML=`<th>NO</th><th class="pay-resizable" style="min-width:60px;position:relative;user-select:none" id="pay-th-name">거래처</th><th class="pay-resizable" style="min-width:50px;position:relative;user-select:none" id="pay-th-mgr">담당자</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
+  theadRow.innerHTML=`<th>NO</th><th class="pay-resizable" style="min-width:60px;position:relative;user-select:none" id="pay-th-name">거래처</th><th class="pay-resizable" style="min-width:50px;position:relative;user-select:none" id="pay-th-mgr">담당자</th><th style="min-width:90px;white-space:nowrap">전화번호</th><th>렌탈금</th>${monthThs}<th>추가사용료</th>`;
   attachPayResizers();
 
   let list=CONTRACTS.filter(c=>{
@@ -2943,6 +2943,7 @@ function renderPayment(){
       <td style="color:#aaa">${c.no}</td>
       <td style="font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--blue)" title="${esc(c.name)}${c.pay_memo?'\n📝 '+c.pay_memo:''}" onclick="openPayMemo(${c.no})">${esc(c.name)}${c.pay_memo?'<span style="margin-left:3px;font-size:10px">📝</span>':''}</td>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis">${esc(c.manager||'-')}</td>
+      <td style="font-size:12px;color:var(--text3);white-space:nowrap">${esc(c.phone||'-')}</td>
       <td style="font-weight:600;white-space:nowrap;${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</td>
       ${cells}
       <td style="text-align:center;cursor:pointer" onclick="openExtraPayAdd(${c.no})">
