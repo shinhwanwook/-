@@ -2274,36 +2274,34 @@ function renderUsageReport(){
     var promises=devices.map(function(dev){
       var no=dev._id.replace('device_','');
 
-      // 시작일 가장 가까운 레코드
-      var startPromise=db.collection('device_status')
+      // 시작일부터 조회일까지 전체 히스토리를 한 번에 가져와서 처리
+      var histPromise=db.collection('device_status')
         .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
-        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359')
-        .get();
-
-      // 종료일 가장 가까운 레코드
-      var endPromise=db.collection('device_status')
-        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
         .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359')
         .get();
 
-      return Promise.all([startPromise, endPromise]).then(function(results){
-        var startRows=[], endRows=[];
-        results[0].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) startRows.push(d); });
-        results[1].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) endRows.push(d); });
-        startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
-        endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+      return histPromise.then(function(snapshot){
+        var rows=[];
+        snapshot.forEach(function(doc){
+          var d=doc.data();
+          if(parseInt(d.bw_count||0)>0) rows.push({id:doc.id, data:d});
+        });
+        // 문서ID(hist_NO_YYYYMMDD_HHMM)로 정렬 = 시간순
+        rows.sort(function(a,b){ return a.id.localeCompare(b.id); });
+
+        // 시작: 기간 내 가장 이른 기록
+        var startData = rows.length ? rows[0].data : null;
+        // 종료: 기간 내 가장 늦은 기록
+        var endData = rows.length ? rows[rows.length-1].data : null;
 
         // 조회일 히스토리 없으면 device_status 현재값 사용
-        var endData = endRows[0] || null;
         if(!endData || parseInt(endData.bw_count||0) === 0){
-          // device_status 현재값으로 대체
           if(parseInt(dev.bw_count||0) > 0){
             endData = dev;
           }
         }
 
-        // 시작일 히스토리 없으면 device의 start_bw 사용
-        var startData = startRows[0] || null;
+        // 기간 내 히스토리가 전혀 없으면 device의 start_bw
         if(!startData && (parseInt(dev.start_bw||0) > 0 || parseInt(dev.start_color||0) > 0)){
           startData = {
             bw_count: parseInt(dev.start_bw)||0,
