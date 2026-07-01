@@ -246,6 +246,12 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .bill-del{display:none}
   @page{margin:12mm}
 }
+/* ===== 자동완성 드롭다운 ===== */
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:240px;overflow-y:auto;margin-top:2px}
+.ac-item{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.ac-active{background:#eff6ff;color:var(--blue)}
+.ac-item b{color:var(--blue)}
 </style>
 </head>
 <body>
@@ -354,7 +360,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDevices()">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDevices();showAutoComplete('dev-srch','dev-ac')" onfocus="showAutoComplete('dev-srch','dev-ac')" autocomplete="off" style="width:100%">
+        <div id="dev-ac" class="ac-dropdown" style="display:none"></div>
+      </div>
       <select class="inp" id="dev-filter" onchange="renderDevices()">
         <option value="">전체 상태</option>
         <option value="online">🟢 온라인만</option>
@@ -402,7 +411,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📅 수집 히스토리</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="renderHistory()" style="flex:1;min-width:180px">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="renderHistory();showAutoComplete('hist-srch','hist-ac')" onfocus="showAutoComplete('hist-srch','hist-ac')" autocomplete="off" style="width:100%">
+        <div id="hist-ac" class="ac-dropdown" style="display:none"></div>
+      </div>
       <select class="inp" id="hist-device" style="min-width:180px" onchange="renderHistory()">
         <option value="">전체 기기</option>
       </select>
@@ -563,7 +575,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDeviceManager()" style="flex:1;min-width:200px">
+      <div style="position:relative;flex:1;min-width:200px">
+        <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDeviceManager();showAutoComplete('device-mgr-srch','dmgr-ac')" onfocus="showAutoComplete('device-mgr-srch','dmgr-ac')" autocomplete="off" style="width:100%">
+        <div id="dmgr-ac" class="ac-dropdown" style="display:none"></div>
+      </div>
       <select class="inp" id="device-mgr-type" onchange="renderDeviceManager()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -601,7 +616,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📈 기간별 사용량 조회</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable()" style="flex:1;min-width:180px">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable();showAutoComplete('usage-srch','usage-ac')" onfocus="showAutoComplete('usage-srch','usage-ac')" autocomplete="off" style="width:100%">
+        <div id="usage-ac" class="ac-dropdown" style="display:none"></div>
+      </div>
       <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -1217,6 +1235,64 @@ function updateSummary(){
 // ══════════════════════════════════════════
 //  기기 카드 렌더
 // ══════════════════════════════════════════
+// ===== 거래처명 자동완성 드롭다운 (4개 검색화면 공용) =====
+window._acActiveIdx = -1;
+function showAutoComplete(inputId, dropId){
+  var inp = document.getElementById(inputId);
+  var drop = document.getElementById(dropId);
+  if(!inp || !drop) return;
+  var q = (inp.value||'').trim().toLowerCase();
+  if(!q){ drop.style.display='none'; drop.innerHTML=''; return; }
+
+  // _devices에서 거래처명 목록 추출 (중복 제거, 해지 제외)
+  var names = {};
+  (_devices||[]).forEach(function(d){
+    if(d.archived===true) return;
+    var nm = (d.name||'').trim();
+    if(nm && nm.toLowerCase().indexOf(q) !== -1) names[nm] = true;
+  });
+  var list = Object.keys(names).sort().slice(0, 30);
+
+  if(!list.length){ drop.style.display='none'; drop.innerHTML=''; return; }
+
+  window._acActiveIdx = -1;
+  drop.innerHTML = list.map(function(nm){
+    // 매칭 부분 강조
+    var low = nm.toLowerCase();
+    var pos = low.indexOf(q);
+    var disp = nm;
+    if(pos !== -1){
+      disp = esc(nm.slice(0,pos)) + '<b>' + esc(nm.slice(pos,pos+q.length)) + '</b>' + esc(nm.slice(pos+q.length));
+    } else {
+      disp = esc(nm);
+    }
+    var nmEsc = nm.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return '<div class="ac-item" onmousedown="pickAutoComplete(\''+inputId+'\',\''+dropId+'\',\''+nmEsc+'\')">'+disp+'</div>';
+  }).join('');
+  drop.style.display='block';
+}
+
+function pickAutoComplete(inputId, dropId, name){
+  var inp = document.getElementById(inputId);
+  var drop = document.getElementById(dropId);
+  if(inp){ inp.value = name; }
+  if(drop){ drop.style.display='none'; drop.innerHTML=''; }
+  // 해당 화면 다시 렌더 (선택한 거래처만 표시)
+  if(inputId==='dev-srch') renderDevices();
+  else if(inputId==='hist-srch') renderHistory();
+  else if(inputId==='device-mgr-srch') renderDeviceManager();
+  else if(inputId==='usage-srch') filterUsageTable();
+}
+
+// 바깥 클릭 시 모든 자동완성 닫기
+document.addEventListener('click', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('inp-search')) return;
+  ['dev-ac','hist-ac','dmgr-ac','usage-ac'].forEach(function(id){
+    var d=document.getElementById(id);
+    if(d){ d.style.display='none'; }
+  });
+});
+
 function renderDevices(){
   var srch   = (document.getElementById('dev-srch').value||'').toLowerCase();
   var filter = document.getElementById('dev-filter').value;
