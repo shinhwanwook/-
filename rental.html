@@ -6143,6 +6143,20 @@ function doLogin(){
     messagingSenderId: "1021274937799",
     appId: "1:1021274937799:web:022a4ba9496380216d21e2"
   };
+
+  // firebase 라이브러리가 아직 로드 안 됐으면 로드될 때까지 대기 후 실행
+  function whenFirebaseReady(fn, tries){
+    tries = tries || 0;
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      fn();
+    } else if (tries < 100) {  // 최대 20초 대기 (200ms x 100)
+      setTimeout(function(){ whenFirebaseReady(fn, tries+1); }, 200);
+    } else {
+      alert('네트워크 문제로 데이터베이스 연결에 실패했습니다.\n인터넷 연결을 확인하고 새로고침(F5) 해주세요.');
+    }
+  }
+
+  whenFirebaseReady(function(){
   firebase.initializeApp(cfg);
   var db = firebase.firestore();
   window._db = db; // 디버깅용 전역 노출
@@ -6365,6 +6379,7 @@ function doLogin(){
         if(el) el.focus();
       },100);
     });
+  }); // whenFirebaseReady 콜백 닫기
 })();
 </script>
 <script>
