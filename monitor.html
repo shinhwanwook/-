@@ -210,6 +210,27 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-sign-line{border-top:1px solid var(--text);padding-top:6px;width:160px}
 .bill-memo{margin-top:22px;font-size:12px;color:var(--text3);border-top:1px dashed var(--border);padding-top:10px;min-height:36px}
 .bill-memo-lbl{font-weight:700;color:var(--text2)}
+/* ===== 모바일 청구서 (화면에서만, 인쇄엔 영향 없음) ===== */
+@media(max-width:768px){
+  .bill-sheet{padding:18px 14px}
+  .bill-doc-head{flex-direction:row;flex-wrap:wrap;gap:8px;padding-bottom:10px}
+  .bill-doc-title{font-size:19px;letter-spacing:4px}
+  .bill-doc-title small{font-size:11px}
+  .bill-provider{font-size:11px;line-height:1.5}
+  .bill-provider b{font-size:13px}
+  .bill-doc-no{margin:6px 0 14px}
+  .bill-party{grid-template-columns:1fr;gap:0;margin-bottom:14px}
+  .bill-party-full{grid-column:1/2}
+  .bill-field{font-size:12px;padding:6px 2px}
+  .bill-field .bill-lbl{width:64px;font-size:11px}
+  .bill-table{font-size:11px}
+  .bill-table thead th{padding:6px 3px}
+  .bill-table tbody td{padding:6px 3px}
+  .bill-t-amt{font-size:20px}
+  .bill-terms{font-size:11.5px;padding:10px 12px}
+  .bill-actions{padding:10px 12px;gap:6px}
+  .btn-bill{padding:7px 10px;font-size:12px}
+}
 @media print{
   body * { visibility:hidden; }
   #bill-sheet, #bill-sheet * { visibility:visible; }
@@ -641,13 +662,15 @@ tbody td{padding:9px 12px;vertical-align:middle}
     </div>
     <div class="controls">
       <input class="inp inp-search" id="bill-srch" placeholder="🔍 거래처명 검색 후 선택..." oninput="searchBillContract()" style="flex:1;min-width:200px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">이전검침일</label>
-        <input class="inp" type="date" id="bill-start" style="width:140px">
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">현재검침일</label>
-        <input class="inp" type="date" id="bill-end" style="width:140px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;width:100%">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:0">
+          <label style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">이전검침</label>
+          <input class="inp" type="date" id="bill-start" style="flex:1;min-width:0;font-size:12px;padding:6px 4px">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:0">
+          <label style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">현재검침</label>
+          <input class="inp" type="date" id="bill-end" style="flex:1;min-width:0;font-size:12px;padding:6px 4px">
+        </div>
       </div>
       <button class="btn btn-primary" onclick="loadBillFromUsage()">🔄 검침값 자동 불러오기</button>
     </div>
