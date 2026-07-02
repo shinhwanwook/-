@@ -2641,6 +2641,15 @@ function initBillingPage(){
   if(!document.getElementById('bill-date').textContent || document.getElementById('bill-date').textContent==='-'){
     document.getElementById('bill-date').textContent=y+'년 '+(t.getMonth()+1)+'월 '+t.getDate()+'일';
   }
+  // 청구 이력 조회 기간 기본값: 최근 1년 (오늘로부터 1년 전 ~ 오늘)
+  var hs=document.getElementById('hist-start'), he=document.getElementById('hist-end');
+  if(hs && !hs.value){
+    var yearAgo=new Date(t); yearAgo.setFullYear(yearAgo.getFullYear()-1);
+    hs.value=yearAgo.getFullYear()+'-'+String(yearAgo.getMonth()+1).padStart(2,'0')+'-'+String(yearAgo.getDate()).padStart(2,'0');
+  }
+  if(he && !he.value){
+    he.value=y+'-'+m+'-'+d;
+  }
   // 거래처 목록 로드 (사용량/설치안내와 동일 소스)
   loadBillContracts();
   if(!_billData.devices.length){
