@@ -2864,13 +2864,19 @@ function renderBillTerms(){
 }
 
 function billMeter(idx,kind,prev,cur){
-  return '<td class="bill-num"><input class="bill-minput" value="'+prev+'" onchange="billSet('+idx+',\'prev'+kind+'\',this.value)"></td>'+
-    '<td class="bill-num"><input class="bill-minput" value="'+cur+'" onchange="billSet('+idx+',\'cur'+kind+'\',this.value)"></td>';
+  var pv=(Number(prev)||0).toLocaleString();
+  var cv=(Number(cur)||0).toLocaleString();
+  return '<td class="bill-num"><input class="bill-minput" value="'+pv+'" onfocus="billMeterFocus(this)" onchange="billSet('+idx+',\'prev'+kind+'\',this.value)"></td>'+
+    '<td class="bill-num"><input class="bill-minput" value="'+cv+'" onfocus="billMeterFocus(this)" onchange="billSet('+idx+',\'cur'+kind+'\',this.value)"></td>';
+}
+// 입력창 포커스 시 쉼표 제거 (편집 편하게)
+function billMeterFocus(el){
+  el.value=(el.value||'').replace(/,/g,'');
 }
 
 function billSet(idx,key,v){
   if(key==='model') _billData.devices[idx][key]=v;
-  else _billData.devices[idx][key]=parseFloat(v)||0;
+  else _billData.devices[idx][key]=parseFloat(String(v).replace(/,/g,''))||0;
   billCalc();
 }
 function billAddDevice(){
