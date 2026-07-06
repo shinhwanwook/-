@@ -1500,9 +1500,9 @@ function renderHistory(){
       // 기기 번호로 대상 기기 찾기
       var dev = targetDevices.find(function(d){ return d._id === 'device_'+no; });
       if(!dev) return;
-      // IP가 등록된 기기와 다르면 제외 (잘못된 데이터 방지)
+      // device_no로 이미 매칭됨 - IP는 변경될 수 있으므로 체크하지 않음
+      // (장비교체/재설치로 IP가 바뀌어도 같은 device_no면 같은 거래처)
       var docData = doc.data();
-      if(dev.ip && docData.ip && dev.ip !== docData.ip) return;
 
       // 날짜 범위 필터 (시작일 최대 7일 전까지 기준값으로 포함)
       if(dateStr < baseStartStr || dateStr > endStr) return;
