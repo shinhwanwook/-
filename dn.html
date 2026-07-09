@@ -15,8 +15,9 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;backg
 .page{width:210mm;background:#fff;margin:16px auto;padding:16mm 17mm;box-shadow:0 4px 20px rgba(0,0,0,.15)}
 .title{text-align:center;font-size:20pt;font-weight:900;letter-spacing:4px;margin-bottom:4px}
 .subtitle{text-align:center;font-size:9pt;color:#666;margin-bottom:10px}
-table{width:100%;border-collapse:collapse}
+table{width:100%;border-collapse:collapse;border:1px solid #000}
 td,th{border:1px solid #000;padding:6px 8px;vertical-align:middle;font-size:9.5pt;min-height:28px}
+td:last-child,th:last-child{border-right:1px solid #000}
 .label{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
 input[type=text],input[type=date],input[type=number]{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center}
 input:focus,textarea:focus{background:#fffde7}
@@ -32,7 +33,9 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
 
 @media print{
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-  table { border-collapse: collapse; }
+  table { border-collapse: collapse; border: 1px solid #000 !important; }
+  td, th { border: 1px solid #000 !important; }
+  td:last-child, th:last-child { border-right: 1px solid #000 !important; }
   .print-controls{display:none}
   .no-print{display:none!important}
   body{background:#fff}
