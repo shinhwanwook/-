@@ -17,7 +17,6 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;backg
 .subtitle{text-align:center;font-size:9pt;color:#666;margin-bottom:10px}
 table{width:100%;border-collapse:collapse}
 td,th{border:1px solid #000;padding:6px 8px;vertical-align:middle;font-size:9.5pt;min-height:28px}
-tr>td:last-child,tr>th:last-child{box-shadow:inset -1px 0 0 0 #000}
 .label{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
 input[type=text],input[type=date],input[type=number]{border:none;outline:none;width:100%;font-size:9.5pt;font-family:inherit;background:transparent;text-align:center}
 input:focus,textarea:focus{background:#fffde7}
@@ -38,6 +37,7 @@ textarea{border:none;outline:none;width:100%;font-family:inherit;font-size:9.5pt
   .no-print{display:none!important}
   body{background:#fff}
   .page{box-shadow:none;margin:0;padding:0;width:100%}
+  table{width:calc(100% - 1px) !important}
   input,textarea{border-color:transparent!important;background:transparent!important}
   select{border:none!important;background:transparent!important;font-size:10pt!important;font-weight:600!important;-webkit-appearance:none;appearance:none;}
 }
