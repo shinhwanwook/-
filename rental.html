@@ -88,9 +88,9 @@ thead th.pay-month-active{background:#166534!important;color:#fff!important;font
 #pay-table tbody tr:hover td:nth-child(2){background:#f0f7ff}
 
 /* ── 세금계산서: 거래처(1번째) 고정 ── */
-#tax-matrix-table thead th:nth-child(1){position:sticky;top:0;left:0;z-index:20;background:#e8eef7;white-space:nowrap}
-#tax-matrix-table tbody td:nth-child(1){position:sticky;left:0;z-index:5;background:#fff;box-shadow:2px 0 4px rgba(0,0,0,.06)}
-#tax-matrix-table tbody tr:hover td:nth-child(1){background:#f0f7ff}
+#tax-matrix-table thead th:nth-child(2){position:sticky;top:0;left:0;z-index:20;background:#e8eef7;white-space:nowrap}
+#tax-matrix-table tbody td:nth-child(2){position:sticky;left:0;z-index:5;background:#fff;box-shadow:2px 0 4px rgba(0,0,0,.06)}
+#tax-matrix-table tbody tr:hover td:nth-child(2){background:#f0f7ff}
 /* column resize */
 #page-list table{table-layout:fixed;min-width:800px}
 thead th.resizable{position:relative;user-select:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -4942,6 +4942,7 @@ function hidePayTip(){
         <option value="">전체</option>
         <option value="miss">미발행 포함</option>
         <option value="done">발행 완료만</option>
+        <option value="term">해지 거래처</option>
       </select>
     </div>
     <div class="info-row" id="tax-info"></div>
@@ -5410,7 +5411,14 @@ function renderTax() {
 
   // 필터
   var list = TAX_CLIENTS.filter(function(t) {
-    if(t.terminated) return false; // 해지된 거래처 제외
+    // [수정] 해지 거래처 필터
+    //  st==='term' -> 해지된 거래처만 표시 (NO의 빈 번호가 '삭제'인지 '해지'인지 구분용)
+    //  그 외        -> 기존과 동일하게 해지 제외
+    if(st === 'term') {
+      if(!t.terminated) return false;
+    } else {
+      if(t.terminated) return false; // 해지된 거래처 제외
+    }
     var txt = (t.name+t.manager).toLowerCase();
     if(q && txt.indexOf(q)<0) return false;
     if(st==='done') {
@@ -5434,6 +5442,8 @@ function renderTax() {
   // 헤더
   var mlabels = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   document.getElementById('tax-thead').innerHTML =
+    // [추가] NO = 내부 레코드 ID(seq). 삭제된 거래처가 있으면 번호가 비어보임
+    '<th id="tax-th-no" style="white-space:nowrap;min-width:44px;width:48px;text-align:center">NO</th>' +
     '<th id="tax-th-name" class="resizable" style="white-space:nowrap;min-width:80px;width:160px">거래처</th>' +
     '<th id="tax-th-mgr"  class="resizable" style="white-space:nowrap;min-width:60px;width:80px">담당자</th>' +
     '<th id="tax-th-qty"  class="resizable" style="white-space:nowrap;min-width:40px;width:50px">수량</th>' +
@@ -5480,9 +5490,11 @@ function renderTax() {
       return '<td style="text-align:center;padding:3px 2px;" onclick="openTaxEdit('+t.seq+',\''+ym+'\')">'+
         '<div style="'+cellStyle+'">'+cellContent+'</div></td>';
     }).join('');
-    return '<tr>'+
+    return '<tr'+(t.terminated?' style="background:#f3f4f6;opacity:.75"':'')+'>'+
+      // [추가] NO = seq (내부 ID). 중간 번호가 비면 그 거래처가 삭제된 것
+      '<td style="text-align:center;font-size:11px;color:var(--text3);white-space:nowrap">'+t.seq+'</td>'+
       '<td style="font-weight:600;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;'+(t.nameColor&&t.nameColor!=='none'?'background:'+t.nameColor+';':'')+'" title="'+esc(t.name)+'" onclick="openTaxClientDetail('+t.seq+')" oncontextmenu="openTaxColorPicker(event,'+t.seq+',\'name\');return false;">'+
-        esc(t.name)+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
+        esc(t.name)+(t.terminated?'<span style="margin-left:4px;font-size:10px;background:#9ca3af;color:#fff;padding:1px 4px;border-radius:3px">해지</span>':'')+(t.memo?'<span style="margin-left:4px;font-size:10px;color:#f59e0b">📝</span>':'')+'</td>'+
       '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(t.manager||'-')+'</td>'+
       '<td style="font-size:12px;text-align:center">'+esc(String(t.qty||1))+'</td>'+
       '<td style="font-size:12px;color:var(--blue);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(t.email||'')+'">'+(t.email?'<a href="mailto:'+esc(t.email)+'" onclick="event.stopPropagation()" style="color:var(--blue)">'+esc(t.email)+'</a>':'−')+'</td>'+
