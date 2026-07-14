@@ -3630,6 +3630,7 @@ function autoSaveCloud(){
         // manualSave()가 성공시 하는 정리를 동일하게 수행
         _hasUnsaved = false;
         if(typeof broadcastEditState === 'function') broadcastEditState(false);
+        _renderEditingBanner();   // [추가] 미저장 해제 후 표시등 갱신
         if(btn){
           btn.disabled = false;
           btn.style.animation = '';
@@ -3667,10 +3668,23 @@ function _renderEditingBanner(){
   var others = window._othersEditing || [];
 
   // [신규] 저장하기 버튼 옆 표시등 — 누가 작업 중인지 항상 보이게
+  //  · 남이 작업중        -> 빨강 "OO 작업중"  (나는 기다려야 함)
+  //  · 나만 작업중        -> 파랑 "나 작업중"  (남이 기다리는 중, 빨리 저장할 것)
+  //  · 나도 남도 작업중   -> 빨강 "OO 작업중 (나도 작업중!)"  (충돌 위험, 먼저 저장하는 쪽이 우선)
   var tag = document.getElementById('editing-now');
   if(tag){
-    if(others.length){
+    var me = (typeof _currentUserId !== 'undefined' && _currentUserId) ? _currentUserId : '나';
+    if(others.length && _hasUnsaved){
+      tag.textContent = '⚠️ ' + others.join(', ') + ' 작업중 — 나도 작업중! 먼저 저장하세요';
+      tag.style.background = '#dc2626';
+      tag.style.display = 'inline-block';
+    } else if(others.length){
       tag.textContent = '🔴 ' + others.join(', ') + ' 작업중';
+      tag.style.background = '#ef4444';
+      tag.style.display = 'inline-block';
+    } else if(_hasUnsaved){
+      tag.textContent = '✏️ ' + me + ' 작업중 (미저장)';
+      tag.style.background = '#2563eb';
       tag.style.display = 'inline-block';
     } else {
       tag.style.display = 'none';
@@ -3760,6 +3774,7 @@ function manualSave() {
         btn.textContent = '💾 저장하기';
         _hasUnsaved = false;
         broadcastEditState(false);
+        _renderEditingBanner();   // [추가] 미저장 해제 후 표시등 갱신 (순서 중요)
         showSaveStatus('✅ 저장 완료', '#86efac');
       } else {
         btn.style.background = '#ef4444';
