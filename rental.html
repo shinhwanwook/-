@@ -2429,11 +2429,18 @@ function initOnlinePresence(){
     lastSeen: new Date().toISOString()
   }).catch(function(){});
 
-  // [개선] 30초 -> 90초 갱신 (활성 판정 기준이 120초이므로 90초면 여유 있게 안전)
-  //  Firebase 쓰기/읽기 각각 3배 절감
+  // [개선] 30초 -> 60초 갱신 (Firebase 쓰기/읽기 절반으로 절감)
+  //  * 90초로 늘리려다 되돌림: 브라우저가 백그라운드 탭의 타이머를 늦추기 때문에
+  //    (Chrome은 1분에 1회로 제한) 90초 간격이 실제로는 120초를 넘길 수 있고,
+  //    그러면 아래 활성판정(240초)에 걸려 접속자 문서가 삭제되는 사고가 남.
+  //  * update() -> set(merge) 로 변경: 문서가 삭제됐어도 스스로 복구됨.
   _onlineInterval = setInterval(function(){
-    userRef.update({ lastSeen: new Date().toISOString() }).catch(function(){});
-  }, 90000);
+    userRef.set({
+      id: userId,
+      role: window.isAdmin ? '관리자' : '사용자',
+      lastSeen: new Date().toISOString()
+    }, { merge: true }).catch(function(){});
+  }, 60000);
 
   // 실시간 접속자 목록 구독
   _onlineUnsubscribe = db.collection('rental_online').onSnapshot(function(snap){
@@ -2441,9 +2448,11 @@ function initOnlinePresence(){
     var users = [];
     snap.forEach(function(doc){
       var d = doc.data();
-      // 2분 이내 lastSeen만 활성 접속자로 표시
+      // [개선] 2분 -> 4분 이내 lastSeen을 활성으로 판정
+      //  갱신 주기(60초) 대비 4배 여유. 백그라운드 탭 타이머 지연/네트워크 지연에도
+      //  접속자가 잘못 삭제되지 않도록 함.
       var lastSeen = d.lastSeen ? new Date(d.lastSeen).getTime() : 0;
-      if(now - lastSeen < 120000){
+      if(now - lastSeen < 240000){
         users.push(d);
       } else {
         // 오래된 접속자 삭제
@@ -6307,13 +6316,17 @@ function doLogin(){
     });
 
     // DOC_FILES 별도 저장 - DOC_FILES가 있을 때만 저장 (없으면 기존 청크 유지)
+    // [수정] 기존에는 청크를 20개(=파일 200개)로 고정 -> 201번째 파일부터 저장 자체가 안 되어
+    //        조용히 사라지는 버그가 있었음. 필요한 만큼 동적으로 늘리고, 개수를 main에 기록해
+    //        로드할 때 그만큼 읽도록 함.
     var docData = data.DOC_FILES || DOC_FILES || [];
     if(docData.length > 0) {
       var docChunks = [];
       for(var i=0; i<docData.length; i+=10){
         docChunks.push(docData.slice(i, i+10));
       }
-      for(var i=0; i<20; i++){
+      var docChunkCount = Math.max(20, docChunks.length + 2); // 최소 20 유지(하위호환) + 여유 2
+      for(var i=0; i<docChunkCount; i++){
         var did = 'doc_chunk_'+String(i).padStart(2,'0');
         var payload = (i < docChunks.length) ? {docs: docChunks[i]} : {docs: []};
         var dbody = JSON.stringify(payload);
@@ -6321,6 +6334,8 @@ function doLogin(){
         _pending[did] = dbody;
         promises.push(db.collection('rental').doc(did).set(payload));
       }
+      // 로드할 때 몇 개를 읽어야 하는지 main에 남김 (meta에도 함께)
+      promises.push(db.collection('rental').doc('meta').set({ docChunkCount: docChunkCount }, {merge:true}));
     }
     // DOC_FILES가 비어있으면 기존 청크 건드리지 않음
 
@@ -6340,14 +6355,21 @@ function doLogin(){
     // 단계별로 불러오기 - 순서 명확하게
     var result = {};
 
-    // 1단계: main + tax_main 동시 로드
+    // 1단계: main + tax_main + meta 동시 로드
+    // (meta에는 계약서류 청크 개수가 들어있어, 아래에서 몇 개를 읽을지 판단하는 데 씀)
     return Promise.all([
       mainRef.get(),
-      db.collection('rental').doc('tax_main').get()
+      db.collection('rental').doc('tax_main').get(),
+      db.collection('rental').doc('meta').get()
     ]).then(function(snaps) {
       if(!snaps[0].exists) throw new Error('main 없음');
       result = snaps[0].data();
       console.log('main 로드 완료, CONTRACTS:', (result.CONTRACTS||[]).length);
+
+      // meta: 계약서류 청크 개수 (없으면 기존대로 20개)
+      if(snaps[2] && snaps[2].exists && snaps[2].data().docChunkCount){
+        window._metaDocChunkCount = parseInt(snaps[2].data().docChunkCount) || 20;
+      }
 
       // tax_main에서 TAX_CLIENTS 로드 (항상 tax_main 우선)
       if(snaps[1].exists) {
@@ -6413,8 +6435,11 @@ function doLogin(){
       console.log('세금계산서 issues 로드 완료, 총:', result.TAX_CLIENTS.length);
       }
       // DOC_FILES 불러오기
+      // [수정] 20개 고정 -> meta에 기록된 실제 청크 수만큼 읽음 (없으면 기존대로 20개)
       var docPromises = [];
-      for(var i=0; i<20; i++){
+      var _docCnt = (window._metaDocChunkCount && window._metaDocChunkCount > 20)
+        ? window._metaDocChunkCount : 20;
+      for(var i=0; i<_docCnt; i++){
         docPromises.push(db.collection('rental').doc('doc_chunk_'+String(i).padStart(2,'0')).get());
       }
       return Promise.all(docPromises).then(function(docSnaps){
