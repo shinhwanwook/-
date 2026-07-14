@@ -2429,10 +2429,11 @@ function initOnlinePresence(){
     lastSeen: new Date().toISOString()
   }).catch(function(){});
 
-  // 30초마다 lastSeen 갱신
+  // [개선] 30초 -> 90초 갱신 (활성 판정 기준이 120초이므로 90초면 여유 있게 안전)
+  //  Firebase 쓰기/읽기 각각 3배 절감
   _onlineInterval = setInterval(function(){
     userRef.update({ lastSeen: new Date().toISOString() }).catch(function(){});
-  }, 30000);
+  }, 90000);
 
   // 실시간 접속자 목록 구독
   _onlineUnsubscribe = db.collection('rental_online').onSnapshot(function(snap){
@@ -6281,6 +6282,14 @@ function doLogin(){
 
     var promises = [mainRef.set(mainData)];  // main은 항상 저장 (savedAt이 매번 바뀜)
 
+    // [개선] 변경감지용 meta 문서(~100byte)에도 savedAt 기록
+    //  기존: 다른 PC의 저장 여부를 확인하려고 30초마다 main(462KB) 전체를 내려받음
+    //  개선: 작은 meta 문서만 폴링 -> 대역폭 4,600배 절감
+    promises.push(db.collection('rental').doc('meta').set({
+      savedAt: mainData.savedAt,
+      savedBy: mainData.savedBy
+    }));
+
     Object.keys(payChunks).forEach(function(key) {
       var id = 'pay_' + key;
       var body = JSON.stringify(payChunks[key]);
@@ -6374,8 +6383,19 @@ function doLogin(){
       console.log('입금 청크 로드 완료');
 
       // 3단계: 세금계산서 issues 청크 로드
+      // [수정] 기존에는 9개로 하드코딩되어 있었음.
+      //   청크 계산식이 Math.floor((seq-1)/30)+1 이므로 seq 271부터는 청크 10이 필요한데
+      //   로드에서 9까지만 읽어 -> 저장은 되지만 화면에 안 나오는 데이터 손실이 발생.
+      //   입금(pay) 청크처럼 최대 seq 기준으로 동적 계산 + 여유분 확보.
       var taxPromises = [];
-      for(var i = 1; i <= 9; i++) {
+      // result.TAX_CLIENTS = 방금 tax_main에서 읽어온 실제 데이터
+      // (전역 TAX_CLIENTS는 아직 초기 시드값이므로 절대 쓰면 안 됨)
+      var _tcs = (result && result.TAX_CLIENTS) ? result.TAX_CLIENTS : [];
+      var maxSeq = _tcs.length
+        ? Math.max.apply(null, _tcs.map(function(t){ return parseInt(t.seq)||1; }))
+        : 1;
+      var maxTaxChunk = Math.max(9, Math.floor((maxSeq-1)/30) + 3); // 여유 3청크
+      for(var i = 1; i <= maxTaxChunk; i++) {
         taxPromises.push(db.collection('rental').doc('tax_issues_' + String(i).padStart(2,'0')).get());
       }
       return Promise.all(taxPromises);
@@ -6424,7 +6444,9 @@ function doLogin(){
   var lastSavedAt = null;
   setInterval(function(){
     if(!window._fbReady || window._isLoading) return;
-    db.collection('rental').doc('main').get().then(function(snap){
+    // [개선] main(462KB) -> meta(~100byte) 폴링으로 변경
+    //  meta가 아직 없으면(첫 저장 전) 조용히 넘어감 -> 다음 저장때 자동 생성됨
+    db.collection('rental').doc('meta').get().then(function(snap){
       if(!snap.exists) return;
       var serverSavedAt = snap.data().savedAt;
       var serverSavedBy = snap.data().savedBy;
@@ -6437,7 +6459,7 @@ function doLogin(){
       }
       lastSavedAt = serverSavedAt;
     }).catch(function(){});
-  }, 30000); // 30초마다 체크
+  }, 60000); // [개선] 30초 -> 60초 (meta 문서로 바꿨고, 호출수도 절감)
   // Firebase에서 계정 로드 후 자동로그인
   window._db.collection('rental').doc('accounts').get()
     .then(function(snap){
