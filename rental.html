@@ -363,6 +363,10 @@ body.locked { overflow:hidden; }
   <div class="nav-tab" id="nav-tab-tax" onclick="showPage('tax')">🧾 세금계산서</div>
   <div style="flex:1"></div>
   <div style="display:flex;align-items:center;gap:8px">
+    <!-- [신규] 다른 PC가 작업 중일 때 빨간 문구로 경고 (저장하기 버튼 바로 옆) -->
+    <span id="editing-now" style="display:none;background:#ef4444;color:#fff;
+          font-size:12px;font-weight:800;padding:5px 10px;border-radius:6px;
+          white-space:nowrap;animation:pulse 1.2s infinite"></span>
     <button id="manual-save-btn" onclick="manualSave()"
       style="background:#3b82f6;color:#fff;border:none;border-radius:6px;
              padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;
@@ -2397,6 +2401,9 @@ function updateOnlineUI(users){
   var othersEditing=users.filter(function(u){
     return u.id!==_currentUserId && u.editing===true;
   });
+  // [신규] 다른 PC의 편집 상태를 전역에 보관 -> 내가 작업 시작하기 전에 경고할 때 사용
+  window._othersEditing = othersEditing.map(function(u){ return u.id; });
+  _renderEditingBanner();
   var btn=document.getElementById('manual-save-btn');
   if(btn){
     if(_hasUnsaved){
@@ -2569,6 +2576,19 @@ function resetAutoLogout(){
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
   _autoLogoutTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
+      // [수정] 미저장 변경사항이 있으면 먼저 클라우드에 저장하고 로그아웃
+      //   기존에는 경고 없이 로그아웃 -> 재로그인시 Firebase에서 로드 -> 입력 내용 소실
+      if(_hasUnsaved && window._fbReady && window._fbSave){
+        showSaveStatus('⏳ 자동 로그아웃 전 저장 중...', '#93c5fd');
+        saveToApi(function(ok){
+          _hasUnsaved = !ok;
+          alert(ok
+            ? '10분 동안 활동이 없어 자동 로그아웃 됩니다.\n(변경사항은 저장되었습니다)'
+            : '10분 동안 활동이 없어 자동 로그아웃 됩니다.\n⚠ 저장에 실패했습니다. 다시 로그인 후 확인해 주세요.');
+          adminLogout();
+        });
+        return;
+      }
       alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
       adminLogout();
     }
@@ -3322,7 +3342,17 @@ function deleteDoc(id){
 }
 
 // ══ 공통 모달 ══
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){
+  // [신규] 데이터를 입력/수정하는 모달을 열 때, 다른 PC가 작업 중이면 먼저 경고
+  //   (헛수고 방지 - 나중에 저장이 막혀서 처음부터 다시 입력하는 사태를 예방)
+  var EDIT_MODALS = ['svc-modal','pay-modal','extra-modal','tax-modal',
+                     'tax-client-modal','pay-memo-modal','rent-memo-modal',
+                     'tax-memo-modal','doc-modal'];
+  if(EDIT_MODALS.indexOf(id) >= 0 && typeof confirmEditWhileOthers === 'function'){
+    if(!confirmEditWhileOthers()) return;   // 사용자가 '아니오' -> 모달 안 엶
+  }
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showConfirm(msg,cb,btnLabel,isGreen){
   document.getElementById('conf-msg').textContent=msg;
@@ -3429,38 +3459,50 @@ function saveToLocal() {
 function broadcastEditState(editing) {
   if(!window._db || !_currentUserId) return;
   try {
-    window._db.collection('rental_online').doc(_currentUserId).update({
+    // [수정] update() -> set(merge)
+    //   update()는 문서가 없으면 조용히 실패함. 접속자 문서가 정리됐거나 아직
+    //   만들어지기 전이면 "작업중" 신호가 전달되지 않아 표시등이 안 켜짐.
+    //   set(merge)는 문서가 없으면 만들고, 있으면 해당 필드만 갱신하므로 항상 전달됨.
+    window._db.collection('rental_online').doc(_currentUserId).set({
+      id: _currentUserId,
+      role: window.isAdmin ? '관리자' : '사용자',
       editing: editing,
-      editAt: editing ? new Date().toISOString() : null
-    }).catch(function(){});
+      editAt: editing ? new Date().toISOString() : null,
+      lastSeen: new Date().toISOString()
+    }, { merge: true }).catch(function(){});
   } catch(e) {}
 }
 
+// ═══════════════════════════════════════════════════════════════
+// [신규] 덮어쓰기 방지 (Stale-Write Guard)
+//
+//  문제: 저장은 main 문서를 통째로 덮어쓰는 방식이라,
+//        PC-A가 저장한 뒤 PC-B가 (예전 데이터를 들고) 저장하면
+//        A의 작업이 통째로 사라짐. 지금까지는 사람이 눈치껏 피해왔음.
+//
+//  해결: 저장 직전에 서버의 savedAt을 확인.
+//        내가 불러온 이후 다른 사람이 저장했다면 -> 저장을 막고 새로고침 안내.
+//        (내 화면의 입력 내용은 localStorage에 그대로 남아있음)
+// ═══════════════════════════════════════════════════════════════
+window._baseSavedAt = null;   // 내가 불러왔거나 마지막으로 저장한 시점
+
+function _guardStaleWrite(){
+  // 서버의 최신 savedAt을 확인해서, 다른 사람이 먼저 저장했는지 판단
+  return window._db.collection('rental').doc('meta').get().then(function(snap){
+    if(!snap.exists) return { ok:true };                 // meta 없음(최초) -> 통과
+    var srvAt = snap.data().savedAt;
+    var srvBy = snap.data().savedBy;
+    if(!window._baseSavedAt) return { ok:true };          // 기준값 없음 -> 통과
+    if(srvAt && srvAt !== window._baseSavedAt && srvBy !== (window._currentUserId||_currentUserId)){
+      return { ok:false, by: srvBy, at: srvAt };          // 다른 사람이 먼저 저장함!
+    }
+    return { ok:true };
+  }).catch(function(){ return { ok:true }; });            // 확인 실패시엔 막지 않음
+}
+
 function saveToApi(callback) {
-  var data = collectData();
-  // Firebase 저장
-  if (window._fbReady && window._fbSave) {
-    window._isSaving = true; // 저장 진행 중 플래그
-    showSaveStatus('⏳ 저장 중...', '#93c5fd');
-    var plain = JSON.parse(JSON.stringify(data));
-    window._fbSave(plain).then(function(ok) {
-      window._isSaving = false;
-      window._saveRetryCount = 0;
-      if (ok) {
-        showSaveStatus('☁ 클라우드 저장됨', '#86efac');
-        if(callback) callback(true);
-      } else {
-        showSaveStatus('⚠ 저장 실패', '#fbbf24');
-        if(callback) callback(false);
-      }
-    }).catch(function(e){
-      window._isSaving = false;
-      console.error('saveToApi 오류:', e);
-      showSaveStatus('⚠ 저장 오류', '#fbbf24');
-      if(callback) callback(false);
-    });
-  } else {
-    // Firebase 준비중 - 잠시 후 재시도 (최대 10초)
+  // Firebase 준비 안 됐으면 잠시 후 재시도 (최대 10초)
+  if (!(window._fbReady && window._fbSave)) {
     if(!window._saveRetryCount) window._saveRetryCount = 0;
     window._saveRetryCount++;
     if(window._saveRetryCount > 10){
@@ -3470,7 +3512,50 @@ function saveToApi(callback) {
       return;
     }
     setTimeout(function(){ saveToApi(callback); }, 1000);
+    return;
   }
+
+  var data  = collectData();
+  var plain = JSON.parse(JSON.stringify(data));
+  window._isSaving = true;
+  showSaveStatus('⏳ 저장 중...', '#93c5fd');
+
+  // [신규] 저장 직전 덮어쓰기 검사 -> 다른 PC가 먼저 저장했으면 중단
+  _guardStaleWrite().then(function(g){
+    if(!g.ok){
+      window._isSaving = false;
+      showSaveStatus('⛔ 저장 차단됨 - 새로고침 필요', '#ef4444');
+      alert(
+        '⛔ 저장할 수 없습니다.\n\n' +
+        '이 화면을 불러온 뒤에 다른 PC(' + (g.by || '?') + ')가 먼저 저장했습니다.\n' +
+        '지금 저장하면 그 작업이 통째로 지워집니다.\n\n' +
+        '👉 방금 입력하신 내용은 이 PC 화면에 그대로 남아 있습니다.\n' +
+        '   내용을 메모해 두신 뒤 새로고침(F5) 하고 다시 입력해 주세요.'
+      );
+      if(callback) callback(false);
+      return;
+    }
+
+    return window._fbSave(plain).then(function(ok){
+      window._isSaving = false;
+      window._saveRetryCount = 0;
+      if (ok) {
+        window._baseSavedAt = plain.savedAt || window._baseSavedAt;  // 내 기준시각 갱신
+        _editWarnShown = false;                                        // 경고 상태 초기화
+        if(typeof _renderEditingBanner === 'function') _renderEditingBanner();
+        showSaveStatus('☁ 클라우드 저장됨', '#86efac');
+        if(callback) callback(true);
+      } else {
+        showSaveStatus('⚠ 저장 실패', '#fbbf24');
+        if(callback) callback(false);
+      }
+    });
+  }).catch(function(e){
+    window._isSaving = false;
+    console.error('saveToApi 오류:', e);
+    showSaveStatus('⚠ 저장 오류', '#fbbf24');
+    if(callback) callback(false);
+  });
 }
 
 // ── 자동저장 (로컬만 - Firebase는 수동저장 버튼으로) ──
@@ -3498,8 +3583,150 @@ function autoSave() {
 }
 
 // 미저장 상태 표시
+// ═══════════════════════════════════════════════════════════════
+// [신규] 클라우드 자동 저장
+//
+//  문제: 방문/AS·입금 등을 입력해도 localStorage에만 저장되고 Firebase에는
+//        [저장하기] 버튼을 눌러야만 올라갔음. 직원이 버튼을 안 누른 채
+//        10분 자동 로그아웃 -> 재로그인 -> Firebase에서 로드 -> 입력한 내용 소실.
+//        ("입력했는데 없어졌다"의 진짜 원인)
+//
+//  해결: 변경이 생기면 3초 뒤 자동으로 Firebase에도 올림.
+//        저장 1회에 58개 문서를 쓰던 것을 1~3개로 줄여놨기 때문에 부담이 없음.
+//        [저장하기] 버튼은 그대로 유지 (즉시 저장하고 싶을 때 사용).
+// ═══════════════════════════════════════════════════════════════
+// ┌─────────────────────────────────────────────────────────────┐
+// │  ⚙ 클라우드 자동저장 설정 — 필요하면 여기 두 줄만 바꾸세요       │
+// │                                                             │
+// │  AUTO_CLOUD_SAVE = true   -> 변경 후 자동으로 클라우드 저장     │
+// │                   false  -> 예전처럼 [저장하기] 버튼으로만 저장  │
+// │                                                             │
+// │  AUTO_CLOUD_DELAY = 3000  -> 마지막 변경 후 3초 뒤 저장         │
+// │             10000으로 늘리면 10초간 모았다가 한 번에 저장        │
+// │                                                             │
+// │  * 저장 1회당 Firebase 쓰기 = 2~3건 (예전 58건에서 대폭 감소)   │
+// │    하루 500건을 입력해도 무료한도의 7.5% 수준                  │
+// └─────────────────────────────────────────────────────────────┘
+var AUTO_CLOUD_SAVE  = false;   // 기존 방식(모아서 수동저장) 유지. true로 켜면 자동저장
+var AUTO_CLOUD_DELAY = 3000;
+
+var _cloudTimer = null;
+function autoSaveCloud(){
+  if(!AUTO_CLOUD_SAVE) return;   // 꺼져 있으면 예전 방식(수동저장)대로 동작
+  if(window._isLoading) return;
+  clearTimeout(_cloudTimer);
+  _cloudTimer = setTimeout(function(){
+    if(window._isLoading || window._isSaving) {
+      // 다른 저장이 진행 중이면 잠시 후 재시도 (놓치지 않도록)
+      autoSaveCloud();
+      return;
+    }
+    if(!_hasUnsaved) return;              // 저장할 게 없으면 통과
+    if(!window._fbReady || !window._fbSave) return;  // 오프라인이면 로컬만 유지
+
+    saveToApi(function(ok){
+      var btn = document.getElementById('manual-save-btn');
+      if(ok){
+        // manualSave()가 성공시 하는 정리를 동일하게 수행
+        _hasUnsaved = false;
+        if(typeof broadcastEditState === 'function') broadcastEditState(false);
+        if(btn){
+          btn.disabled = false;
+          btn.style.animation = '';
+          btn.style.background = '#3b82f6';
+          btn.style.color = '#fff';
+          btn.textContent = '💾 저장하기';
+        }
+        showSaveStatus('☁ 자동 저장됨', '#86efac');
+      } else {
+        // 실패해도 _hasUnsaved는 true로 유지 -> 버튼이 계속 빨갛고, 다음 변경/수동저장때 재시도
+        console.warn('클라우드 자동저장 실패 - 로컬에는 보존됨. [저장하기] 버튼으로 재시도하세요.');
+        if(btn){
+          btn.disabled = false;
+          btn.style.background = '#ef4444';
+          btn.textContent = '💾 저장하기 *';
+        }
+        // 20초 뒤 자동 재시도
+        setTimeout(autoSaveCloud, 20000);
+      }
+    });
+  }, AUTO_CLOUD_DELAY);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// [신규] 동시 작업 사고 예방
+//
+//  구조상 저장은 main 문서를 통째로 덮어씀. 그래서 A가 저장한 뒤
+//  B가 (예전 데이터를 들고) 저장하면 A의 작업이 통째로 사라짐.
+//  saveToApi의 가드가 이를 [차단]하지만, 그때는 이미 B가 입력을 다 한 뒤라
+//  B는 새로고침하고 처음부터 다시 입력해야 함 = 헛수고.
+//
+//  그래서 B가 [작업을 시작하기 전에] 경고해서 헛수고를 막는다.
+// ═══════════════════════════════════════════════════════════════
+function _renderEditingBanner(){
+  var others = window._othersEditing || [];
+
+  // [신규] 저장하기 버튼 옆 표시등 — 누가 작업 중인지 항상 보이게
+  var tag = document.getElementById('editing-now');
+  if(tag){
+    if(others.length){
+      tag.textContent = '🔴 ' + others.join(', ') + ' 작업중';
+      tag.style.display = 'inline-block';
+    } else {
+      tag.style.display = 'none';
+    }
+  }
+
+  var el = document.getElementById('editing-banner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'editing-banner';
+    el.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:9999;'
+      + 'background:#f59e0b;color:#fff;font-weight:700;text-align:center;'
+      + 'padding:8px 12px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+    document.body.appendChild(el);
+  }
+  if(others.length && !_hasUnsaved){
+    el.textContent = '✏️ 지금 ' + others.join(', ') + '님이 작업 중입니다 — 저장이 끝날 때까지 입력을 미뤄주세요';
+    el.style.display = 'block';
+  } else if(others.length && _hasUnsaved){
+    el.style.background = '#ef4444';
+    el.textContent = '⚠️ ' + others.join(', ') + '님도 작업 중입니다 — 먼저 저장하는 쪽이 우선입니다. 서둘러 저장하세요!';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+    el.style.background = '#f59e0b';
+  }
+}
+
+// 입력을 시작하기 전에 호출 -> 다른 PC가 작업 중이면 확인받음
+var _editWarnShown = false;
+function confirmEditWhileOthers(){
+  var others = window._othersEditing || [];
+  if(!others.length) return true;          // 아무도 작업 안 함 -> 그냥 진행
+  if(_hasUnsaved) return true;             // 나도 이미 작업 중 -> 계속 진행
+  if(_editWarnShown) return true;          // 이미 경고 봤으면 반복하지 않음
+  var go = confirm(
+    '⚠️ 지금 ' + others.join(', ') + '님이 작업 중입니다.\n\n' +
+    '지금 입력하시면, 상대방이 먼저 저장할 경우\n' +
+    '내 저장이 막히고 처음부터 다시 입력해야 할 수 있습니다.\n\n' +
+    '👉 상대방의 저장이 끝난 뒤(주황 표시가 사라진 뒤)\n' +
+    '   새로고침(F5)하고 입력하시는 것을 권합니다.\n\n' +
+    '그래도 지금 입력하시겠습니까?'
+  );
+  if(go) _editWarnShown = true;
+  return go;
+}
+
 function markUnsaved() {
+  var wasClean = !_hasUnsaved;
   _hasUnsaved = true;
+  // [수정] 미저장 상태가 되는 순간 다른 PC에 "편집 중" 신호를 보냄.
+  //   기존에는 broadcastEditState(true)를 어디서도 호출하지 않아
+  //   "✏️ OO 편집 중" 주황불이 실제로는 한 번도 뜬 적이 없었음.
+  if(wasClean && typeof broadcastEditState === 'function') broadcastEditState(true);
+  _renderEditingBanner();
+  autoSaveCloud();   // AUTO_CLOUD_SAVE가 true일 때만 동작
   var btn = document.getElementById('manual-save-btn');
   if(btn){
     btn.style.background = '#ef4444';
@@ -6370,6 +6597,11 @@ function doLogin(){
       if(snaps[2] && snaps[2].exists && snaps[2].data().docChunkCount){
         window._metaDocChunkCount = parseInt(snaps[2].data().docChunkCount) || 20;
       }
+
+      // [신규] 덮어쓰기 방지용 기준시각 = 내가 불러온 데이터의 savedAt
+      //   이후 저장할 때 서버의 savedAt과 비교해, 그 사이 다른 PC가 저장했으면 차단함.
+      window._baseSavedAt = result.savedAt || null;
+      console.log('기준 저장시각:', window._baseSavedAt);
 
       // tax_main에서 TAX_CLIENTS 로드 (항상 tax_main 우선)
       if(snaps[1].exists) {
