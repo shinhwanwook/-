@@ -3485,6 +3485,93 @@ function broadcastEditState(editing) {
 //        (내 화면의 입력 내용은 localStorage에 그대로 남아있음)
 // ═══════════════════════════════════════════════════════════════
 window._baseSavedAt = null;   // 내가 불러왔거나 마지막으로 저장한 시점
+window._baseSnapshot = null;  // 내가 불러온 시점의 데이터 원본 (병합 기준)
+
+// ═══════════════════════════════════════════════════════════════
+// [신규] 3-way 자동 병합
+//
+//  목적: 다른 PC가 먼저 저장했어도 새로고침 없이 그대로 저장할 수 있게.
+//
+//  원리: BASE(내가 불러온 원본) / MINE(내 화면) / SRV(서버 최신) 세 개를 비교해서
+//        "내가 바꾼 것"만 정확히 골라내어 서버 최신본 위에 얹는다.
+//        -> 내가 안 건드린 부분은 서버(=남의 작업)가 그대로 살아남는다.
+//
+//  처리하는 난제:
+//   1) 같은 거래처의 다른 달 입금 -> payments를 [월 단위]로 병합
+//   2) 새 레코드 번호 충돌       -> 내 것에 새 번호를 재부여
+//   3) 삭제 구분                 -> BASE와 비교해 "내가 지운 것"만 삭제
+// ═══════════════════════════════════════════════════════════════
+function _mEq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+function _mIdx(arr,key){
+  var m={};
+  (arr||[]).forEach(function(x){ if(x && x[key]!=null) m[String(x[key])]=x; });
+  return m;
+}
+function _mMergeObj(base,mine,srv){
+  base=base||{}; mine=mine||{}; srv=srv||{};
+  var out=Object.assign({},srv);
+  Object.keys(mine).forEach(function(k){ if(!_mEq(base[k],mine[k])) out[k]=mine[k]; });
+  Object.keys(base).forEach(function(k){ if(!(k in mine)) delete out[k]; });
+  return out;
+}
+var _MERGE_SPEC = [
+  { name:'CONTRACTS',   key:'no',  deep:['payments'] },
+  { name:'SERVICES',    key:'id',  deep:[] },
+  { name:'EXTRA_PAYS',  key:'id',  deep:[] },
+  { name:'INVENTORY',   key:'id',  deep:[] },
+  { name:'STAFF_LIST',  key:'id',  deep:[] },
+  { name:'TAX_CLIENTS', key:'seq', deep:['issues'] }
+];
+function merge3(base, mine, srv){
+  var out={}, notes=[];
+  _MERGE_SPEC.forEach(function(spec){
+    var KEY=spec.key;
+    var B=_mIdx(base[spec.name],KEY), M=_mIdx(mine[spec.name],KEY), S=_mIdx(srv[spec.name],KEY);
+    var res={};
+    Object.keys(S).forEach(function(id){ res[id]=S[id]; });   // 서버 것부터 (남의 작업 보존)
+    var maxId=0;
+    [B,M,S].forEach(function(mp){ Object.keys(mp).forEach(function(id){
+      var n=parseInt(id); if(!isNaN(n)&&n>maxId) maxId=n;
+    });});
+    Object.keys(M).forEach(function(id){
+      var bRec=B[id], mRec=M[id], sRec=S[id];
+      if(!bRec){                                   // 내가 새로 추가
+        if(sRec && !_mEq(sRec,mRec)){              // 번호 충돌 -> 새 번호 재부여
+          var newId=++maxId;
+          var copy=JSON.parse(JSON.stringify(mRec));
+          copy[KEY]=newId;
+          res[String(newId)]=copy;
+          notes.push(spec.name+' 번호충돌 '+id+'→'+newId);
+        } else { res[id]=mRec; }
+        return;
+      }
+      if(_mEq(bRec,mRec)) return;                  // 내가 안 건드림 -> 서버 것 유지
+      if(!sRec){ res[id]=mRec; return; }           // 남이 지웠지만 내 수정본 보존
+      var merged=Object.assign({},sRec);           // 필드 단위 병합
+      Object.keys(mRec).forEach(function(f){
+        if(spec.deep.indexOf(f)>=0) return;
+        if(!_mEq(bRec[f],mRec[f])) merged[f]=mRec[f];
+      });
+      spec.deep.forEach(function(f){               // payments/issues 는 키 단위 병합
+        merged[f]=_mMergeObj(bRec[f], mRec[f], sRec[f]);
+      });
+      res[id]=merged;
+    });
+    Object.keys(B).forEach(function(id){           // 내가 지운 것만 삭제
+      if(!(id in M)){ delete res[id]; notes.push(spec.name+' #'+id+' 삭제'); }
+    });
+    out[spec.name]=Object.keys(res).map(function(k){ return res[k]; });
+  });
+  out.CONFIG=Object.assign({}, srv.CONFIG||{}, mine.CONFIG||{});
+  ['nextNo','nextSvcId','nextExtraId','nextInvId','nextStaffId','nextTaxSeq','nextDocId'].forEach(function(k){
+    var a=parseInt((mine.CONFIG||{})[k])||0, b=parseInt((srv.CONFIG||{})[k])||0;
+    out.CONFIG[k]=String(Math.max(a,b));
+  });
+  out.version=mine.version;
+  out.savedAt=mine.savedAt;
+  out.savedBy=mine.savedBy;
+  return {data:out, notes:notes};
+}
 
 function _guardStaleWrite(){
   // 서버의 최신 savedAt을 확인해서, 다른 사람이 먼저 저장했는지 판단
@@ -3501,7 +3588,6 @@ function _guardStaleWrite(){
 }
 
 function saveToApi(callback) {
-  // Firebase 준비 안 됐으면 잠시 후 재시도 (최대 10초)
   if (!(window._fbReady && window._fbSave)) {
     if(!window._saveRetryCount) window._saveRetryCount = 0;
     window._saveRetryCount++;
@@ -3515,45 +3601,77 @@ function saveToApi(callback) {
     return;
   }
 
-  var data  = collectData();
-  var plain = JSON.parse(JSON.stringify(data));
+  var mine = JSON.parse(JSON.stringify(collectData()));
+  mine.savedBy = (typeof _currentUserId !== 'undefined' ? _currentUserId : 'unknown');
   window._isSaving = true;
   showSaveStatus('⏳ 저장 중...', '#93c5fd');
 
-  // [신규] 저장 직전 덮어쓰기 검사 -> 다른 PC가 먼저 저장했으면 중단
-  _guardStaleWrite().then(function(g){
-    if(!g.ok){
-      window._isSaving = false;
-      showSaveStatus('⛔ 저장 차단됨 - 새로고침 필요', '#ef4444');
-      alert(
-        '⛔ 저장할 수 없습니다.\n\n' +
-        '이 화면을 불러온 뒤에 다른 PC(' + (g.by || '?') + ')가 먼저 저장했습니다.\n' +
-        '지금 저장하면 그 작업이 통째로 지워집니다.\n\n' +
-        '👉 방금 입력하신 내용은 이 PC 화면에 그대로 남아 있습니다.\n' +
-        '   내용을 메모해 두신 뒤 새로고침(F5) 하고 다시 입력해 주세요.'
-      );
-      if(callback) callback(false);
-      return;
+  // ── 저장 직전: 서버가 그새 바뀌었는지 확인 ──
+  window._db.collection('rental').doc('meta').get().then(function(snap){
+    var srvAt = snap.exists ? snap.data().savedAt : null;
+    var srvBy = snap.exists ? snap.data().savedBy : null;
+    var me    = mine.savedBy;
+
+    var changedByOther = srvAt && window._baseSavedAt
+                       && srvAt !== window._baseSavedAt && srvBy !== me;
+
+    if(!changedByOther){
+      return window._fbSave(mine).then(function(ok){ return {ok:ok, merged:false}; });
     }
 
-    return window._fbSave(plain).then(function(ok){
-      window._isSaving = false;
-      window._saveRetryCount = 0;
-      if (ok) {
-        window._baseSavedAt = plain.savedAt || window._baseSavedAt;  // 내 기준시각 갱신
-        _editWarnShown = false;                                        // 경고 상태 초기화
-        if(typeof _renderEditingBanner === 'function') _renderEditingBanner();
-        showSaveStatus('☁ 클라우드 저장됨', '#86efac');
-        if(callback) callback(true);
-      } else {
-        showSaveStatus('⚠ 저장 실패', '#fbbf24');
-        if(callback) callback(false);
+    // ── 다른 PC가 먼저 저장함 -> 새로고침 없이 자동 병합 ──
+    showSaveStatus('🔀 다른 PC 변경사항과 병합 중...', '#93c5fd');
+    return window._fbLoad().then(function(srv){
+      if(!srv || !window._baseSnapshot){
+        // 기준 스냅샷이 없으면 병합 불가 -> 안전하게 중단
+        throw new Error('MERGE_BASE_MISSING');
       }
+      var r = merge3(window._baseSnapshot, mine, srv);
+      var merged = r.data;
+      merged.savedAt = mine.savedAt;
+      merged.savedBy = me;
+      if(r.notes.length) console.log('병합 처리:', r.notes);
+
+      return window._fbSave(merged).then(function(ok){
+        if(ok){
+          // 병합 결과를 내 화면에도 반영 -> 이제 내 화면 = 서버 = 최신
+          applyRestoredData(JSON.parse(JSON.stringify(merged)));
+          applyFilters(); renderList();
+          if(typeof renderPayment==='function') renderPayment();
+          if(typeof renderService==='function') renderService();
+          if(typeof renderTax==='function') renderTax();
+        }
+        return {ok:ok, merged:true, by:srvBy, notes:r.notes};
+      });
     });
+
+  }).then(function(r){
+    window._isSaving = false;
+    window._saveRetryCount = 0;
+    if (r && r.ok) {
+      window._baseSavedAt  = mine.savedAt;
+      window._baseSnapshot = JSON.parse(JSON.stringify(collectData()));  // 새 기준점
+      _editWarnShown = false;
+      if(r.merged){
+        showSaveStatus('🔀 병합 저장됨 (' + (r.by||'다른PC') + '의 작업 포함)', '#86efac');
+      } else {
+        showSaveStatus('☁ 클라우드 저장됨', '#86efac');
+      }
+      if(callback) callback(true);
+    } else {
+      showSaveStatus('⚠ 저장 실패', '#fbbf24');
+      if(callback) callback(false);
+    }
   }).catch(function(e){
     window._isSaving = false;
     console.error('saveToApi 오류:', e);
-    showSaveStatus('⚠ 저장 오류', '#fbbf24');
+    if(e && e.message === 'MERGE_BASE_MISSING'){
+      showSaveStatus('⚠ 병합 불가 - 새로고침 필요', '#ef4444');
+      alert('저장하려는데 다른 PC가 먼저 저장했고, 병합 기준을 찾을 수 없습니다.\n\n' +
+            '입력하신 내용을 메모해 두시고 새로고침(F5) 후 다시 입력해 주세요.');
+    } else {
+      showSaveStatus('⚠ 저장 오류', '#fbbf24');
+    }
     if(callback) callback(false);
   });
 }
@@ -3899,6 +4017,15 @@ function loadFromApi(callback) {
       try {
         setLoadingProgress(80, '데이터 적용 중...');
         applyRestoredData(data);
+
+        // [신규] 병합 기준점 = 방금 불러온 데이터 그대로의 복사본.
+        //   나중에 저장할 때 "이 시점 대비 내가 무엇을 바꿨는지"를 계산하는 데 씀.
+        //   반드시 applyRestoredData 직후(= 사용자가 손대기 전)에 떠야 정확함.
+        window._baseSnapshot = JSON.parse(JSON.stringify(collectData()));
+        console.log('병합 기준점 확보: 거래처',
+          (window._baseSnapshot.CONTRACTS||[]).length + '건, AS',
+          (window._baseSnapshot.SERVICES||[]).length + '건');
+
         setLoadingProgress(90, '화면 구성 중...');
         // 렌더링을 setTimeout으로 분산 - UI 멈춤 방지
         setTimeout(function(){
