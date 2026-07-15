@@ -139,10 +139,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .guide-search-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px}
 .guide-search-item:hover{background:#eff6ff}
 @media(max-width:768px){
-  .nav{padding:0 8px}
-  .nav-logo{font-size:14px;margin-right:6px}
+  .nav{padding:4px;gap:0;height:auto;min-height:auto}
+  .nav-logo{font-size:14px;margin-right:6px;padding:6px 4px;width:100%}
   .nav-logo span{display:none}
-  .nav-tab{padding:0 8px;font-size:12px}
+  .nav-tab{padding:0 8px;height:40px;font-size:12px}
 }
 @media(max-width:600px){
   .nav{padding:0 4px}
@@ -151,107 +151,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .nav-tab{padding:0 7px;font-size:11px}
 }
 .nav::-webkit-scrollbar{display:none}
-/* ===== 청구서 (billing) ===== */
-.bill-actions{display:flex;gap:8px;align-items:center;padding:14px 20px;background:var(--gray-bg);border-bottom:1px solid var(--border);flex-wrap:wrap}
-.bill-vat-toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);margin-right:auto}
-.btn-bill{padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit}
-.btn-bill-print{background:var(--blue);color:#fff}
-.btn-bill-ghost{background:#fff;border:1px solid var(--border2);color:var(--text2)}
-.btn-bill-reset{background:#fff;border:1px solid #e0a0a0;color:#a3352d}
-.btn-bill-reset:hover{background:#fbeeed}
-.bill-sheet{background:#fff;padding:36px 40px;max-width:820px;margin:0 auto}
-.bill-edit{cursor:text;border-bottom:1px dashed transparent;padding:0 1px}
-.bill-edit:hover{border-bottom-color:var(--border2)}
-.bill-edit:focus{outline:none;border-bottom-color:var(--blue);background:#fafcff}
-.bill-doc-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid var(--text);padding-bottom:16px;margin-bottom:6px}
-.bill-doc-title{font-size:26px;font-weight:800;letter-spacing:7px;display:flex;align-items:baseline;gap:12px}
-.bill-doc-title small{font-size:13px;font-weight:400;letter-spacing:1px;color:var(--text3)}
-.bill-provider{text-align:right;font-size:12px;color:var(--text3);line-height:1.7}
-.bill-provider b{font-size:15px;color:var(--text);letter-spacing:1px}
-.bill-doc-no{font-size:11px;color:var(--text3);text-align:right;margin:8px 0 22px}
-.bill-party{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin-bottom:22px}
-.bill-field{display:flex;border-bottom:1px solid var(--border);padding:7px 2px;font-size:13px;align-items:baseline}
-.bill-field .bill-lbl{width:78px;color:var(--text3);flex-shrink:0;font-size:12px}
-.bill-field .bill-val{font-weight:600;flex:1}
-.bill-party-full{grid-column:1/3}
-.bill-sec-row{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px}
-.bill-sec-title{font-size:13px;font-weight:700;color:var(--blue);padding-left:9px;border-left:3px solid var(--blue)}
-.bill-terms{background:var(--accent-bg,#eef3fa);border:1px solid #d4e0f0;border-radius:6px;padding:12px 15px;font-size:12.5px;color:#2a3a4f;line-height:1.85}
-.bill-terms b{color:var(--blue)}
-.bill-tbl-wrap{overflow-x:auto}
-.bill-table{width:100%;border-collapse:collapse;font-size:12px}
-.bill-table thead th{background:#f5f5f0;border-top:1.5px solid var(--text);border-bottom:1px solid var(--border2);padding:8px 5px;font-weight:700;text-align:center;white-space:nowrap}
-.bill-table tbody td{border-bottom:1px solid var(--border);padding:8px 5px;text-align:center}
-.bill-table td.bill-dev{text-align:left;font-weight:600}
-.bill-table td.bill-num{text-align:right;font-variant-numeric:tabular-nums}
-.bill-table tr.bill-over{background:#fbeeed}
-.bill-table tr.bill-over td.bill-excess{color:#a3352d;font-weight:700}
-.bill-uinput{width:54px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:right;font-size:12px;font-family:inherit}
-.bill-uinput:focus{outline:none;border-color:var(--blue);background:#fafcff}
-.bill-minput{width:66px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:right;font-size:12px;font-family:inherit;font-variant-numeric:tabular-nums}
-.bill-minput:focus{outline:none;border-color:var(--blue);background:#fafcff}
-.bill-modelinput{width:120px;min-height:30px;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;resize:none;overflow:hidden;line-height:1.3;white-space:pre-wrap;word-break:break-all}
-.bill-modelinput:hover{border-color:var(--border)}
-.bill-modelinput:focus{outline:none;border-color:var(--blue);background:#fafcff}
-.bill-tax{color:#555;font-variant-numeric:tabular-nums}
-.bill-del{background:none;border:none;color:#b94;cursor:pointer;font-size:14px;padding:0 3px}
-.bill-del:hover{color:#a3352d}
-.bill-total-row{display:flex;justify-content:flex-end;align-items:baseline;gap:18px;margin-top:18px;padding-top:16px;border-top:2px solid var(--text)}
-.bill-t-lbl{font-size:14px;font-weight:700}
-.bill-t-amt{font-size:25px;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}
-.bill-t-amt small{font-size:14px;font-weight:600}
-.bill-vat-note{text-align:right;font-size:11px;color:var(--text3);margin-top:4px}
-.bill-foot{margin-top:34px;display:flex;justify-content:space-between;align-items:flex-end}
-.bill-confirm{font-size:12px;color:var(--text3)}
-.bill-sign{text-align:center;font-size:12px}
-.bill-sign-date{color:var(--text3);margin-bottom:18px;cursor:text;border-bottom:1px dashed transparent;display:inline-block;padding:0 2px}
-.bill-sign-date:hover{border-bottom-color:var(--border2)}
-.bill-sign-date:focus{outline:none;border-bottom-color:var(--blue);background:#fafcff}
-.bill-sign-line{border-top:1px solid var(--text);padding-top:6px;width:160px}
-.bill-memo{margin-top:22px;font-size:12px;color:var(--text3);border-top:1px dashed var(--border);padding-top:10px;min-height:36px}
-.bill-memo-lbl{font-weight:700;color:var(--text2)}
-/* ===== 모바일 청구서 (화면에서만, 인쇄엔 영향 없음) ===== */
-@media(max-width:768px){
-  .bill-sheet{padding:18px 14px}
-  .bill-doc-head{flex-direction:row;flex-wrap:wrap;gap:8px;padding-bottom:10px}
-  .bill-doc-title{font-size:19px;letter-spacing:4px}
-  .bill-doc-title small{font-size:11px}
-  .bill-provider{font-size:11px;line-height:1.5}
-  .bill-provider b{font-size:13px}
-  .bill-doc-no{margin:6px 0 14px}
-  .bill-party{grid-template-columns:1fr;gap:0;margin-bottom:14px}
-  .bill-party-full{grid-column:1/2}
-  .bill-field{font-size:12px;padding:6px 2px}
-  .bill-field .bill-lbl{width:64px;font-size:11px}
-  .bill-table{font-size:11px}
-  .bill-table thead th{padding:6px 3px}
-  .bill-table tbody td{padding:6px 3px}
-  .bill-t-amt{font-size:20px}
-  .bill-terms{font-size:11.5px;padding:10px 12px}
-  .bill-actions{padding:10px 12px;gap:6px}
-  .btn-bill{padding:7px 10px;font-size:12px}
-}
-@media print{
-  body * { visibility:hidden; }
-  #bill-sheet, #bill-sheet * { visibility:visible; }
-  #bill-sheet{position:absolute;left:0;top:0;width:100%;padding:20px 24px;max-width:100%}
-  .bill-uinput,.bill-minput,.bill-modelinput{border:none;background:transparent;padding:0}
-  /* 인쇄 시 단가/숫자 셀 줄바꿈 방지 */
-  .bill-table td, .bill-table th{white-space:nowrap}
-  .bill-table td.bill-dev{white-space:normal}
-  .bill-uinput{width:auto !important;min-width:24px;max-width:46px;text-align:right}
-  .bill-minput{width:auto !important;min-width:40px;max-width:62px}
-  .bill-modelinput{width:100% !important}
-  /* 삭제 버튼만 숨김 (칸은 유지해 rowspan 구조 보존) */
-  .bill-del{display:none}
-  @page{margin:12mm}
-}
-/* ===== 자동완성 드롭다운 ===== */
-.ac-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:240px;overflow-y:auto;margin-top:2px}
-.ac-item{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ac-item:last-child{border-bottom:none}
-.ac-item:hover,.ac-item.ac-active{background:#eff6ff;color:var(--blue)}
-.ac-item b{color:var(--blue)}
 </style>
 </head>
 <body>
@@ -267,28 +166,19 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div id="login-box">
     <div class="logo">🖨️</div>
     <h2>프린터 모니터링</h2>
-    <p id="login-msg">아이디와 비밀번호를 입력하세요</p>
-    <div id="login-fields">
+    <p>아이디와 비밀번호를 입력하세요</p>
     <input type="text" id="login-id" placeholder="아이디"
       onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
     <input type="password" id="login-pw" placeholder="비밀번호"
       onkeydown="if(event.key==='Enter')doLogin()">
+    <div style="display:flex;align-items:center;gap:6px;margin:4px 0 10px;font-size:13px;color:#555">
+      <input type="checkbox" id="auto-login-chk" checked style="width:15px;height:15px;cursor:pointer">
+      <label for="auto-login-chk" style="cursor:pointer;user-select:none">자동 로그인</label>
+    </div>
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-err" id="login-err">아이디 또는 비밀번호가 틀립니다.</div>
-    </div>
   </div>
 </div>
-<script>
-// 자동로그인 토큰(?auth=)이 있으면 로그인 입력칸 숨기고 "로그인 중" 표시 (깜빡임 방지)
-(function(){
-  try{
-    if(new URLSearchParams(location.search).get('auth')){
-      var f=document.getElementById('login-fields'); if(f) f.style.display='none';
-      var m=document.getElementById('login-msg'); if(m) m.textContent='로그인 중입니다...';
-    }
-  }catch(e){}
-})();
-</script>
 
 <!-- ══ 앱 본체 ══ -->
 <div id="app-wrapper" style="display:none">
@@ -299,7 +189,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
-  <div class="nav-tab" onclick="showPage('billing')">💰 청구관리</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
@@ -360,10 +249,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <div style="position:relative;flex:1;min-width:180px">
-        <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDevices();showAutoComplete('dev-srch','dev-ac')" onfocus="showAutoComplete('dev-srch','dev-ac')" autocomplete="off" style="width:100%">
-        <div id="dev-ac" class="ac-dropdown" style="display:none"></div>
-      </div>
+      <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb('dev',renderDevices)">
       <select class="inp" id="dev-filter" onchange="renderDevices()">
         <option value="">전체 상태</option>
         <option value="online">🟢 온라인만</option>
@@ -384,7 +270,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <table>
           <thead>
             <tr>
-              <th>No</th>
               <th>거래처 / 기기명</th>
               <th>IP</th>
               <th>상태</th>
@@ -411,10 +296,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📅 수집 히스토리</span>
     </div>
     <div class="controls">
-      <div style="position:relative;flex:1;min-width:180px">
-        <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="renderHistory();showAutoComplete('hist-srch','hist-ac')" onfocus="showAutoComplete('hist-srch','hist-ac')" autocomplete="off" style="width:100%">
-        <div id="hist-ac" class="ac-dropdown" style="display:none"></div>
-      </div>
+      <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb('hist',renderHistory)" style="flex:1;min-width:180px">
       <select class="inp" id="hist-device" style="min-width:180px" onchange="renderHistory()">
         <option value="">전체 기기</option>
       </select>
@@ -480,11 +362,13 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
       <!-- 거래처 검색 및 다운로드 -->
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px">🖨️ 한 PC에서 수집할 프린터를 모두 추가하세요</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:12px">한 거래처 PC에 장비가 여러 대면, 아래에서 하나씩 검색해 <b>＋추가</b> 한 뒤 배치파일을 받으세요. 한 배치파일에 모두 담깁니다.</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:12px">🖨️ 거래처 선택 후 배치파일 다운로드</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 후 목록에서 ＋추가..."
-            oninput="searchGuideContract()" style="flex:1;min-width:200px">
+          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 후 선택..."
+            oninput="_monDeb('guide',searchGuideContract)" style="flex:1;min-width:200px">
+          <button class="btn btn-primary" onclick="downloadAgentForContract()">
+            ⬇ 배치파일 다운로드
+          </button>
           <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe"
             class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
             target="_blank">
@@ -497,34 +381,20 @@ tbody td{padding:9px 12px;vertical-align:middle}
         </div>
         <!-- 검색 결과 드롭다운 -->
         <div id="guide-search-result" style="display:none;margin-top:8px;border:1px solid #93c5fd;border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
-
-        <!-- 추가된 프린터 목록 (이 PC에 설치할 장비들) -->
-        <div style="margin-top:14px">
-          <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:6px">📦 이 PC에 설치할 프린터 목록</div>
-          <div id="guide-cart" style="border:1px dashed #93c5fd;border-radius:6px;padding:6px;background:#fff;min-height:48px"></div>
-        </div>
-
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="downloadAgentForContract()">
-            ⬇ 배치파일 다운로드 (목록 전체)
-          </button>
-          <button class="btn" onclick="clearGuideCart()" style="background:#e2e8f0;color:#475569;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit">
-            목록 비우기
-          </button>
-        </div>
+        <!-- 선택된 거래처 정보 -->
+        <div id="guide-selected" style="display:none;margin-top:10px;padding:10px;background:#dbeafe;border-radius:6px;font-size:13px"></div>
         <div style="font-size:12px;color:#64748b;margin-top:8px">
           ※ 임대관리에 IP가 등록된 거래처만 표시됩니다
         </div>
       </div>
 
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (3단계)</div>
         <div style="font-size:13px;line-height:2;color:#1e3a5f">
-          <b>1단계.</b> 그 PC에서 수집할 프린터를 <b>모두 ＋추가</b> (장비 여러 대면 다 추가)<br>
-          <b>2단계.</b> "배치파일 다운로드" 클릭 → install.bat + printers.alloy 다운로드<br>
-          <b>3단계.</b> alloy 설치파일 + snmp_modules.yml 포함 4개를 한 폴더에 모아 고객사 PC로 복사<br>
-          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">install.bat</code> 우클릭 → 관리자 권한으로 실행<br>
-          <b>5단계.</b> 약 15~20분 후 모니터링 화면에서 온라인 확인!
+          <b>1단계.</b> 위에서 거래처 검색 후 선택<br>
+          <b>2단계.</b> "배치파일 다운로드" 클릭 → 파일 2개 자동 다운로드<br>
+          <b>3단계.</b> 고객사 PC 바탕화면에 파일 2개 복사<br>
+          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> 더블클릭 → Online: True 확인!
         </div>
       </div>
 
@@ -575,10 +445,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <div style="position:relative;flex:1;min-width:200px">
-        <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="renderDeviceManager();showAutoComplete('device-mgr-srch','dmgr-ac')" onfocus="showAutoComplete('device-mgr-srch','dmgr-ac')" autocomplete="off" style="width:100%">
-        <div id="dmgr-ac" class="ac-dropdown" style="display:none"></div>
-      </div>
+      <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb('devmgr',renderDeviceManager)" style="flex:1;min-width:200px">
       <select class="inp" id="device-mgr-type" onchange="renderDeviceManager()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -591,7 +458,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="">전체 상태</option>
         <option value="online">🟢 온라인</option>
         <option value="offline">🔴 오프라인</option>
-        <option value="archived">⏸ 해지 보기</option>
       </select>
     </div>
     <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
@@ -599,7 +465,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
-            <th>거래처No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
+            <th>No</th><th>거래처명</th><th>기기명</th><th>제조사</th>
             <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>시작(흑백)</th><th>시작(컬러)</th><th>상태</th><th>관리</th>
           </tr>
         </thead>
@@ -616,10 +482,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📈 기간별 사용량 조회</span>
     </div>
     <div class="controls">
-      <div style="position:relative;flex:1;min-width:180px">
-        <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="filterUsageTable();showAutoComplete('usage-srch','usage-ac')" onfocus="showAutoComplete('usage-srch','usage-ac')" autocomplete="off" style="width:100%">
-        <div id="usage-ac" class="ac-dropdown" style="display:none"></div>
-      </div>
+      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb('usage',filterUsageTable)" style="flex:1;min-width:180px">
       <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -651,7 +514,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
-            <th>No</th>
             <th>거래처명</th>
             <th>기기명</th>
             <th style="text-align:right">흑백(시작)</th>
@@ -670,153 +532,27 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </table>
     </div>
   </div>
-</div>
-
-<!-- 청구관리 페이지 -->
-<div class="page" id="page-billing">
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">💰 청구서 작성</span>
-    </div>
-    <div class="controls">
-      <input class="inp inp-search" id="bill-srch" placeholder="🔍 거래처명 검색 후 선택..." oninput="searchBillContract()" style="flex:1;min-width:200px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;width:100%">
-        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:0">
-          <label style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">이전검침</label>
-          <input class="inp" type="date" id="bill-start" style="flex:1;min-width:0;font-size:12px;padding:6px 4px">
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:0">
-          <label style="font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap">현재검침</label>
-          <input class="inp" type="date" id="bill-end" style="flex:1;min-width:0;font-size:12px;padding:6px 4px">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="loadBillFromUsage()">🔄 검침값 자동 불러오기</button>
-    </div>
-    <div id="bill-search-result" style="display:none;margin-top:8px;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
-    <div style="font-size:12px;color:var(--text3);margin-top:8px">
-      ※ 거래처를 선택하고 기간을 정한 뒤 자동 불러오기를 누르면 검침값이 채워집니다. 값은 직접 수정도 가능합니다.
-    </div>
-  </div>
-
-  <!-- 청구서 양식 -->
-  <div class="card" style="padding:0;overflow:hidden">
-    <div class="bill-actions">
-      <label class="bill-vat-toggle">
-        세액 처리
-        <select id="bill-vat-mode" onchange="billCalc()" style="font-family:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;cursor:pointer">
-          <option value="separate">별도</option>
-          <option value="included">포함</option>
-        </select>
-      </label>
-      <button class="btn-bill btn-bill-ghost" onclick="openBillDevicePicker()" title="모니터링에서 수집 중인 장비를 검색해 추가">＋ 기종 자동추가</button>
-      <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 직접 입력">＋ 기종 수동추가</button>
-      <button class="btn-bill btn-bill-ghost" onclick="saveBillHistory()">💾 청구 저장</button>
-      <button class="btn-bill btn-bill-print" onclick="printBill()">🖨 인쇄 / PDF</button>
-      <button class="btn-bill btn-bill-reset" onclick="resetBill()" title="작성 내용을 모두 비우고 새로 시작">↺ 새 청구서</button>
-    </div>
-
-    <div class="bill-sheet" id="bill-sheet">
-      <div class="bill-doc-head">
-        <div class="bill-doc-title">청 구 서 <small>사용료 정산</small></div>
-        <div class="bill-provider">
-          <b contenteditable="true" class="bill-edit">잉크스테이션</b><br>
-          <span contenteditable="true" class="bill-edit">사업자등록번호 122-07-72711</span><br>
-          <span contenteditable="true" class="bill-edit">인천시 부평구 장제로222번길 25</span><br>
-          <span contenteditable="true" class="bill-edit">TEL 080-506-4959 / 010-4785-7190</span>
-        </div>
-      </div>
-      <div class="bill-doc-no">청구번호 <span contenteditable="true" class="bill-edit" id="bill-no">-</span></div>
-
-      <div class="bill-party">
-        <div class="bill-field"><span class="bill-lbl">상호</span><span class="bill-val bill-edit" contenteditable="true" id="bill-name">-</span></div>
-        <div class="bill-field"><span class="bill-lbl">사업자번호</span><span class="bill-val bill-edit" contenteditable="true" id="bill-bizno">-</span></div>
-        <div class="bill-field"><span class="bill-lbl">대표자</span><span class="bill-val bill-edit" contenteditable="true" id="bill-ceo">-</span></div>
-        <div class="bill-field"><span class="bill-lbl">청구기간</span><span class="bill-val bill-edit" contenteditable="true" id="bill-period">-</span></div>
-        <div class="bill-field bill-party-full"><span class="bill-lbl">주소</span><span class="bill-val bill-edit" contenteditable="true" id="bill-addr">-</span></div>
-      </div>
-
-      <div class="bill-sec-row" style="margin-top:24px">
-        <div class="bill-sec-title">계약 조건</div>
-      </div>
-      <div class="bill-terms" id="bill-terms">기종을 추가하면 약정 내역이 표시됩니다.</div>
-
-      <div class="bill-sec-row">
-        <div class="bill-sec-title">출력량 및 추가분 산정</div>
-      </div>
-      <div class="bill-tbl-wrap">
-        <table class="bill-table">
-          <thead>
-            <tr>
-              <th>기종명</th><th>구분</th><th>이전 검침</th><th>현재 검침</th>
-              <th>사용량</th><th>기본제공</th><th>초과분</th><th>단가</th><th>금액</th><th>세액</th><th style="width:24px"></th>
-            </tr>
-          </thead>
-          <tbody id="bill-body"></tbody>
-        </table>
-      </div>
-
-      <div class="bill-total-row">
-        <span class="bill-t-lbl">합계 금액</span>
-        <span class="bill-t-amt" id="bill-total">0<small> 원</small></span>
-      </div>
-      <div class="bill-vat-note" id="bill-vat-note"></div>
-
-      <div class="bill-foot">
-        <div class="bill-confirm">위의 내용으로 청구합니다.</div>
-        <div class="bill-sign">
-          <div class="bill-sign-date" contenteditable="true" id="bill-date">-</div>
-          <div class="bill-sign-line">담당자 &nbsp;&nbsp; (서명 또는 인)</div>
-        </div>
-      </div>
-      <div class="bill-memo"><span class="bill-memo-lbl">기타 사항</span> <span contenteditable="true" class="bill-edit">&nbsp;</span></div>
-    </div>
-  </div>
-
-  <!-- 청구 이력 -->
-  <div class="card" id="bill-history-card">
-    <div class="card-header">
-      <span class="card-title">📋 거래처별 청구 이력</span>
-    </div>
-    <div class="controls" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:12px;font-weight:600;color:var(--text3)">조회 시작</label>
-        <input class="inp" type="date" id="hist-start" style="width:140px">
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:12px;font-weight:600;color:var(--text3)">조회 종료</label>
-        <input class="inp" type="date" id="hist-end" style="width:140px">
-      </div>
-      <button class="btn btn-primary" onclick="loadBillHistory(_billContract?_billContract.name:null)">🔍 기간 조회</button>
-      <button class="btn" onclick="clearHistFilter()" style="background:var(--gray-bg);border:1px solid var(--border);color:var(--text2)">전체 보기</button>
-      <button class="btn" onclick="printHistory()" style="background:var(--gray-bg);border:1px solid var(--border);color:var(--text2)">🖨 이력 출력</button>
-      <button class="btn" onclick="downloadHistoryCsv()" style="background:var(--gray-bg);border:1px solid var(--border);color:var(--text2)">⬇ CSV 다운로드</button>
-    </div>
-    <div id="bill-history-list" style="font-size:13px;color:var(--text3);padding:8px 0">거래처를 선택하면 청구 이력이 표시됩니다.</div>
-  </div>
-
-  <!-- 청구 상세 모달 -->
-  <div class="modal-bg" id="bill-detail-modal">
-    <div class="modal" style="max-width:700px">
-      <div class="modal-header">
-        <span>📄 청구 상세내역</span>
-        <button onclick="closeBillDetail()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
-      </div>
-      <div id="bill-detail-body" style="padding:0"></div>
-    </div>
-  </div>
-
-  <!-- 기종 자동추가 팝업 -->
-  <div class="modal-bg" id="bill-picker-modal">
-    <div class="modal" style="max-width:520px">
-      <div class="modal-header">
-        <span>🖨️ 모니터링 장비에서 추가</span>
-        <button onclick="closeBillDevicePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
-      </div>
-      <div style="padding:16px">
-        <input class="inp" id="bill-picker-srch" placeholder="🔍 거래처명 또는 기기명 검색..." oninput="renderBillDevicePicker()" style="width:100%;margin-bottom:10px">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">추가할 장비를 클릭하세요. 이미 추가된 장비는 표시됩니다.</div>
-        <div id="bill-picker-list" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
-      </div>
+<div class="info-row" id="usage-info"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>거래처명</th>
+            <th>기기명</th>
+            <th style="text-align:right">흑백(시작)</th>
+            <th style="text-align:right">흑백(현재)</th>
+            <th style="text-align:right">흑백약정</th>
+            <th style="text-align:right">흑백사용량</th>
+            <th style="text-align:right">컬러(시작)</th>
+            <th style="text-align:right">컬러(현재)</th>
+            <th style="text-align:right">컬러약정</th>
+            <th style="text-align:right">컬러사용량</th>
+            <th style="text-align:center">상태</th>
+            <th style="text-align:center">상세</th>
+          </tr>
+        </thead>
+        <tbody id="usage-tbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -915,6 +651,27 @@ var FIREBASE_CONFIG = {
 var db = null;
 var _fbReady = false;
 
+// ── 자동로그인 저장 키 ──
+var MON_AUTO_LOGIN_KEY = 'monitor_auto_login_v1';   // 자동진입 토큰
+var MON_REMEMBER_KEY   = 'monitor_remember_v1';     // 아이디/비번 기억 (로그아웃해도 유지)
+
+// 기억된 아이디/비번을 로그인칸에 채움
+function monPrefillRemembered(){
+  try{
+    var r = localStorage.getItem(MON_REMEMBER_KEY);
+    if(!r) return false;
+    var parts = atob(r).split(':');
+    var id = parts[0]; var pw = parts.slice(1).join(':');
+    var idEl=document.getElementById('login-id');
+    var pwEl=document.getElementById('login-pw');
+    var chk =document.getElementById('auto-login-chk');
+    if(idEl) idEl.value=id;
+    if(pwEl) pwEl.value=pw;
+    if(chk)  chk.checked=true;
+    return true;
+  }catch(e){ return false; }
+}
+
 // Firebase 준비될 때까지 대기
 function initFirebase() {
   try {
@@ -935,10 +692,50 @@ function initFirebase() {
 }
 initFirebase();
 
-// 페이지 로드 시: 임대관리에서 넘어온 auth 토큰 있으면 자동 로그인 시도
-window.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){ if(typeof tryAutoLogin==='function') tryAutoLogin(); }, 400);
-});
+// ── 앱 시작: 자동로그인 토큰 있으면 자동 진입, 없으면 기억값만 채움 ──
+function tryAutoLogin(tries){
+  tries = tries || 0;
+  if(!_fbReady || !db){
+    if(tries < 40){ setTimeout(function(){ tryAutoLogin(tries+1); }, 250); return; }
+    // Firebase 연결 실패 -> 그냥 로그인 화면
+    try{ monPrefillRemembered(); }catch(e){}
+    return;
+  }
+  var saved = null;
+  try{ saved = localStorage.getItem(MON_AUTO_LOGIN_KEY); }catch(e){}
+  if(!saved){
+    try{ monPrefillRemembered(); }catch(e){}
+    return;
+  }
+  // 토큰이 있으면 계정 로드 후 자동 로그인
+  loadAccounts(function(){
+    try{
+      var parts = atob(saved).split(':');
+      var id = parts[0]; var pw = parts.slice(1).join(':');
+      var matched = null;
+      var keys = Object.keys(ACCOUNTS);
+      for(var i=0;i<keys.length;i++){
+        var a=ACCOUNTS[keys[i]];
+        if(a.id===id && a.pw===pw){ matched=a; break; }
+      }
+      var hasPerm = matched && (matched.role==='admin' || (matched.permissions && matched.permissions.monitor));
+      if(matched && hasPerm){
+        _currentUser = matched;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-wrapper').style.display  = 'block';
+        applyPermissions();
+        loadAllDevices();
+        startDeviceRefresh();
+        startAutoLogout();
+      } else {
+        // 토큰이 무효(비번변경 등) -> 정리하고 기억값만 채움
+        try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
+        monPrefillRemembered();
+      }
+    }catch(e){ console.log('자동로그인 오류:', e); monPrefillRemembered(); }
+  });
+}
+window.addEventListener('load', function(){ setTimeout(function(){ tryAutoLogin(0); }, 300); });
 
 // ══════════════════════════════════════════
 //  계정 정보 (Firebase 연동)
@@ -1015,56 +812,27 @@ function doLogin(){
         return;
       }
       _currentUser = matched;
+      // 자동로그인 처리 (임대관리와 동일 방식)
+      if(document.getElementById('auto-login-chk') && document.getElementById('auto-login-chk').checked){
+        try{ localStorage.setItem(MON_AUTO_LOGIN_KEY, btoa(id+':'+pw)); }catch(e){}
+        try{ localStorage.setItem(MON_REMEMBER_KEY, btoa(id+':'+pw)); }catch(e){}
+      } else {
+        try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
+        try{ localStorage.removeItem(MON_REMEMBER_KEY); }catch(e){}
+      }
       errEl.style.display = 'none';
-      enterApp();
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-wrapper').style.display  = 'block';
+      applyPermissions();
+      loadAllDevices();
+      startDeviceRefresh();
+      startAutoLogout();
     } else {
       errEl.textContent = '아이디 또는 비밀번호가 틀립니다.';
       errEl.style.display = 'block';
       document.getElementById('login-pw').value = '';
       document.getElementById('login-pw').focus();
     }
-  });
-}
-
-// 로그인 성공 후 앱 진입 (수동/자동 공통)
-function enterApp(){
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-wrapper').style.display  = 'block';
-  applyPermissions();
-  loadAllDevices();
-  setInterval(function(){ loadAllDevices(true); }, 5*60*1000);
-  startAutoLogout();
-}
-
-// 임대관리에서 넘어온 auth 토큰으로 자동 로그인
-function tryAutoLogin(){
-  var params = new URLSearchParams(location.search);
-  var auth = params.get('auth');
-  if(!auth) return;
-  var uid = '';
-  try{
-    var obj = JSON.parse(decodeURIComponent(escape(atob(auth))));
-    uid = obj && obj.u ? obj.u : '';
-    // 토큰 유효시간 10분 제한 (오래된 링크 재사용 방지)
-    if(obj && obj.t && (Date.now() - obj.t > 10*60*1000)) uid = '';
-  }catch(e){ uid=''; }
-  if(!uid) return;
-  // URL에서 토큰 제거 (주소창에 안 남기고 새로고침 시 재시도 방지)
-  try{ history.replaceState(null,'',location.pathname); }catch(e){}
-  loadAccounts(function(){
-    var matched = null;
-    var keys = Object.keys(ACCOUNTS);
-    for(var i=0;i<keys.length;i++){
-      if(ACCOUNTS[keys[i]].id === uid){ matched = ACCOUNTS[keys[i]]; break; }
-    }
-    // 임대관리에서 로그인한 사용자가 넘어온 것이므로, 계정만 확인되면
-    // 관리자/사용자 구분·권한 체크 없이 바로 입장 (모니터링 재로그인 불필요)
-    if(!matched){
-      // 계정 정보를 못 찾아도, 토큰이 유효하면 임시 사용자로 입장
-      matched = { id: uid, role: 'user', permissions: { monitor:true } };
-    }
-    _currentUser = matched;
-    enterApp();
   });
 }
 
@@ -1075,30 +843,43 @@ function applyPermissions(){
 }
 function doLogout(){
   _currentUser = null;
+  // 자동진입 토큰만 제거 (다음 사람 자동진입 방지). 아이디/비번 기억은 유지.
+  try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
   document.getElementById('app-wrapper').style.display  = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-id').value = '';
   document.getElementById('login-pw').value = '';
   document.getElementById('login-err').style.display = 'none';
+  // 기억된 아이디/비번이 있으면 다시 채워줌
+  try{ monPrefillRemembered(); }catch(e){}
 }
 
 // ══════════════════════════════════════
 //  5분 자동 로그아웃
 // ══════════════════════════════════════
 var _autoLogoutTimer = null;
-var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
+var _AUTO_LOGOUT_MS  = 5 * 60 * 1000; // 5분
 
 function resetAutoLogout(){
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
   _autoLogoutTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
-      alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
+      alert('5분 동안 활동이 없어 자동 로그아웃 됩니다.');
       doLogout();
     }
   }, _AUTO_LOGOUT_MS);
 }
 
 // 자동로그아웃은 로그인 성공 후 startAutoLogout() 호출로 시작
+// [신규] 장비 데이터 5분 갱신 (중복 등록 방지)
+var _deviceRefreshTimer = null;
+function startDeviceRefresh(){
+  if(_deviceRefreshTimer) clearInterval(_deviceRefreshTimer);  // 기존 타이머 제거
+  // [개선] 5분 -> 10분 갱신. 수집(서버)이 5분 주기이므로 정보 손실 없이 읽기량 절반.
+  //   여러 직원이 동시에 켜두면 읽기가 합산되므로 여유를 둠. 필요하면 새로고침 버튼으로 즉시 갱신.
+  _deviceRefreshTimer = setInterval(function(){ loadAllDevices(true); }, 10*60*1000);
+}
+
 function startAutoLogout(){
   var events = ['mousemove','mousedown','keydown','touchstart','click','scroll'];
   events.forEach(function(e){
@@ -1115,7 +896,14 @@ var _devices = []; // 현재 기기 목록
 // ══════════════════════════════════════════
 //  유틸
 // ══════════════════════════════════════════
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// [신규] 검색 입력 디바운스 (매 글자마다 전체 렌더 방지)
+var _monDebTimers = {};
+function _monDeb(key, fn, ms){
+  if(_monDebTimers[key]) clearTimeout(_monDebTimers[key]);
+  _monDebTimers[key] = setTimeout(fn, ms||250);
+}
 
 function tonerColor(pct){
   var v = parseInt(pct);
@@ -1152,15 +940,6 @@ function hasTonerWarn(d){
 // ══════════════════════════════════════════
 //  데이터 로드
 // ══════════════════════════════════════════
-
-// 현재 기기(device_)만 읽는 공용 쿼리 - hist_ 히스토리는 읽지 않아 Firebase 읽기량 대폭 감소
-// 문서ID 범위: 'device_' <= id < 'device`' (백틱은 언더스코어 다음 문자라 device_로 시작하는 것만 포함)
-function currentDevicesQuery(){
-  return db.collection('device_status')
-    .where(firebase.firestore.FieldPath.documentId(), '>=', 'device_')
-    .where(firebase.firestore.FieldPath.documentId(), '<', 'device`');
-}
-
 function loadAllDevices(silent){
   // Firebase 준비 안됐으면 대기
   if(!_fbReady || !db){
@@ -1175,12 +954,18 @@ function loadAllDevices(silent){
   var btn = document.getElementById('refresh-btn');
   if(btn) btn.innerHTML = '<span class="spinning">🔄</span> 새로고침';
 
-  // device_ 로 시작하는 문서만 읽기 (hist_ 히스토리는 읽지 않음 → Firebase 읽기량 대폭 감소)
-  currentDevicesQuery()
+  // [개선] 기존에는 device_status 전체(현재상태 + 히스토리 hist_)를 모두 다운로드한 뒤
+  //   코드에서 hist_를 걸러냈음. 히스토리가 쌓이면 읽기량/대역폭이 폭증(수만 문서).
+  //   -> 문서ID 범위 쿼리로 '현재상태(device_)'만 받아옴. 히스토리는 아예 안 받음.
+  //   (Firestore 문서ID 정렬 기준으로 device_ ~ device`￿ 범위)
+  var FieldPath = firebase.firestore.FieldPath;
+  db.collection('device_status')
+    .where(FieldPath.documentId(), '>=', 'device_')
+    .where(FieldPath.documentId(), '<', 'device`')
     .get().then(function(snap){
     _devices = [];
     snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
+      if(!doc.id.startsWith('hist_')){   // 이중 안전장치
         var d = doc.data();
         d._id = doc.id;
         _devices.push(d);
@@ -1246,64 +1031,6 @@ function updateSummary(){
 // ══════════════════════════════════════════
 //  기기 카드 렌더
 // ══════════════════════════════════════════
-// ===== 거래처명 자동완성 드롭다운 (4개 검색화면 공용) =====
-window._acActiveIdx = -1;
-function showAutoComplete(inputId, dropId){
-  var inp = document.getElementById(inputId);
-  var drop = document.getElementById(dropId);
-  if(!inp || !drop) return;
-  var q = (inp.value||'').trim().toLowerCase();
-  if(!q){ drop.style.display='none'; drop.innerHTML=''; return; }
-
-  // _devices에서 거래처명 목록 추출 (중복 제거, 해지 제외)
-  var names = {};
-  (_devices||[]).forEach(function(d){
-    if(d.archived===true) return;
-    var nm = (d.name||'').trim();
-    if(nm && nm.toLowerCase().indexOf(q) !== -1) names[nm] = true;
-  });
-  var list = Object.keys(names).sort().slice(0, 30);
-
-  if(!list.length){ drop.style.display='none'; drop.innerHTML=''; return; }
-
-  window._acActiveIdx = -1;
-  drop.innerHTML = list.map(function(nm){
-    // 매칭 부분 강조
-    var low = nm.toLowerCase();
-    var pos = low.indexOf(q);
-    var disp = nm;
-    if(pos !== -1){
-      disp = esc(nm.slice(0,pos)) + '<b>' + esc(nm.slice(pos,pos+q.length)) + '</b>' + esc(nm.slice(pos+q.length));
-    } else {
-      disp = esc(nm);
-    }
-    var nmEsc = nm.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    return '<div class="ac-item" onmousedown="pickAutoComplete(\''+inputId+'\',\''+dropId+'\',\''+nmEsc+'\')">'+disp+'</div>';
-  }).join('');
-  drop.style.display='block';
-}
-
-function pickAutoComplete(inputId, dropId, name){
-  var inp = document.getElementById(inputId);
-  var drop = document.getElementById(dropId);
-  if(inp){ inp.value = name; }
-  if(drop){ drop.style.display='none'; drop.innerHTML=''; }
-  // 해당 화면 다시 렌더 (선택한 거래처만 표시)
-  if(inputId==='dev-srch') renderDevices();
-  else if(inputId==='hist-srch') renderHistory();
-  else if(inputId==='device-mgr-srch') renderDeviceManager();
-  else if(inputId==='usage-srch') filterUsageTable();
-}
-
-// 바깥 클릭 시 모든 자동완성 닫기
-document.addEventListener('click', function(e){
-  if(e.target && e.target.classList && e.target.classList.contains('inp-search')) return;
-  ['dev-ac','hist-ac','dmgr-ac','usage-ac'].forEach(function(id){
-    var d=document.getElementById(id);
-    if(d){ d.style.display='none'; }
-  });
-});
-
 function renderDevices(){
   var srch   = (document.getElementById('dev-srch').value||'').toLowerCase();
   var filter = document.getElementById('dev-filter').value;
@@ -1315,7 +1042,6 @@ function renderDevices(){
 
   // 필터링
   var list = _devices.filter(function(d){
-    if(d.archived===true) return false;  // 해지된 거래처는 메인 화면에서 제외
     if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
     if(filter==='online'  && !isOnline(d))    return false;
     if(filter==='offline' && isOnline(d))     return false;
@@ -1353,7 +1079,7 @@ function renderDevices(){
         // 헤더
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
           '<div>'+
-            '<div style="font-size:14px;font-weight:700">'+((d.contract_no&&String(d.contract_no)!=='0')?'<span style="display:inline-block;background:#eef2ff;color:#4338ca;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;margin-right:5px;vertical-align:middle">No.'+esc(String(d.contract_no))+'</span>':'')+esc(d.name||'-')+'</div>'+
+            '<div style="font-size:14px;font-weight:700">'+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(d.model||'-')+' · '+esc(d.ip||'-')+'</div>'+
           '</div>'+
           '<span style="background:'+statusBg+';color:'+statusColor+';font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">'+
@@ -1400,7 +1126,6 @@ function renderDevices(){
         ? '<span class="badge b-ok">🟢 온라인</span>'
         : '<span class="badge b-late">🔴 오프라인</span>';
       return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
-        '<td style="font-weight:600;color:var(--text2)">'+((d.contract_no&&String(d.contract_no)!=='0')?esc(String(d.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
         '<td><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3)">'+esc(d.model||'-')+'</div></td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.ip||'-')+'</td>'+
@@ -1411,7 +1136,7 @@ function renderDevices(){
         '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
         '</tr>';
     }).join('') :
-    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
+    '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
 }
 
 // ══════════════════════════════════════════
@@ -1426,7 +1151,6 @@ function openDetail(id){
   document.getElementById('detail-title').textContent = (d.name||'-') + ' 상세 정보';
   document.getElementById('detail-body').innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
-      '<div><span style="color:var(--text3)">거래처No</span><br><b>'+((d.contract_no&&String(d.contract_no)!=='0')?esc(String(d.contract_no)):'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">기기명</span><br><b>'+esc(d.name||'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">모델</span><br><b>'+esc(d.model||'-')+'</b></div>'+
       '<div><span style="color:var(--text3)">IP주소</span><br><b>'+esc(d.ip||'-')+'</b></div>'+
@@ -1497,19 +1221,31 @@ function renderHistory(){
   // 기준값용: 시작일 7일 전까지 탐색
   var baseStartStr = getPrevDateN(startStr, 7);
 
-  // 히스토리 읽기: 대상 기기들의 hist_NO_ 문서만 범위 쿼리로 읽음 (전체 읽기 방지 → Firebase 읽기 대폭 감소)
-  // 각 대상 기기별로 hist_{no}_ ~ hist_{no}` 범위만 조회
-  var targetNos = targetDevices.map(function(d){ return (d._id||'').replace('device_',''); }).filter(Boolean);
-  var histPromises = targetNos.map(function(no){
-    return db.collection('device_status')
-      .where(firebase.firestore.FieldPath.documentId(), '>=', 'hist_'+no+'_')
-      .where(firebase.firestore.FieldPath.documentId(), '<', 'hist_'+no+'`')
-      .get();
-  });
+  // [개선] 기존에는 조회 때마다 device_status 전체(모든 기기의 모든 히스토리)를 받아
+  //   대상 기기만 걸러냈음. 히스토리가 쌓이면 조회 1회에 수만 문서를 읽게 됨.
+  //   -> 검색 대상 기기가 소수면, 그 기기들의 hist_ 범위만 쿼리해서 읽는다.
+  var FieldPath = firebase.firestore.FieldPath;
+  var histQueries = [];
+  if(targetDevices.length <= 20){
+    // 대상 기기별로 hist_<no>_ 범위만 조회 (대폭 절감)
+    targetDevices.forEach(function(d){
+      var no = (d._id||'').replace('device_','');
+      var pfx = 'hist_'+no+'_';
+      histQueries.push(
+        db.collection('device_status')
+          .where(FieldPath.documentId(), '>=', pfx)
+          .where(FieldPath.documentId(), '<', pfx+'￿')
+          .get()
+      );
+    });
+  } else {
+    // 대상이 많으면(전체 조회 등) 기존 방식(전체 읽기)
+    histQueries.push(db.collection('device_status').get());
+  }
 
-  Promise.all(histPromises).then(function(snaps){
+  Promise.all(histQueries).then(function(snaps){
     var allRows = [];
-    snaps.forEach(function(snap){
+    var snap = { forEach: function(fn){ snaps.forEach(function(s){ s.forEach(fn); }); } };
     snap.forEach(function(doc){
       if(!doc.id.startsWith('hist_')) return;
       // hist_NO_YYYYMMDD_HHMM 형식
@@ -1521,9 +1257,9 @@ function renderHistory(){
       // 기기 번호로 대상 기기 찾기
       var dev = targetDevices.find(function(d){ return d._id === 'device_'+no; });
       if(!dev) return;
-      // device_no로 이미 매칭됨 - IP는 변경될 수 있으므로 체크하지 않음
-      // (장비교체/재설치로 IP가 바뀌어도 같은 device_no면 같은 거래처)
+      // IP가 등록된 기기와 다르면 제외 (잘못된 데이터 방지)
       var docData = doc.data();
+      if(dev.ip && docData.ip && dev.ip !== docData.ip) return;
 
       // 날짜 범위 필터 (시작일 최대 7일 전까지 기준값으로 포함)
       if(dateStr < baseStartStr || dateStr > endStr) return;
@@ -1534,8 +1270,9 @@ function renderHistory(){
       d._devName  = dev.name||'';
       d._devModel = dev.model||'';
       d._isBase   = dateStr < startStr; // 기준값 여부
+      // bw=0이고 오프라인인 데이터 제외
+      if(parseInt(d.bw_count||0) === 0 && d.is_online === 'False') return;
       allRows.push(d);
-    });
     });
 
     // 1단계: 오름차순으로 증분 계산
@@ -1694,8 +1431,8 @@ function renderGuideList(){
 // ══════════════════════════════════════════
 //  배치파일 다운로드 생성
 // ══════════════════════════════════════════
-// 이 PC에 설치할 프린터 목록 (장바구니)
-var _guideCart = [];
+// 선택된 거래처 정보
+var _selectedContract = null;
 var _allContractsForGuide = [];
 
 // 임대관리에서 IP 등록된 거래처 로드
@@ -1705,72 +1442,32 @@ function loadGuideContracts(){
     if(!snap.exists) return;
     var contracts = snap.data().CONTRACTS||[];
     _allContractsForGuide = contracts.filter(function(c){
-      if(c.terminated) return false;
-      if(!(c.printer_ip && c.printer_ip.trim()!=='')) return false;
-      // monitoring_on 체크된 것만 (기존 거래처는 필드 없으면 IP 있으니 표시)
-      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
+      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
     });
   });
 }
 
-// 거래처를 목록에 추가
+// 거래처 검색
+
+// 거래처 선택
 function selectGuideContract(el){
-  var item = {
+  _selectedContract = {
     name:  el.getAttribute('data-name'),
     ip:    el.getAttribute('data-ip'),
     type:  el.getAttribute('data-type'),
-    model: el.getAttribute('data-model'),
-    no:    el.getAttribute('data-no') || ''
+    model: el.getAttribute('data-model')
   };
 
-  // 실수 방지 1: IP 없는 거래처 거르기
-  if(!item.ip){
-    alert('이 거래처는 IP가 등록되어 있지 않습니다.\n임대관리에서 프린터 IP를 먼저 등록하세요.');
-    return;
-  }
-  // 실수 방지 2: 같은 IP 중복 추가 막기
-  if(_guideCart.some(function(c){ return c.ip===item.ip; })){
-    alert('이미 추가된 프린터입니다: '+item.name+' ('+item.ip+')');
-    return;
-  }
-  // 실수 방지 3: 같은 거래처명 중복 경고
-  if(_guideCart.some(function(c){ return c.name===item.name; })){
-    if(!confirm('같은 거래처명이 이미 있습니다: '+item.name+'\n그래도 추가할까요? (다른 IP라면 추가하세요)')) return;
-  }
-
-  _guideCart.push(item);
-  document.getElementById('guide-srch').value = '';
+  document.getElementById('guide-srch').value = _selectedContract.name;
   document.getElementById('guide-search-result').style.display='none';
-  renderGuideCart();
-}
 
-// 목록 렌더링
-function renderGuideCart(){
-  var el = document.getElementById('guide-cart');
-  if(!el) return;
-  if(!_guideCart.length){
-    el.innerHTML = '<div style="padding:10px;color:#94a3b8;font-size:12px;text-align:center">검색해서 ＋추가하면 여기에 표시됩니다</div>';
-    return;
-  }
-  el.innerHTML = _guideCart.map(function(c,i){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #eff6ff;font-size:13px">'+
-      '<span style="background:#1d4ed8;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">'+(i+1)+'</span>'+
-      '<strong style="flex-shrink:0">'+esc(c.name)+'</strong>'+
-      '<code style="color:#475569">'+esc(c.ip)+'</code>'+
-      '<span style="color:#2563eb;font-size:11px">'+esc(c.type||'ricoh')+'</span>'+
-      '<button onclick="removeGuideCart('+i+')" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;flex-shrink:0">삭제</button>'+
-      '</div>';
-  }).join('');
-}
-
-function removeGuideCart(i){
-  _guideCart.splice(i,1);
-  renderGuideCart();
-}
-function clearGuideCart(){
-  if(_guideCart.length && !confirm('목록을 모두 비울까요?')) return;
-  _guideCart = [];
-  renderGuideCart();
+  var sel = document.getElementById('guide-selected');
+  sel.style.display='block';
+  sel.innerHTML =
+    '<strong>✅ 선택됨:</strong> '+esc(_selectedContract.name)+
+    ' &nbsp;|&nbsp; IP: <code>'+esc(_selectedContract.ip)+'</code>'+
+    ' &nbsp;|&nbsp; 제조사: <strong>'+esc(_selectedContract.type)+'</strong>'+
+    (_selectedContract.model ? ' &nbsp;|&nbsp; 모델: '+esc(_selectedContract.model) : '');
 }
 
 // 거래처별 배치파일 다운로드
@@ -1787,121 +1484,71 @@ function downloadSnmpModules(){
 }
 
 function downloadAgentForContract(){
-  if(!_guideCart.length){
-    alert('먼저 이 PC에 설치할 프린터를 ＋추가 하세요.\n\n거래처명을 검색해서 목록에 추가하면 됩니다.');
+  if(!_selectedContract){
+    alert('거래처를 먼저 선택해 주세요!\n\n거래처명을 입력하면 목록이 표시됩니다.');
     return;
   }
 
-  // install.bat: 설치할 프린터 목록을 주석으로 표시 (IP만, 한글 깨짐 방지)
-  var ipList = _guideCart.map(function(c){ return c.ip; }).join(', ');
+  var ip   = _selectedContract.ip;
+  var name = _selectedContract.name;
+  var no   = _selectedContract.no || '';
 
-  // 각 프린터 IP로 ping 자동 테스트 (설치 직후 연결 확인)
-  var pingChecks = _guideCart.map(function(c){
-    // echo 안에서 깨질 수 있는 특수문자 제거: ( ) < > | & ^ % -
-    var safeName = (c.name||'').replace(/[<>|&"^%()\-]/g,' ').trim();
-    return [
-      'ping -n 2 -w 1000 ' + c.ip + ' >nul 2>&1 && (echo   [ OK ]  ' + c.ip + '  ' + safeName + '  connected) || (echo   [FAIL]  ' + c.ip + '  ' + safeName + '  NO RESPONSE check printer/IP)'
-    ].join('\r\n');
-  }).join('\r\n');
-
+  // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
   var installBat = [
     '@echo off',
-    'chcp 65001 >nul',
     'net session >nul 2>&1',
     'if %errorLevel% neq 0 (',
-    '  echo ============================================================',
-    '  echo  [Error] Administrator rights required!',
-    '  echo  Right-click install.bat and select Run as administrator',
-    '  echo ============================================================',
-    '  echo.',
+    '  echo [Error] Administrator rights required!',
+    '  echo Right-click and select Run as administrator',
     '  pause & exit /b 1',
     ')',
-    'REM ── 창 유지 가드: 관리자 확인 후, 결과 화면이 안 닫히게 재실행 ──',
-    'if not "%~1"=="KEEP" (',
-    '  cmd /k ""%~f0" KEEP"',
-    '  exit /b',
-    ')',
-    'set "ALLOY_DIR=C:\\alloy"',
+    'set "ALLOY_DIR=C:\alloy"',
     'echo [1/4] Prepare config folder: %ALLOY_DIR%',
     'if not exist "%ALLOY_DIR%" mkdir "%ALLOY_DIR%"',
     'echo [2/4] Copy config files',
-    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\\printers.alloy"   >nul',
-    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\\snmp_modules.yml" >nul',
-    'echo [3/4] Install Alloy (please wait...)',
-    'if exist "%~dp0alloy-installer-windows-amd64.exe" (',
-    '  call "%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG="C:\\alloy\\printers.alloy"',
-    ') else (',
-    '  echo   [WARN] alloy-installer-windows-amd64.exe not found in this folder!',
-    '  echo   Already installed? Will just restart the service.',
-    ')',
+    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\printers.alloy"   >nul',
+    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\snmp_modules.yml" >nul',
+    'echo [3/4] Install Alloy',
+    '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
     'echo [4/4] Restart Alloy service',
     'net stop Alloy >nul 2>&1',
     'net start Alloy >nul 2>&1',
-    'echo [5/5] Power settings - prevent sleep (monitoring stays alive)',
-    'powercfg /change standby-timeout-ac 0',
-    'powercfg /change standby-timeout-dc 0',
-    'powercfg /change hibernate-timeout-ac 0',
-    'powercfg /change hibernate-timeout-dc 0',
-    'powercfg /change monitor-timeout-ac 10',
-    'powercfg /change monitor-timeout-dc 10',
     'echo.',
     'echo ============================================================',
-    'echo  [Auto Check] Printer network connection test (PING)',
+    'echo  Done! - ' + name,
+    'echo  Check 1: services.msc - Alloy Running',
+    'echo  Check 2: http://localhost:12345',
     'echo ============================================================',
-    pingChecks,
-    'echo.',
-    'echo ============================================================',
-    'echo  Install Done!   Printers: ' + _guideCart.length + '   IP: ' + ipList,
-    'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
-    'echo  Check 1: services.msc  -  Alloy = Running',
-    'echo  Check 2: http://localhost:12345  -  Graph tab',
-    'echo ============================================================',
-    'echo.',
-    'echo  * If any printer shows [FAIL] above:',
-    'echo    - Check printer power / IP address',
-    'echo    - Check PC and printer are on same network',
-    'echo.',
     'pause'
   ].join('\r\n');
 
-  // printers.alloy: target 블록을 프린터 수만큼 생성, 각각 customer 라벨
-  var targets = _guideCart.map(function(c, idx){
-    var n = idx + 1;
-    return [
-      '  target "printer_' + n + '" {',
-      '    address     = "' + c.ip + '"',
-      '    module      = "printer_mib"',
-      '    auth        = "public_v2"',
-      '    walk_params = "default"',
-      '    labels = {',
-      '      customer  = "' + c.name + '",',
-      '      device_no = "' + (c.no||'') + '",',
-      '    }',
-      '  }'
-    ].join('\n');
-  }).join('\n');
-
+  // printers.alloy 내용 생성
   var printersAlloy = [
-    '// Printer Monitoring Agent - ' + _guideCart.length + ' printer(s) on this PC',
-    '// Printers: ' + _guideCart.map(function(c){ return c.name+'('+c.ip+')'; }).join(', '),
+    '// ' + name + ' - Printer Monitoring Agent',
     'local.file "snmp_config" {',
     '  filename = "C:\\\\alloy\\\\snmp_modules.yml"',
     '}',
     'prometheus.exporter.snmp "printers" {',
     '  config = local.file.snmp_config.content',
-    targets,
-    '  walk_param "default" {',
-    '    retries = "3"',
-    '    timeout = "20s"',
+    '  target "printer_1" {',
+    '    address     = "' + ip + '"',
+    '    module      = "printer_mib"',
+    '    auth        = "public_v2"',
+    '    walk_params = "default"',
     '  }',
+    '  walk_param "default" { retries = "2" }',
     '}',
     'prometheus.scrape "printers" {',
     '  targets         = prometheus.exporter.snmp.printers.targets',
     '  forward_to      = [prometheus.remote_write.central.receiver]',
     '  scrape_interval = "300s"',
-    '  scrape_timeout  = "90s"',
+    '  scrape_timeout  = "30s"',
     '}',
     'prometheus.remote_write "central" {',
+    '  external_labels = {',
+    '    customer = "' + name + '",',
+    '    device_no = "' + no + '",',
+    '  }',
     '  endpoint {',
     '    url = "http://161.33.35.210:8428/api/v1/write"',
     '  }',
@@ -1909,23 +1556,23 @@ function downloadAgentForContract(){
   ].join('\n');
 
   // 파일들 다운로드
-  // 1. install.bat (chcp 65001 사용 -> UTF-8 저장)
-  var blob1 = new Blob([installBat], {type:'text/plain;charset=utf-8'});
+  // 1. install.bat
+  var blob1 = new Blob([installBat], {type:'text/plain;charset=windows-1252'});
   var a1 = document.createElement('a');
   a1.href = URL.createObjectURL(blob1);
   a1.download = 'install.bat';
   a1.click();
 
-  // 2. printers.alloy (한글 거래처명 포함 -> UTF-8 저장)
+  // 2. printers.alloy
   setTimeout(function(){
-    var blob2 = new Blob([printersAlloy], {type:'text/plain;charset=utf-8'});
+    var blob2 = new Blob([printersAlloy], {type:'text/plain'});
     var a2 = document.createElement('a');
     a2.href = URL.createObjectURL(blob2);
     a2.download = 'printers.alloy';
     a2.click();
   }, 500);
 
-  alert('배치파일 다운로드 완료! (프린터 '+_guideCart.length+'대)\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat을 관리자 권한으로 실행하세요!');
+  alert('install.bat + printers.alloy 다운로드!\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat 실행하세요!');
 }
 
 
@@ -1941,12 +1588,11 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('page-'+id).classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var idx = {monitor:0,history:1,devices:2,usage:3,billing:4,guide:5}[id];
+  var idx = {monitor:0,history:1,devices:2,usage:3,guide:4}[id];
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
   if(id==='devices') renderDeviceManager();
-  if(id==='guide'){ renderGuideList(); loadGuideContracts(); renderGuideCart(); }
-  if(id==='billing') initBillingPage();
+  if(id==='guide'){ renderGuideList(); loadGuideContracts(); }
   if(id==='usage'){
     renderUsagePage();
     // 날짜 기본값 세팅 후 자동 조회
@@ -1986,7 +1632,10 @@ function renderDeviceManager(){
   document.getElementById('device-mgr-tbody').innerHTML =
     '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
-  currentDevicesQuery().get().then(function(snap){
+  db.collection('device_status')
+    .where(firebase.firestore.FieldPath.documentId(), '>=', 'device_')
+    .where(firebase.firestore.FieldPath.documentId(), '<', 'device`')
+    .get().then(function(snap){
     var devices=[];
     snap.forEach(function(doc){
       if(!doc.id.startsWith('hist_')){
@@ -1996,15 +1645,6 @@ function renderDeviceManager(){
     devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
 
     var total = devices.length;
-    var archivedCount = devices.filter(function(d){ return d.archived===true; }).length;
-
-    // 해지(archived) 필터: 기본은 숨김, "해지 보기" 선택 시만 표시
-    var showArchived = (statF==='archived');
-    if(showArchived){
-      devices = devices.filter(function(d){ return d.archived===true; });
-    } else {
-      devices = devices.filter(function(d){ return d.archived!==true; });
-    }
 
     // 검색 필터 적용
     if(srch){
@@ -2017,7 +1657,7 @@ function renderDeviceManager(){
         return (d.printer_type||d.type||'') === typeF;
       });
     }
-    if(statF==='online' || statF==='offline'){
+    if(statF){
       devices = devices.filter(function(d){
         var on = (d.is_online||'').toLowerCase()==='true';
         return statF==='online' ? on : !on;
@@ -2025,30 +1665,19 @@ function renderDeviceManager(){
     }
 
     document.getElementById('device-mgr-info').textContent=
-      '총 '+(total-archivedCount)+'대 운영 / '+devices.length+'대 표시'+(archivedCount?' (해지 '+archivedCount+'대)':'');
+      '총 '+total+'대 등록 / '+devices.length+'대 표시';
 
     if(!devices.length){
       document.getElementById('device-mgr-tbody').innerHTML=
-        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">'+(showArchived?'해지된 거래처가 없습니다.':'등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small>')+'</td></tr>';
+        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">등록된 기기 없음<br><small>임대관리에서 가져오기 또는 직접 추가해 주세요</small></td></tr>';
       return;
     }
 
     document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
       var online = (d.is_online||'').toLowerCase()==='true';
-      var actionBtns;
-      if(d.archived===true){
-        // 해지 상태: 복원 / 영구삭제
-        actionBtns='<button class="btn btn-ghost btn-xs" style="color:#16a34a" onclick="restoreDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="복원">♻️ 복원</button> '+
-                   '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="영구삭제">🗑️</button>';
-      } else {
-        // 운영 상태: 편집 / 해지 / 삭제
-        actionBtns='<button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'" title="편집">✏️</button> '+
-                   '<button class="btn btn-ghost btn-xs" style="color:#d97706" onclick="archiveDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="해지(숨김)">🔕 해지</button> '+
-                   '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="영구삭제">🗑️</button>';
-      }
-      return '<tr'+(d.archived===true?' style="background:#fafafa;color:#9ca3af"':'')+'>'+
-        '<td style="color:var(--text2);font-weight:600">'+(d.contract_no&&String(d.contract_no)!=='0'?esc(String(d.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
-        '<td style="font-weight:600">'+esc(d.name||'-')+(d.archived===true?' <span class="badge b-gray" style="font-size:10px">해지</span>':'')+'</td>'+
+      return '<tr>'+
+        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
         '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
         '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
@@ -2056,36 +1685,15 @@ function renderDeviceManager(){
         '<td style="text-align:right">'+(d.quota_color?parseInt(d.quota_color).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right;color:var(--text3)">'+(d.start_bw?parseInt(d.start_bw).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right;color:var(--text3)">'+(d.start_color?parseInt(d.start_color).toLocaleString():'-')+'</td>'+
-        '<td>'+(d.archived===true?'<span class="badge b-gray">⏸ 해지</span>':(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>'))+'</td>'+
-        '<td style="white-space:nowrap">'+actionBtns+'</td>'+
+        '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
+        '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'">✏️</button> '+
+            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'">🗑️</button></td>'+
         '</tr>';
     }).join('');
   }).catch(function(e){
     document.getElementById('device-mgr-tbody').innerHTML=
       '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">오류: '+e.message+'</td></tr>';
   });
-}
-
-// 거래처 해지 (숨김 - 데이터 보존, 복원 가능)
-function archiveDevice(btn){
-  var id=btn.getAttribute('data-id'); var name=btn.getAttribute('data-name')||'';
-  if(!db){ alert('Firebase 연결 대기 중입니다.'); return; }
-  if(!confirm('["'+name+'"] 거래처를 해지(숨김) 처리할까요?\n\n· 모니터링 목록에서 안 보이게 됩니다.\n· 데이터는 보존되며, 나중에 복원할 수 있습니다.\n· 동기화 시 카운터 업데이트도 멈춥니다.')) return;
-  db.collection('device_status').doc(id).update({archived:true}).then(function(){
-    alert('해지 처리되었습니다.\n"상태: 해지 보기"에서 복원할 수 있습니다.');
-    renderDeviceManager();
-  }).catch(function(e){ alert('해지 실패: '+e.message); });
-}
-
-// 거래처 복원 (해지 해제)
-function restoreDevice(btn){
-  var id=btn.getAttribute('data-id'); var name=btn.getAttribute('data-name')||'';
-  if(!db){ alert('Firebase 연결 대기 중입니다.'); return; }
-  if(!confirm('["'+name+'"] 거래처를 복원할까요?\n\n다시 모니터링 목록에 표시됩니다.')) return;
-  db.collection('device_status').doc(id).update({archived:false}).then(function(){
-    alert('복원되었습니다.');
-    renderDeviceManager();
-  }).catch(function(e){ alert('복원 실패: '+e.message); });
 }
 
 // 임대관리에서 가져오기
@@ -2107,9 +1715,7 @@ function importFromRental(){
     }
     var allContracts = (doc.data().CONTRACTS)||[];
     var contracts = allContracts.filter(function(c){
-      if(!(c.printer_ip && c.printer_ip.trim()!=='') || c.terminated) return false;
-      // 모니터링 연동 체크된 것만 (기존 거래처는 필드 없으면 IP 있으니 포함)
-      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
+      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
     });
 
     if(!contracts.length){
@@ -2118,17 +1724,17 @@ function importFromRental(){
       return;
     }
 
-    currentDevicesQuery().get().then(function(devSnap){
+    var _FP = firebase.firestore.FieldPath;
+    db.collection('device_status')
+      .where(_FP.documentId(), '>=', 'device_')
+      .where(_FP.documentId(), '<', 'device`')
+      .get().then(function(devSnap){
       var existingByIp={};
-      var existingByNo={};   // 거래처 no(contract_no)로 기존 device 찾기
       var maxNo=0;
       devSnap.forEach(function(d){
         if(!d.id.startsWith('hist_')){
           var dd=d.data();
           if(dd.ip) existingByIp[dd.ip]=d.id;
-          if(dd.contract_no!==undefined && dd.contract_no!==null && String(dd.contract_no)!=='' && String(dd.contract_no)!=='0'){
-            existingByNo[String(dd.contract_no)]=d.id;
-          }
           var n=parseInt(d.id.replace('device_',''))||0;
           if(n>maxNo) maxNo=n;
         }
@@ -2139,11 +1745,8 @@ function importFromRental(){
 
       contracts.forEach(function(c){
         var ip=c.printer_ip.trim();
-        var cno=String(c.no||'');
-        // 매칭 우선순위: 거래처 no -> IP -> 신규
-        // no로 찾으면 장비 교체(IP 변경)해도 같은 문서 유지 (데이터 이어짐)
-        var docId = (cno && existingByNo[cno]) || existingByIp[ip] || ('device_'+(++maxNo));
-        var isNew = !((cno && existingByNo[cno]) || existingByIp[ip]);
+        var isNew=!existingByIp[ip];
+        var docId=existingByIp[ip]||('device_'+(++maxNo));
         var deviceData={
           name:c.name||'', model:c.etc||'', ip:ip,
           printer_type:c.printer_type||'ricoh',
@@ -2164,25 +1767,8 @@ function importFromRental(){
       });
 
       batch.commit().then(function(){
-        // 연동 해제 감지: device_status엔 있지만(no 보유) 이번 가져온 목록엔 없는 거래처
-        var importedNos = {};
-        contracts.forEach(function(c){ if(c.no) importedNos[String(c.no)]=true; });
-        var orphans = [];
-        devSnap.forEach(function(d){
-          if(d.id.startsWith('hist_')) return;
-          var dd=d.data();
-          var dno = (dd.contract_no!==undefined && dd.contract_no!==null) ? String(dd.contract_no) : '';
-          if(dno && dno!=='0' && !importedNos[dno]){
-            orphans.push((dd.name||d.id)+' (No.'+dno+')');
-          }
-        });
         var msg = '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
-        if(orphans.length){
-          msg += '\n\n⚠️ 연동 해제된 거래처 '+orphans.length+'개가 목록에 남아있습니다:\n'
-               + orphans.join(', ')
-               + '\n\n→ 모니터링에서 빼려면 기기관리에서 직접 삭제하세요.';
-        }
-        if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent='완료! 신규 '+added+'대 / 업데이트 '+updated+'대'+(orphans.length?' / 연동해제 '+orphans.length+'대(수동삭제 필요)':'');
+        if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent=msg;
         alert(msg);
         renderDeviceManager();
         loadAllDevices(true);
@@ -2285,20 +1871,22 @@ function deleteDevice(btn){
   var infoEl = document.getElementById('device-mgr-info');
   if(infoEl) infoEl.textContent = name+' 삭제 중...';
 
-  // 히스토리 전체 + 현재값 삭제
-  currentDevicesQuery().get().then(function(snap){
+  // [개선] 전체를 읽어 필터링하던 것을, 이 기기의 현재값 + 히스토리 범위만 읽어 삭제.
+  //   현재값: device_<no> 1개 / 히스토리: hist_<no>_ 범위
+  var _FP = firebase.firestore.FieldPath;
+  var hp = 'hist_'+no+'_';
+  Promise.all([
+    db.collection('device_status').doc(id).get(),
+    db.collection('device_status')
+      .where(_FP.documentId(), '>=', hp)
+      .where(_FP.documentId(), '<', hp+'￿')
+      .get()
+  ]).then(function(res){
     var batch = db.batch();
     var count = 0;
-    snap.forEach(function(doc){
-      var docId = doc.id;
-      if(docId === id || docId.startsWith('hist_'+no+'_')){
-        batch.delete(doc.ref);
-        count++;
-      }
-    });
-    return batch.commit().then(function(){
-      return count;
-    });
+    if(res[0].exists){ batch.delete(res[0].ref); count++; }
+    res[1].forEach(function(doc){ batch.delete(doc.ref); count++; });
+    return batch.commit().then(function(){ return count; });
   }).then(function(count){
     alert('['+name+'] 삭제완료!\n\n' +
       '• 현재 기기 상태 1개\n' +
@@ -2373,8 +1961,11 @@ function renderUsageReport(){
   var startStr=startDate.replace(/-/g,'');
   var endStr=endDate.replace(/-/g,'');
 
-  // 모든 기기 히스토리 가져오기
-  currentDevicesQuery().get().then(function(snap){
+  // [개선] 현재 기기 목록만 먼저 조회 (히스토리 제외). 기간 히스토리는 아래에서 기기별로.
+  db.collection('device_status')
+    .where(firebase.firestore.FieldPath.documentId(), '>=', 'device_')
+    .where(firebase.firestore.FieldPath.documentId(), '<', 'device`')
+    .get().then(function(snap){
     var devices=[];
     snap.forEach(function(doc){
       if(!doc.id.startsWith('hist_')){
@@ -2393,34 +1984,36 @@ function renderUsageReport(){
     var promises=devices.map(function(dev){
       var no=dev._id.replace('device_','');
 
-      // 시작일부터 조회일까지 전체 히스토리를 한 번에 가져와서 처리
-      var histPromise=db.collection('device_status')
+      // 시작일 가장 가까운 레코드
+      var startPromise=db.collection('device_status')
         .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
+        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359')
+        .get();
+
+      // 종료일 가장 가까운 레코드
+      var endPromise=db.collection('device_status')
+        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
         .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359')
         .get();
 
-      return histPromise.then(function(snapshot){
-        var rows=[];
-        snapshot.forEach(function(doc){
-          var d=doc.data();
-          if(parseInt(d.bw_count||0)>0) rows.push({id:doc.id, data:d});
-        });
-        // 문서ID(hist_NO_YYYYMMDD_HHMM)로 정렬 = 시간순
-        rows.sort(function(a,b){ return a.id.localeCompare(b.id); });
-
-        // 시작: 기간 내 가장 이른 기록
-        var startData = rows.length ? rows[0].data : null;
-        // 종료: 기간 내 가장 늦은 기록
-        var endData = rows.length ? rows[rows.length-1].data : null;
+      return Promise.all([startPromise, endPromise]).then(function(results){
+        var startRows=[], endRows=[];
+        results[0].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) startRows.push(d); });
+        results[1].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) endRows.push(d); });
+        startRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+        endRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
 
         // 조회일 히스토리 없으면 device_status 현재값 사용
+        var endData = endRows[0] || null;
         if(!endData || parseInt(endData.bw_count||0) === 0){
+          // device_status 현재값으로 대체
           if(parseInt(dev.bw_count||0) > 0){
             endData = dev;
           }
         }
 
-        // 기간 내 히스토리가 전혀 없으면 device의 start_bw
+        // 시작일 히스토리 없으면 device의 start_bw 사용
+        var startData = startRows[0] || null;
         if(!startData && (parseInt(dev.start_bw||0) > 0 || parseInt(dev.start_color||0) > 0)){
           startData = {
             bw_count: parseInt(dev.start_bw)||0,
@@ -2443,7 +2036,8 @@ function renderUsageReport(){
       _usageRows = results.filter(function(r){ return r.startData||r.endData; });
       document.getElementById('usage-info').textContent=
         startDate+' ~ '+endDate+' | 총 '+_usageRows.length+'대';
-      // 검색 필터 초기화 후 표시 (거래처명 검색칸은 유지 - 입력한 거래처만 조회되게)
+      // 검색 필터 초기화 후 표시
+      if(document.getElementById('usage-srch')) document.getElementById('usage-srch').value='';
       if(document.getElementById('usage-type-filter')) document.getElementById('usage-type-filter').value='';
       if(document.getElementById('usage-filter')) document.getElementById('usage-filter').value='';
       filterUsageTable();
@@ -2507,7 +2101,7 @@ function filterUsageTable(){
 
   var filtered = _usageRows.filter(function(r){
     var dev = r.device;
-    if(srch && !((dev.name||'')+(dev.model||'')+(dev.contract_no||'')).toLowerCase().includes(srch)) return false;
+    if(srch && !((dev.name||'')+(dev.model||'')).toLowerCase().includes(srch)) return false;
     if(typeF && (dev.printer_type||dev.type||'') !== typeF) return false;
     if(statF){
       var sd = r.startData||{};
@@ -2569,7 +2163,6 @@ function filterUsageTable(){
     }
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
-      '<td style="font-weight:600;color:var(--text2)">'+((dev.contract_no&&String(dev.contract_no)!=='0')?esc(String(dev.contract_no)):'<span style="color:var(--text3)">-</span>')+'</td>'+
       '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
       // 흑백
@@ -2604,6 +2197,11 @@ function filterUsageTable(){
 function searchGuideContract(){
   var q = document.getElementById('guide-srch').value.trim().toLowerCase();
   var resultEl = document.getElementById('guide-search-result');
+  var selectedEl = document.getElementById('guide-selected');
+
+  // 선택 초기화
+  _selectedContract = null;
+  selectedEl.style.display='none';
 
   if(!q || q.length < 1){
     resultEl.style.display='none';
@@ -2628,695 +2226,15 @@ function searchGuideContract(){
     div.setAttribute('data-ip',c.printer_ip||'');
     div.setAttribute('data-type',c.printer_type||'ricoh');
     div.setAttribute('data-model',c.etc||'');
-    div.setAttribute('data-no',c.no||'');
-    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;align-items:center;gap:8px';
+    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px';
     div.onmouseover=function(){this.style.background='#eff6ff';};
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){selectGuideContract(this);};
-    div.innerHTML='<span style="color:#1d4ed8;font-weight:700">＋추가</span>'+
-      '<strong>'+esc(c.name||'-')+'</strong>'+
-      '<span style="color:var(--text3)">'+esc(c.printer_ip||'')+'</span>'+
-      '<span style="color:var(--blue);font-size:11px">'+esc(c.printer_type||'ricoh')+'</span>';
+    div.innerHTML='<strong>'+esc(c.name||'-')+'</strong>'+
+      '<span style="color:var(--text3);margin-left:8px">'+esc(c.printer_ip||'')+'</span>'+
+      '<span style="color:var(--blue);margin-left:8px;font-size:11px">'+esc(c.printer_type||'ricoh')+'</span>';
     resultEl.appendChild(div);
   });
-}
-
-// ══════════════════════════════════════════
-//  청구관리 (billing)
-// ══════════════════════════════════════════
-var _billData = { vatRate:0.10, devices:[] };
-var _billContract = null;
-var _allBillContracts = [];
-
-function initBillingPage(){
-  // 날짜 기본값
-  var t=new Date(), y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
-  if(!document.getElementById('bill-start').value){
-    var prev=new Date(t); prev.setMonth(prev.getMonth()-1);
-    document.getElementById('bill-start').value=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0')+'-'+d;
-  }
-  if(!document.getElementById('bill-end').value){
-    document.getElementById('bill-end').value=y+'-'+m+'-'+d;
-  }
-  if(!document.getElementById('bill-date').textContent || document.getElementById('bill-date').textContent==='-'){
-    document.getElementById('bill-date').textContent=y+'년 '+(t.getMonth()+1)+'월 '+t.getDate()+'일';
-  }
-  // 청구 이력 조회 기간 기본값: 최근 1년 (오늘로부터 1년 전 ~ 오늘)
-  var hs=document.getElementById('hist-start'), he=document.getElementById('hist-end');
-  if(hs && !hs.value){
-    var yearAgo=new Date(t); yearAgo.setFullYear(yearAgo.getFullYear()-1);
-    hs.value=yearAgo.getFullYear()+'-'+String(yearAgo.getMonth()+1).padStart(2,'0')+'-'+String(yearAgo.getDate()).padStart(2,'0');
-  }
-  if(he && !he.value){
-    he.value=y+'-'+m+'-'+d;
-  }
-  // 거래처 목록 로드 (사용량/설치안내와 동일 소스)
-  loadBillContracts();
-  if(!_billData.devices.length){
-    _billData.devices=[{model:'기종명 입력',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80}];
-  }
-  billCalc();
-}
-
-function loadBillContracts(){
-  if(!_fbReady||!db) return;
-  db.collection('rental').doc('main').get().then(function(snap){
-    if(!snap.exists) return;
-    var contracts=snap.data().CONTRACTS||[];
-    _allBillContracts=contracts.filter(function(c){
-      if(c.terminated) return false;
-      return (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
-    });
-  });
-}
-
-function searchBillContract(){
-  var q=document.getElementById('bill-srch').value.trim().toLowerCase();
-  var el=document.getElementById('bill-search-result');
-  if(!q){ el.style.display='none'; return; }
-  var filtered=_allBillContracts.filter(function(c){ return (c.name||'').toLowerCase().includes(q); });
-  if(!filtered.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">검색 결과 없음</div>'; return; }
-  el.style.display='block'; el.innerHTML='';
-  filtered.slice(0,10).forEach(function(c){
-    var div=document.createElement('div');
-    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px';
-    div.onmouseover=function(){this.style.background='#eff6ff';};
-    div.onmouseout=function(){this.style.background='';};
-    div.onclick=function(){ selectBillContract(c); };
-    div.innerHTML='<strong>'+esc(c.name||'-')+'</strong>'+
-      '<span style="color:var(--text3);margin-left:8px;font-size:12px">'+esc(c.address||'')+'</span>';
-    el.appendChild(div);
-  });
-}
-
-function selectBillContract(c){
-  _billContract=c;
-  document.getElementById('bill-srch').value=c.name||'';
-  document.getElementById('bill-search-result').style.display='none';
-  fillContractInfo(c);
-  loadBillHistory(c.name);
-}
-
-// 거래처 정보를 청구서에 채우기 (등록된 것만, 없으면 공란)
-function fillContractInfo(c){
-  if(!c) return;
-  document.getElementById('bill-name').textContent=c.name||'';
-  document.getElementById('bill-bizno').textContent=c.biz_no||c.business_no||c.bizno||'';
-  document.getElementById('bill-ceo').textContent=c.ceo||c.representative||c.manager||'';
-  document.getElementById('bill-addr').textContent=c.address||'';
-  // 청구번호 자동 생성 (비어있을 때만)
-  var noEl=document.getElementById('bill-no');
-  if(!noEl.textContent || noEl.textContent==='-'){
-    var t=new Date();
-    noEl.textContent=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-001';
-  }
-}
-
-// device의 거래처명으로 rental에서 거래처 찾기
-function findContractByName(name){
-  if(!name) return null;
-  return _allBillContracts.find(function(c){ return (c.name||'')===name; }) || null;
-}
-
-// 거래처 추가단가 가져오기 (없으면 기본값)
-function getContractUnit(name){
-  var c=findContractByName(name);
-  return {
-    bwUnit:  c && c.extra_bw!=null && c.extra_bw!=='' ? parseFloat(c.extra_bw)||0 : 10,
-    colorUnit: c && c.extra_color!=null && c.extra_color!=='' ? parseFloat(c.extra_color)||0 : 80
-  };
-}
-
-// 사용량조회 로직을 재사용해서 검침값 자동 채우기
-function loadBillFromUsage(){
-  var startDate=document.getElementById('bill-start').value;
-  var endDate=document.getElementById('bill-end').value;
-  if(!_billContract){ alert('거래처를 먼저 선택해 주세요.'); return; }
-  if(!startDate||!endDate){ alert('이전검침일과 현재검침일을 선택해 주세요.'); return; }
-  if(!_fbReady||!db){ setTimeout(loadBillFromUsage,400); return; }
-
-  // 청구기간 표시
-  document.getElementById('bill-period').textContent=startDate+' ~ '+endDate;
-
-  var startStr=startDate.replace(/-/g,'');
-  var endStr=endDate.replace(/-/g,'');
-  var cname=_billContract.name;
-
-  // 이 거래처의 device들 찾기 (name 일치)
-  currentDevicesQuery().get().then(function(snap){
-    var devices=[];
-    snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
-        var dd=doc.data();
-        if((dd.name||'')===cname){ dd._id=doc.id; devices.push(dd); }
-      }
-    });
-    if(!devices.length){ alert('이 거래처에 연결된 모니터링 기기가 없습니다.\n검침값을 직접 입력해 주세요.'); return; }
-
-    var promises=devices.map(function(dev){
-      var no=dev._id.replace('device_','');
-      var sP=db.collection('device_status')
-        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
-        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359').get();
-      var eP=db.collection('device_status')
-        .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
-        .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359').get();
-      return Promise.all([sP,eP]).then(function(r){
-        var sRows=[],eRows=[];
-        r[0].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) sRows.push(d); });
-        r[1].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) eRows.push(d); });
-        sRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
-        eRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
-        var sData=sRows[0]||null, eData=eRows[0]||null;
-        if(!eData && parseInt(dev.bw_count||0)>0) eData=dev;
-        if(!sData && (parseInt(dev.start_bw||0)>0||parseInt(dev.start_color||0)>0)){
-          sData={bw_count:parseInt(dev.start_bw)||0,color_count:parseInt(dev.start_color)||0};
-        }
-        var u=getContractUnit(dev.name);
-        return {
-          model: dev.model||dev.name||'기종',
-          _src: dev._id,
-          prevBw: sData?parseInt(sData.bw_count||0):0,
-          curBw:  eData?parseInt(eData.bw_count||0):0,
-          prevColor: sData?parseInt(sData.color_count||0):0,
-          curColor:  eData?parseInt(eData.color_count||0):0,
-          bwFree: parseInt(dev.quota_bw||0)||0,
-          colorFree: parseInt(dev.quota_color||0)||0,
-          bwUnit:u.bwUnit, colorUnit:u.colorUnit
-        };
-      });
-    });
-    Promise.all(promises).then(function(results){
-      _billData.devices=results;
-      billCalc();
-      alert('검침값을 불러왔습니다. ('+results.length+'대)\n필요 시 직접 수정하세요.');
-    });
-  });
-}
-
-function billWon(n){ return Math.round(n).toLocaleString('ko-KR'); }
-function billEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function billCalc(){
-  var rows='', totalSupply=0, totalTax=0;
-  var mode=document.getElementById('bill-vat-mode').value;
-  _billData.devices.forEach(function(d,i){
-    var bwUse=d.curBw-d.prevBw, cUse=d.curColor-d.prevColor;
-    var bwEx=Math.max(0,bwUse-d.bwFree), cEx=Math.max(0,cUse-d.colorFree);
-    var bwAmt=bwEx*d.bwUnit, cAmt=cEx*d.colorUnit;
-    var bwTax=bwAmt*_billData.vatRate, cTax=cAmt*_billData.vatRate;
-    totalSupply+=bwAmt+cAmt; totalTax+=bwTax+cTax;
-    var bwTaxShow = mode==='included' ? billWon(bwTax) : '';
-    var cTaxShow  = mode==='included' ? billWon(cTax)  : '';
-    rows+='<tr'+(bwEx>0?' class="bill-over"':'')+'>'+
-      '<td class="bill-dev" rowspan="2"><textarea class="bill-modelinput" rows="1" onchange="billSet('+i+',\'model\',this.value)" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'">'+billEsc(d.model)+'</textarea></td>'+
-      '<td>흑백</td>'+billMeter(i,'Bw',d.prevBw,d.curBw)+
-      '<td class="bill-num">'+billWon(bwUse)+'</td>'+
-      '<td class="bill-num"><input class="bill-uinput" style="width:58px" value="'+d.bwFree+'" onchange="billSet('+i+',\'bwFree\',this.value)"></td>'+
-      '<td class="bill-num bill-excess">'+billWon(bwEx)+'</td>'+
-      '<td class="bill-num"><input class="bill-uinput" value="'+d.bwUnit+'" onchange="billSet('+i+',\'bwUnit\',this.value)">원</td>'+
-      '<td class="bill-num" style="font-weight:700">'+billWon(bwAmt)+'</td>'+
-      '<td class="bill-num bill-tax">'+bwTaxShow+'</td>'+
-      '<td rowspan="2"><button class="bill-del" onclick="billDel('+i+')">✕</button></td></tr>';
-    rows+='<tr'+(cEx>0?' class="bill-over"':'')+'>'+
-      '<td>컬러</td>'+billMeter(i,'Color',d.prevColor,d.curColor)+
-      '<td class="bill-num">'+billWon(cUse)+'</td>'+
-      '<td class="bill-num"><input class="bill-uinput" style="width:58px" value="'+d.colorFree+'" onchange="billSet('+i+',\'colorFree\',this.value)"></td>'+
-      '<td class="bill-num bill-excess">'+billWon(cEx)+'</td>'+
-      '<td class="bill-num"><input class="bill-uinput" value="'+d.colorUnit+'" onchange="billSet('+i+',\'colorUnit\',this.value)">원</td>'+
-      '<td class="bill-num" style="font-weight:700">'+billWon(cAmt)+'</td>'+
-      '<td class="bill-num bill-tax">'+cTaxShow+'</td></tr>';
-  });
-  document.getElementById('bill-body').innerHTML=rows;
-  // 모델명 textarea 높이 자동 조정
-  document.querySelectorAll('.bill-modelinput').forEach(function(ta){
-    ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
-  });
-  // 약정내역 박스 채우기
-  renderBillTerms();
-  var note=document.getElementById('bill-vat-note');
-  if(mode==='included'){
-    document.getElementById('bill-total').innerHTML=billWon(totalSupply+totalTax)+'<small> 원</small>';
-    note.textContent='공급가액 '+billWon(totalSupply)+'원 + 세액 '+billWon(totalTax)+'원';
-  } else {
-    document.getElementById('bill-total').innerHTML=billWon(totalSupply)+'<small> 원</small>';
-    note.textContent='세액 '+billWon(totalTax)+'원 별도';
-  }
-}
-
-function renderBillTerms(){
-  var el=document.getElementById('bill-terms');
-  if(!el) return;
-  var devs=_billData.devices.filter(function(d){ return d._src || d.bwFree || d.colorFree; });
-  if(!devs.length){ el.innerHTML='기종을 추가하면 약정 내역이 표시됩니다.'; return; }
-  // 기본요금(rent)은 거래처에서
-  var rent = _billContract && _billContract.rent ? (parseFloat(_billContract.rent)||0) : 0;
-  var lines=[];
-  if(rent>0) lines.push('기본요금 <b>'+rent.toLocaleString()+'원</b>');
-  _billData.devices.forEach(function(d){
-    var parts=[];
-    parts.push('기본제공 흑백 <b>'+(d.bwFree||0).toLocaleString()+'매</b>'+(d.colorFree?', 컬러 <b>'+(d.colorFree).toLocaleString()+'매</b>':''));
-    parts.push('추가사용료(장당) 흑백 <b>'+(d.bwUnit||0)+'원</b>'+(d.colorUnit?', 컬러 <b>'+(d.colorUnit)+'원</b>':''));
-    lines.push('· '+(d.model||'기종')+' : '+parts.join(' / '));
-  });
-  lines.push('<span style="color:#5a6a7f;font-size:11.5px">※ 부가세 별도 · 약정/단가는 표에서 수정 가능</span>');
-  el.innerHTML=lines.join('<br>');
-}
-
-function billMeter(idx,kind,prev,cur){
-  var pv=(Number(prev)||0).toLocaleString();
-  var cv=(Number(cur)||0).toLocaleString();
-  return '<td class="bill-num"><input class="bill-minput" value="'+pv+'" onfocus="billMeterFocus(this)" onchange="billSet('+idx+',\'prev'+kind+'\',this.value)"></td>'+
-    '<td class="bill-num"><input class="bill-minput" value="'+cv+'" onfocus="billMeterFocus(this)" onchange="billSet('+idx+',\'cur'+kind+'\',this.value)"></td>';
-}
-// 입력창 포커스 시 쉼표 제거 (편집 편하게)
-function billMeterFocus(el){
-  el.value=(el.value||'').replace(/,/g,'');
-}
-
-function billSet(idx,key,v){
-  if(key==='model') _billData.devices[idx][key]=v;
-  else _billData.devices[idx][key]=parseFloat(String(v).replace(/,/g,''))||0;
-  billCalc();
-}
-function billAddDevice(){
-  var u = _billContract ? getContractUnit(_billContract.name) : {bwUnit:10,colorUnit:80};
-  _billData.devices.push({model:'새 기종',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:u.bwUnit,colorUnit:u.colorUnit});
-  billCalc();
-}
-
-// ===== 기종 자동추가: 모니터링 장비 검색 팝업 =====
-var _billAllDevices = [];
-
-function openBillDevicePicker(){
-  if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
-  if(!_allBillContracts.length) loadBillContracts();
-  document.getElementById('bill-picker-modal').classList.add('open');
-  document.getElementById('bill-picker-srch').value = _billContract ? (_billContract.name||'') : '';
-  // 모든 모니터링 장비 로드
-  currentDevicesQuery().get().then(function(snap){
-    _billAllDevices=[];
-    snap.forEach(function(doc){
-      if(!doc.id.startsWith('hist_')){
-        var d=doc.data(); d._id=doc.id;
-        if(d.name) _billAllDevices.push(d);
-      }
-    });
-    renderBillDevicePicker();
-  });
-}
-
-function closeBillDevicePicker(){
-  document.getElementById('bill-picker-modal').classList.remove('open');
-}
-
-function renderBillDevicePicker(){
-  var q=document.getElementById('bill-picker-srch').value.trim().toLowerCase();
-  var list=document.getElementById('bill-picker-list');
-  var filtered=_billAllDevices.filter(function(d){
-    var hay=((d.name||'')+' '+(d.model||'')).toLowerCase();
-    return !q || hay.includes(q);
-  });
-  if(!filtered.length){ list.innerHTML='<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">검색 결과 없음</div>'; return; }
-  // 이미 추가된 장비(모델명+거래처로 판단)
-  var already={};
-  _billData.devices.forEach(function(d){ already[(d._src||'')]=true; });
-  list.innerHTML='';
-  filtered.forEach(function(d){
-    var srcKey=d._id;
-    var isAdded=already[srcKey];
-    var div=document.createElement('div');
-    div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;'+(isAdded?'opacity:.5':'cursor:pointer');
-    if(!isAdded){
-      div.onmouseover=function(){this.style.background='#eff6ff';};
-      div.onmouseout=function(){this.style.background='';};
-      div.onclick=function(){ addDeviceFromMonitoring(d); };
-    }
-    var online=String(d.is_online)==='True';
-    div.innerHTML=
-      '<span style="width:8px;height:8px;border-radius:50%;background:'+(online?'#16a34a':'#9ca3af')+';flex-shrink:0"></span>'+
-      '<div style="flex:1">'+
-        '<div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
-        '<div style="color:var(--text3);font-size:11.5px">'+esc(d.model||'')+' · '+esc(d.ip||'')+'</div>'+
-      '</div>'+
-      (isAdded?'<span style="color:var(--green);font-size:12px;font-weight:600">✓ 추가됨</span>'
-              :'<span style="color:var(--blue);font-size:12px;font-weight:600">＋ 추가</span>');
-    list.appendChild(div);
-  });
-}
-
-// 모니터링 장비를 청구서 행으로 추가 (검침값 자동 조회)
-function addDeviceFromMonitoring(dev){
-  var startDate=document.getElementById('bill-start').value;
-  var endDate=document.getElementById('bill-end').value;
-  var no=dev._id.replace('device_','');
-
-  // 거래처 정보 자동 채우기 (아직 거래처 미선택이거나, 이 장비의 거래처로 채우기)
-  if(!_billContract || !document.getElementById('bill-name').textContent || document.getElementById('bill-name').textContent==='-'){
-    var c=findContractByName(dev.name);
-    if(c){ _billContract=c; fillContractInfo(c); document.getElementById('bill-srch').value=c.name||''; loadBillHistory(c.name); }
-    else {
-      // rental에 없으면 장비 이름만이라도 상호에 채움
-      if(!document.getElementById('bill-name').textContent || document.getElementById('bill-name').textContent==='-')
-        document.getElementById('bill-name').textContent=dev.name||'';
-    }
-  }
-  // 청구기간 표시 (비어있으면)
-  if(startDate && endDate){
-    var pEl=document.getElementById('bill-period');
-    if(!pEl.textContent || pEl.textContent==='-') pEl.textContent=startDate+' ~ '+endDate;
-  }
-
-  function pushRow(prevBw,curBw,prevColor,curColor){
-    var u=getContractUnit(dev.name);
-    _billData.devices.push({
-      model: (dev.model||dev.name||'기종'),
-      _src: dev._id,
-      prevBw:prevBw, curBw:curBw, prevColor:prevColor, curColor:curColor,
-      bwFree: parseInt(dev.quota_bw||0)||0,
-      colorFree: parseInt(dev.quota_color||0)||0,
-      bwUnit:u.bwUnit, colorUnit:u.colorUnit
-    });
-    // 첫 추가 시 비어있던 기본 행 제거
-    if(_billData.devices.length===2 && _billData.devices[0].model==='기종명 입력' && !_billData.devices[0]._src){
-      _billData.devices.shift();
-    }
-    billCalc();
-    renderBillDevicePicker();
-  }
-
-  if(!startDate||!endDate){
-    // 기간 없으면 현재값만
-    pushRow(parseInt(dev.start_bw||0)||0, parseInt(dev.bw_count||0)||0,
-            parseInt(dev.start_color||0)||0, parseInt(dev.color_count||0)||0);
-    return;
-  }
-
-  var startStr=startDate.replace(/-/g,''), endStr=endDate.replace(/-/g,'');
-  var sP=db.collection('device_status')
-    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+startStr)
-    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+startStr+'_2359').get();
-  var eP=db.collection('device_status')
-    .where(firebase.firestore.FieldPath.documentId(),'>=','hist_'+no+'_'+endStr)
-    .where(firebase.firestore.FieldPath.documentId(),'<=','hist_'+no+'_'+endStr+'_2359').get();
-  Promise.all([sP,eP]).then(function(r){
-    var sRows=[],eRows=[];
-    r[0].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) sRows.push(d); });
-    r[1].forEach(function(doc){ var d=doc.data(); if(parseInt(d.bw_count||0)>0) eRows.push(d); });
-    sRows.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
-    eRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
-    var sData=sRows[0]||null, eData=eRows[0]||null;
-    if(!eData && parseInt(dev.bw_count||0)>0) eData=dev;
-    if(!sData && (parseInt(dev.start_bw||0)>0||parseInt(dev.start_color||0)>0))
-      sData={bw_count:parseInt(dev.start_bw)||0,color_count:parseInt(dev.start_color)||0};
-    pushRow(
-      sData?parseInt(sData.bw_count||0):0, eData?parseInt(eData.bw_count||0):0,
-      sData?parseInt(sData.color_count||0):0, eData?parseInt(eData.color_count||0):0
-    );
-  });
-}
-function billDel(idx){
-  if(_billData.devices.length<=1){ alert('최소 1대는 있어야 합니다.'); return; }
-  _billData.devices.splice(idx,1); billCalc();
-}
-function printBill(){ window.print(); }
-
-// 청구서 전체 초기화 (새 청구서 시작)
-function resetBill(){
-  if(!confirm('작성 중인 청구서를 모두 비우고 새로 시작할까요?')) return;
-  _billContract=null;
-  _editingBillDocId=null;
-  _billData={ vatRate:0.10, devices:[{model:'기종명 입력',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80}] };
-  // 거래처 정보 비우기
-  ['bill-name','bill-bizno','bill-ceo','bill-period','bill-addr','bill-no'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent='';
-  });
-  document.getElementById('bill-srch').value='';
-  document.getElementById('bill-search-result').style.display='none';
-  document.getElementById('bill-vat-mode').value='separate';
-  // 발행일자 오늘로
-  var t=new Date();
-  document.getElementById('bill-date').textContent=t.getFullYear()+'년 '+(t.getMonth()+1)+'월 '+t.getDate()+'일';
-  // 이력 영역 초기화
-  document.getElementById('bill-history-list').innerHTML='거래처를 선택하면 청구 이력이 표시됩니다.';
-  billCalc();
-}
-
-// 청구 이력 저장
-function saveBillHistory(){
-  if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
-  // 거래처명: 선택된 거래처가 있으면 그 이름, 없으면 청구서 상호칸 사용 (단기임대 등)
-  var billName = (_billContract && _billContract.name) ? _billContract.name : '';
-  if(!billName){
-    var nm=(document.getElementById('bill-name').textContent||'').trim();
-    if(nm && nm!=='-') billName=nm;
-  }
-  if(!billName){
-    billName = prompt('청구서에 표시할 거래처/상호를 입력하세요.\n(단기 임대 등 등록되지 않은 거래처도 가능)','');
-    if(billName===null) return;
-    billName=billName.trim();
-    if(!billName){ alert('거래처/상호를 입력해 주세요.'); return; }
-    // 입력한 상호를 청구서 상호칸에도 반영
-    document.getElementById('bill-name').textContent=billName;
-  }
-  var mode=document.getElementById('bill-vat-mode').value;
-  var totalSupply=0,totalTax=0;
-  _billData.devices.forEach(function(d){
-    var bwEx=Math.max(0,(d.curBw-d.prevBw)-d.bwFree), cEx=Math.max(0,(d.curColor-d.prevColor)-d.colorFree);
-    var amt=bwEx*d.bwUnit+cEx*d.colorUnit;
-    totalSupply+=amt; totalTax+=amt*_billData.vatRate;
-  });
-  var rec={
-    contract: billName,
-    period: document.getElementById('bill-period').textContent,
-    bill_no: document.getElementById('bill-no').textContent,
-    date: document.getElementById('bill-date').textContent,
-    vat_mode: mode,
-    supply: Math.round(totalSupply),
-    tax: Math.round(totalTax),
-    total: Math.round(mode==='included'?totalSupply+totalTax:totalSupply),
-    devices: JSON.stringify(_billData.devices),
-    created: Date.now()
-  };
-  // 수정 모드면 기존 docId 그대로 덮어쓰기(이력 추가 안 됨), 신규면 새 docId
-  var isEdit=!!_editingBillDocId;
-  var docId=isEdit ? _editingBillDocId : ('bill_'+billName+'_'+Date.now());
-  db.collection('billing').doc(docId).set(rec).then(function(){
-    _editingBillDocId=null;
-    alert(isEdit ? '청구 내역이 수정되었습니다.' : '청구 내역이 저장되었습니다.');
-    loadBillHistory(billName);
-  }).catch(function(e){ alert('저장 실패: '+e.message); });
-}
-
-var _billHistoryRecs = [];   // 현재 거래처의 청구 이력 캐시
-var _editingBillDocId = null; // 수정 중인 청구 이력 docId (있으면 저장 시 기존 건 삭제)
-
-function clearHistFilter(){
-  document.getElementById('hist-start').value='';
-  document.getElementById('hist-end').value='';
-  loadBillHistory(_billContract?_billContract.name:null);
-}
-
-function loadBillHistory(cname){
-  if(!_fbReady||!db||!cname) return;
-  var el=document.getElementById('bill-history-list');
-  el.innerHTML='조회 중...';
-  db.collection('billing').where('contract','==',cname).get().then(function(snap){
-    var recs=[];
-    snap.forEach(function(doc){ var d=doc.data(); d._docId=doc.id; recs.push(d); });
-    recs.sort(function(a,b){ return b.created-a.created; });
-    // 기간 필터 (발행일 기준)
-    var hs=document.getElementById('hist-start').value;
-    var he=document.getElementById('hist-end').value;
-    if(hs||he){
-      recs=recs.filter(function(r){
-        var d=(r.created? new Date(r.created):null);
-        if(!d) return true;
-        var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        if(hs && ds<hs) return false;
-        if(he && ds>he) return false;
-        return true;
-      });
-    }
-    _billHistoryRecs=recs;
-    if(!recs.length){ el.innerHTML='<span style="color:var(--text3)">해당 기간에 청구 이력이 없습니다.</span>'; return; }
-
-    var sumTotal=recs.reduce(function(a,r){ return a+(r.total||0); },0);
-    var html='<table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
-      '<thead><tr style="background:var(--gray-bg)">'+
-      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">거래처</th>'+
-      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">청구번호</th>'+
-      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">청구기간</th>'+
-      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">발행일</th>'+
-      '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">공급가액</th>'+
-      '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">세액</th>'+
-      '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">합계</th>'+
-      '<th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">관리</th>'+
-      '</tr></thead><tbody>';
-    recs.forEach(function(r,i){
-      html+='<tr>'+
-        '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.contract||'-')+'</td>'+
-        '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.bill_no||'-')+'</td>'+
-        '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.period||'-')+'</td>'+
-        '<td style="padding:8px;border-bottom:1px solid var(--border)">'+esc(r.date||'-')+'</td>'+
-        '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">'+(r.supply||0).toLocaleString()+'</td>'+
-        '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border);color:var(--text3)">'+(r.tax||0).toLocaleString()+'</td>'+
-        '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border);font-weight:700">'+(r.total||0).toLocaleString()+'원</td>'+
-        '<td style="padding:8px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap">'+
-          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px" onclick="showBillDetail('+i+')">보기</button> '+
-          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px" onclick="editBillHistory('+i+')">수정</button> '+
-          '<button class="btn-bill btn-bill-ghost" style="padding:4px 8px;font-size:12px;color:var(--red)" onclick="deleteBillHistory('+i+')">삭제</button>'+
-        '</td>'+
-        '</tr>';
-    });
-    html+='</tbody><tfoot><tr style="background:var(--gray-bg);font-weight:700">'+
-      '<td colspan="6" style="padding:8px;text-align:right;border-top:2px solid var(--text)">기간 합계</td>'+
-      '<td style="padding:8px;text-align:right;border-top:2px solid var(--text);color:var(--blue)">'+sumTotal.toLocaleString()+'원</td>'+
-      '<td style="border-top:2px solid var(--text)"></td></tr></tfoot></table>';
-    el.innerHTML=html;
-  }).catch(function(e){ el.innerHTML='<span style="color:var(--red)">이력 조회 실패: '+e.message+'</span>'; });
-}
-
-// 청구 이력 삭제
-function deleteBillHistory(idx){
-  var r=_billHistoryRecs[idx];
-  if(!r||!r._docId){ alert('삭제할 청구를 찾을 수 없습니다.'); return; }
-  if(!_fbReady||!db){ alert('Firebase 연결 대기 중입니다.'); return; }
-  var msg='이 청구 이력을 삭제할까요?\n\n'+
-    '거래처: '+(r.contract||'')+'\n'+
-    '청구번호: '+(r.bill_no||'')+'\n'+
-    '청구기간: '+(r.period||'')+'\n'+
-    '합계: '+(r.total||0).toLocaleString()+'원\n\n'+
-    '※ 삭제하면 되돌릴 수 없습니다.';
-  if(!confirm(msg)) return;
-  db.collection('billing').doc(r._docId).delete().then(function(){
-    alert('청구 이력이 삭제되었습니다.');
-    loadBillHistory(r.contract||(_billContract?_billContract.name:null));
-  }).catch(function(e){ alert('삭제 실패: '+e.message); });
-}
-
-// 청구 이력 수정: 저장된 청구를 청구서 양식으로 불러와 재작성 (저장 시 기존 건 삭제 후 새로 저장)
-function editBillHistory(idx){
-  var r=_billHistoryRecs[idx];
-  if(!r){ alert('수정할 청구를 찾을 수 없습니다.'); return; }
-  if(!confirm('이 청구를 수정하시겠습니까?\n\n청구서 양식으로 불러온 뒤 수정하고 다시 저장하면\n기존 이력은 새 내용으로 교체됩니다.')) return;
-  // 청구서 양식에 값 채우기
-  document.getElementById('bill-name').textContent=r.contract||'';
-  document.getElementById('bill-no').textContent=r.bill_no||'';
-  document.getElementById('bill-period').textContent=r.period||'';
-  document.getElementById('bill-date').textContent=r.date||'';
-  document.getElementById('bill-vat-mode').value=r.vat_mode||'separate';
-  var devs=[]; try{ devs=JSON.parse(r.devices||'[]'); }catch(e){}
-  _billData={devices:devs, vatRate:0.10};
-  // 수정 중인 원본 docId 기억 (저장 시 기존 건 삭제)
-  _editingBillDocId=r._docId;
-  renderBillTerms();
-  billCalc();
-  // 청구서 양식으로 스크롤
-  var sheet=document.getElementById('bill-sheet');
-  if(sheet) sheet.scrollIntoView({behavior:'smooth',block:'center'});
-  alert('청구서 양식에 불러왔습니다.\n수정 후 "💾 청구 저장"을 누르면 기존 이력이 교체됩니다.');
-}
-
-// 청구 상세 모달
-function showBillDetail(idx){
-  var r=_billHistoryRecs[idx];
-  if(!r) return;
-  var devs=[]; try{ devs=JSON.parse(r.devices||'[]'); }catch(e){}
-  var rowsHtml='';
-  devs.forEach(function(d){
-    var bwUse=d.curBw-d.prevBw, cUse=d.curColor-d.prevColor;
-    var bwEx=Math.max(0,bwUse-d.bwFree), cEx=Math.max(0,cUse-d.colorFree);
-    rowsHtml+='<tr><td style="padding:6px;border-bottom:1px solid var(--border)" rowspan="2">'+esc(d.model)+'</td>'+
-      '<td style="padding:6px;border-bottom:1px solid var(--border)">흑백</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.prevBw||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.curBw||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+bwUse.toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.bwFree||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+bwEx.toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.bwUnit||0)+'원</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(bwEx*d.bwUnit).toLocaleString()+'</td></tr>'+
-      '<tr><td style="padding:6px;border-bottom:1px solid var(--border)">컬러</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.prevColor||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.curColor||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+cUse.toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.colorFree||0).toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+cEx.toLocaleString()+'</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(d.colorUnit||0)+'원</td>'+
-      '<td style="padding:6px;text-align:right;border-bottom:1px solid var(--border)">'+(cEx*d.colorUnit).toLocaleString()+'</td></tr>';
-  });
-  var body='<div id="bill-detail-print" style="padding:20px">'+
-    '<div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--text);padding-bottom:10px;margin-bottom:12px">'+
-    '<div><div style="font-size:17px;font-weight:800">'+esc(r.contract||'')+'</div><div style="font-size:12px;color:var(--text3);margin-top:3px">청구번호 '+esc(r.bill_no||'')+'</div></div>'+
-    '<div style="text-align:right;font-size:12px;color:var(--text3)">청구기간 '+esc(r.period||'')+'<br>발행일 '+esc(r.date||'')+'</div></div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'+
-    '<thead><tr style="background:var(--gray-bg)">'+
-    '<th style="padding:6px;width:18%">기종명</th>'+
-    '<th style="padding:6px;width:7%">구분</th>'+
-    '<th style="padding:6px;width:11%">이전검침</th>'+
-    '<th style="padding:6px;width:11%">현재검침</th>'+
-    '<th style="padding:6px;width:10%">사용량</th>'+
-    '<th style="padding:6px;width:10%">기본제공</th>'+
-    '<th style="padding:6px;width:9%">초과분</th>'+
-    '<th style="padding:6px;width:8%">단가</th>'+
-    '<th style="padding:6px;width:16%">금액</th></tr></thead>'+
-    '<tbody>'+rowsHtml+'</tbody></table>'+
-    '<div style="text-align:right;margin-top:12px;font-size:14px">공급가액 <b>'+(r.supply||0).toLocaleString()+'원</b> · 세액 '+(r.tax||0).toLocaleString()+'원 · 합계 <b style="color:var(--blue);font-size:17px">'+(r.total||0).toLocaleString()+'원</b></div>'+
-    '</div>'+
-    '<div style="padding:0 20px 16px;text-align:right"><button class="btn-bill btn-bill-print" onclick="printBillDetail()">🖨 이 내역 출력</button></div>';
-  document.getElementById('bill-detail-body').innerHTML=body;
-  document.getElementById('bill-detail-modal').classList.add('open');
-}
-function closeBillDetail(){ document.getElementById('bill-detail-modal').classList.remove('open'); }
-function printBillDetail(){
-  var content=document.getElementById('bill-detail-print').innerHTML;
-  var w=window.open('','_blank');
-  w.document.write('<html><head><title>청구 상세내역</title><style>'+
-    'body{font-family:Malgun Gothic,sans-serif;padding:20px;color:#1a1a1a}'+
-    'table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}'+
-    'th,td{border:1px solid #999 !important;padding:6px !important;white-space:nowrap;text-align:center}'+
-    'td:first-child{white-space:normal;word-break:break-all}'+
-    'th{background:#f0f0f0 !important}'+
-    '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
-    '</style></head><body>'+content+'</body></html>');
-  w.document.close();
-  setTimeout(function(){ w.print(); }, 250);
-}
-
-// 이력 전체 출력
-function printHistory(){
-  if(!_billHistoryRecs.length){ alert('출력할 이력이 없습니다.'); return; }
-  // 거래처명: 선택된 거래처 우선, 없으면 이력 레코드의 contract 값 사용
-  var cname=_billContract?_billContract.name:'';
-  if(!cname && _billHistoryRecs.length){ cname=_billHistoryRecs[0].contract||''; }
-  var title=(cname||'거래처')+' 청구 이력';
-  var rows=_billHistoryRecs.map(function(r){
-    return '<tr><td>'+esc(r.contract||cname||'')+'</td><td>'+esc(r.bill_no||'')+'</td><td>'+esc(r.period||'')+'</td><td>'+esc(r.date||'')+'</td><td style="text-align:right">'+(r.supply||0).toLocaleString()+'</td><td style="text-align:right">'+(r.tax||0).toLocaleString()+'</td><td style="text-align:right">'+(r.total||0).toLocaleString()+'원</td></tr>';
-  }).join('');
-  var sum=_billHistoryRecs.reduce(function(a,r){return a+(r.total||0);},0);
-  var w=window.open('','_blank');
-  w.document.write('<html><head><title>'+title+'</title><style>body{font-family:Malgun Gothic,sans-serif;padding:24px}h2{margin-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:12px}th,td{border:1px solid #ccc;padding:7px}th{background:#f0f0f0}</style></head><body>'+
-    '<h2>'+title+'</h2><div style="color:#666;font-size:12px">출력일 '+new Date().toLocaleDateString()+'</div>'+
-    '<table><thead><tr><th>거래처</th><th>청구번호</th><th>청구기간</th><th>발행일</th><th>공급가액</th><th>세액</th><th>합계</th></tr></thead><tbody>'+rows+
-    '<tr style="font-weight:700;background:#f8f8f8"><td colspan="6" style="text-align:right">합계</td><td style="text-align:right">'+sum.toLocaleString()+'원</td></tr>'+
-    '</tbody></table></body></html>');
-  w.document.close(); w.print();
-}
-
-// CSV 다운로드
-function downloadHistoryCsv(){
-  if(!_billHistoryRecs.length){ alert('다운로드할 이력이 없습니다.'); return; }
-  var cname=_billContract?_billContract.name:'';
-  if(!cname && _billHistoryRecs.length){ cname=_billHistoryRecs[0].contract||'거래처'; }
-  var lines=['거래처,청구번호,청구기간,발행일,공급가액,세액,합계'];
-  _billHistoryRecs.forEach(function(r){
-    lines.push('"'+(r.contract||cname||'')+'","'+(r.bill_no||'')+'","'+(r.period||'')+'","'+(r.date||'')+'",'+(r.supply||0)+','+(r.tax||0)+','+(r.total||0));
-  });
-  var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=(cname||'거래처')+'_청구이력.csv';
-  a.click();
 }
 
 </script>
