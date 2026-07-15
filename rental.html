@@ -1272,6 +1272,7 @@ function dbRenderTax(){          _debounce('tax',  renderTax); }
 function dbRenderTaxClientList(){_debounce('tcl',  renderTaxClientList); }
 function dbRenderPayStats(){     _debounce('pst',  renderPayStats); }
 function dbFilterSvcClients(v){  _debounce('svc',  function(){ filterSvcClients(v); }); }
+function dbRenderInvList(){       _debounce('inv',  function(){ invPage=0; renderInvList(); }); }
 
 // ══ 유틸 ══
 function latestPayment(c){
@@ -1333,7 +1334,7 @@ function payStatus(c){
   if(m>=1) return {cls:'b-warn',label:`미납 ${m}개월`};
   return {cls:'b-ok',label:'납부'};
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function today(){return new Date().toISOString().slice(0,10)}
 function fileIcon(name){
   const ext=(name||'').split('.').pop().toLowerCase();
@@ -2437,11 +2438,18 @@ function initOnlinePresence(){
     updateOnlineUI(users);
   }, function(){ });
 
-  // 페이지 닫을 때 접속 해제
-  window.addEventListener('beforeunload', function(){
-    userRef.delete().catch(function(){});
-    if(_onlineInterval) clearInterval(_onlineInterval);
-  });
+  // 페이지 닫을 때 접속 해제 (중복 등록 방지: 이미 달려있으면 다시 안 달음)
+  if(!window._onlineUnloadBound){
+    window._onlineUnloadBound = true;
+    window.addEventListener('beforeunload', function(){
+      try {
+        if(window._db && _currentUserId){
+          window._db.collection('rental_online').doc(_currentUserId).delete().catch(function(){});
+        }
+      } catch(e){}
+      if(_onlineInterval) clearInterval(_onlineInterval);
+    });
+  }
 }
 
 function updateOnlineUI(users){
@@ -3475,92 +3483,6 @@ window._baseSnapshot = null;  // 내가 불러온 시점의 데이터 원본 (�
 //   1) 같은 거래처의 다른 달 입금 -> payments를 [월 단위]로 병합
 //   2) 새 레코드 번호 충돌       -> 내 것에 새 번호를 재부여
 //   3) 삭제 구분                 -> BASE와 비교해 "내가 지운 것"만 삭제
-// ═══════════════════════════════════════════════════════════════
-function _mEq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
-function _mIdx(arr,key){
-  var m={};
-  (arr||[]).forEach(function(x){ if(x && x[key]!=null) m[String(x[key])]=x; });
-  return m;
-}
-function _mMergeObj(base,mine,srv){
-  base=base||{}; mine=mine||{}; srv=srv||{};
-  var out=Object.assign({},srv);
-  Object.keys(mine).forEach(function(k){ if(!_mEq(base[k],mine[k])) out[k]=mine[k]; });
-  Object.keys(base).forEach(function(k){ if(!(k in mine)) delete out[k]; });
-  return out;
-}
-var _MERGE_SPEC = [
-  { name:'CONTRACTS',   key:'no',  deep:['payments'] },
-  { name:'SERVICES',    key:'id',  deep:[] },
-  { name:'EXTRA_PAYS',  key:'id',  deep:[] },
-  { name:'INVENTORY',   key:'id',  deep:[] },
-  { name:'STAFF_LIST',  key:'id',  deep:[] },
-  { name:'TAX_CLIENTS', key:'seq', deep:['issues'] }
-];
-function merge3(base, mine, srv){
-  var out={}, notes=[];
-  _MERGE_SPEC.forEach(function(spec){
-    var KEY=spec.key;
-    var B=_mIdx(base[spec.name],KEY), M=_mIdx(mine[spec.name],KEY), S=_mIdx(srv[spec.name],KEY);
-    var res={};
-    Object.keys(S).forEach(function(id){ res[id]=S[id]; });   // 서버 것부터 (남의 작업 보존)
-    var maxId=0;
-    [B,M,S].forEach(function(mp){ Object.keys(mp).forEach(function(id){
-      var n=parseInt(id); if(!isNaN(n)&&n>maxId) maxId=n;
-    });});
-    Object.keys(M).forEach(function(id){
-      var bRec=B[id], mRec=M[id], sRec=S[id];
-      if(!bRec){                                   // 내가 새로 추가
-        if(sRec && !_mEq(sRec,mRec)){              // 번호 충돌 -> 새 번호 재부여
-          var newId=++maxId;
-          var copy=JSON.parse(JSON.stringify(mRec));
-          copy[KEY]=newId;
-          res[String(newId)]=copy;
-          notes.push(spec.name+' 번호충돌 '+id+'→'+newId);
-        } else { res[id]=mRec; }
-        return;
-      }
-      if(_mEq(bRec,mRec)) return;                  // 내가 안 건드림 -> 서버 것 유지
-      if(!sRec){ res[id]=mRec; return; }           // 남이 지웠지만 내 수정본 보존
-      var merged=Object.assign({},sRec);           // 필드 단위 병합
-      Object.keys(mRec).forEach(function(f){
-        if(spec.deep.indexOf(f)>=0) return;
-        if(!_mEq(bRec[f],mRec[f])) merged[f]=mRec[f];
-      });
-      spec.deep.forEach(function(f){               // payments/issues 는 키 단위 병합
-        merged[f]=_mMergeObj(bRec[f], mRec[f], sRec[f]);
-      });
-      res[id]=merged;
-    });
-    Object.keys(B).forEach(function(id){           // 내가 지운 것만 삭제
-      if(!(id in M)){ delete res[id]; notes.push(spec.name+' #'+id+' 삭제'); }
-    });
-    out[spec.name]=Object.keys(res).map(function(k){ return res[k]; });
-  });
-  out.CONFIG=Object.assign({}, srv.CONFIG||{}, mine.CONFIG||{});
-  ['nextNo','nextSvcId','nextExtraId','nextInvId','nextStaffId','nextTaxSeq','nextDocId'].forEach(function(k){
-    var a=parseInt((mine.CONFIG||{})[k])||0, b=parseInt((srv.CONFIG||{})[k])||0;
-    out.CONFIG[k]=String(Math.max(a,b));
-  });
-  out.version=mine.version;
-  out.savedAt=mine.savedAt;
-  out.savedBy=mine.savedBy;
-  return {data:out, notes:notes};
-}
-
-function _guardStaleWrite(){
-  // 서버의 최신 savedAt을 확인해서, 다른 사람이 먼저 저장했는지 판단
-  return window._db.collection('rental').doc('meta').get().then(function(snap){
-    if(!snap.exists) return { ok:true };                 // meta 없음(최초) -> 통과
-    var srvAt = snap.data().savedAt;
-    var srvBy = snap.data().savedBy;
-    if(!window._baseSavedAt) return { ok:true };          // 기준값 없음 -> 통과
-    if(srvAt && srvAt !== window._baseSavedAt && srvBy !== (window._currentUserId||_currentUserId)){
-      return { ok:false, by: srvBy, at: srvAt };          // 다른 사람이 먼저 저장함!
-    }
-    return { ok:true };
-  }).catch(function(){ return { ok:true }; });            // 확인 실패시엔 막지 않음
-}
 
 function saveToApi(callback) {
   if (!(window._fbReady && window._fbSave)) {
@@ -5237,8 +5159,8 @@ function hidePayTip(){
       <span class="card-title">📋 입출고 이력</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="inv-srch" placeholder="🔍 품목명 검색..." style="flex:1;min-width:120px" oninput="invPage=0;renderInvList()">
-      <input class="inp" type="text" id="inv-client-srch" placeholder="거래처 검색" style="min-width:100px" oninput="invPage=0;renderInvList()">
+      <input class="inp inp-search" type="text" id="inv-srch" placeholder="🔍 품목명 검색..." style="flex:1;min-width:120px" oninput="dbRenderInvList()">
+      <input class="inp" type="text" id="inv-client-srch" placeholder="거래처 검색" style="min-width:100px" oninput="dbRenderInvList()">
       <select class="inp" id="inv-dir" onchange="invPage=0;renderInvList()"><option value="">전체</option><option value="in">입고만</option><option value="out">출고만</option></select>
       <select class="inp" id="inv-cat" onchange="invPage=0;renderInvList()"><option value="">전체 분류</option><option value="장비">장비</option><option value="소모품">소모품</option><option value="부품">부품</option></select>
       <input class="inp" type="date" id="inv-date-from" onchange="invPage=0;renderInvList()" style="min-width:130px">
