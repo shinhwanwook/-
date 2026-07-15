@@ -24,7 +24,7 @@
 body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;width:100%;overflow-x:hidden;box-sizing:border-box}
 
 /* NAV */
-.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);width:100%;box-sizing:border-box;overflow-x:auto}
+.nav{background:var(--blue);color:#fff;padding:0 20px;display:flex;flex-wrap:nowrap;align-items:center;height:52px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.2);width:100%;box-sizing:border-box;overflow-x:auto}
 .nav-logo{font-size:17px;font-weight:700;margin-right:20px;white-space:nowrap;letter-spacing:-.3px}
 .nav-logo span{opacity:.65;font-weight:400;font-size:12px;margin-left:5px}
 .nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;opacity:.7;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
@@ -362,27 +362,27 @@ body.locked { overflow:hidden; }
   <div class="nav-tab" id="nav-tab-inventory" onclick="showPage('inventory')" style="display:none">📦 장비/소모품</div>
   <div class="nav-tab" id="nav-tab-tax" onclick="showPage('tax')">🧾 세금계산서</div>
   <div style="flex:1"></div>
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap">
     <!-- [신규] 다른 PC가 작업 중일 때 빨간 문구로 경고 (저장하기 버튼 바로 옆) -->
     <span id="editing-now" style="display:none;background:#ef4444;color:#fff;
           font-size:12px;font-weight:800;padding:5px 10px;border-radius:6px;
           white-space:nowrap;animation:pulse 1.2s infinite"></span>
     <button id="manual-save-btn" onclick="manualSave()"
       style="background:#3b82f6;color:#fff;border:none;border-radius:6px;
-             padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;
-             font-family:inherit;transition:all .3s">
+             padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;
+             font-family:inherit;transition:all .3s;white-space:nowrap">
       💾 저장하기
     </button>
-    <button id="safe-reload-btn" onclick="safeReload()" title="작업 내용을 저장한 뒤 최신 데이터로 새로고침합니다"
+    <button id="safe-reload-btn" onclick="safeReload()" title="저장 안 한 작업을 버리고 서버 최신 상태로 새로고침합니다"
       style="background:#0ea5e9;color:#fff;border:none;border-radius:6px;
-             padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;
-             font-family:inherit;transition:all .3s">
+             padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;
+             font-family:inherit;transition:all .3s;white-space:nowrap">
       🔄 새로고침
     </button>
     <span id="save-status" style="font-size:11px;color:rgba(255,255,255,.6);transition:opacity .3s;opacity:0">✓ 저장됨</span>
-    <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
-    <a href="#" onclick="openMonitor();return false;" title="프린터 모니터링 열기 (자동 로그인)" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
-    <label title="JSON 파일에서 복원" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:4px">
+    <button onclick="backupData()" title="JSON 백업 다운로드" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">💾 백업</button>
+    <a href="#" onclick="openMonitor();return false;" title="프린터 모니터링 열기 (자동 로그인)" style="background:rgba(100,200,255,.2);border:1px solid rgba(100,200,255,.4);color:#fff;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:none">🖨️ 모니터링</a>
+    <label title="JSON 파일에서 복원" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:4px">
       📂 불러오기<input type="file" accept=".json" id="restore-input" style="display:none" onchange="restoreData(this)">
     </label>
     <span id="nav-admin-label" style="display:none;color:#bbdefb;font-size:12px;font-weight:600">🔓 관리자 모드</span>
@@ -3778,30 +3778,26 @@ function markUnsaved() {
 //   "미저장 내용을 먼저 저장(병합) -> 성공하면 새로고침" 순서로 동작.
 //   -> 작업 중이던 내용이 보존된 채 최신 데이터를 받아옴.
 // ═══════════════════════════════════════════════════════════════
+// [새로고침] 작업 내용을 버리고 서버 최신 상태로 초기화
+//   - 잘못 입력했거나 작업을 취소하고 싶을 때 사용
+//   - 미저장 내용(내 화면 메모리)만 사라짐 -> 저장을 안 하므로 남의 데이터는 안 건드림
+//   - 서버(Firebase)의 최신 데이터를 다시 불러옴 -> 빨간불이 파란불로
+//   - 자동로그인이 켜져 있으면 로그인은 그대로 유지됨
+// ═══════════════════════════════════════════════════════════════
 function safeReload(){
   if(window._isSaving){
     alert('저장 중입니다. 잠시 후 다시 눌러주세요.');
     return;
   }
-  if(!_hasUnsaved){
-    // 저장할 게 없으면 바로 새로고침
-    location.reload();
-    return;
-  }
-  // 미저장 내용이 있으면 -> 먼저 저장하고 새로고침
-  var btn = document.getElementById('safe-reload-btn');
-  if(btn){ btn.textContent = '⏳ 저장 중...'; btn.disabled = true; }
-  showSaveStatus('⏳ 저장 후 새로고침...', '#93c5fd');
-  saveToApi(function(ok){
-    if(ok){
-      showSaveStatus('✅ 저장 완료 - 새로고침', '#86efac');
-      setTimeout(function(){ location.reload(); }, 300);
-    } else {
-      if(btn){ btn.textContent = '🔄 새로고침'; btn.disabled = false; }
-      alert('저장에 실패해서 새로고침을 취소했습니다.\n\n' +
-            '입력하신 내용은 그대로 있습니다. 잠시 후 다시 시도해 주세요.');
+  if(_hasUnsaved){
+    if(!confirm('저장하지 않은 작업 내용을 버리고\n서버의 최신 상태로 새로고침합니다.\n\n계속하시겠습니까?')){
+      return;  // 사용자가 취소 -> 아무것도 안 함
     }
-  });
+  }
+  // 미저장 플래그를 꺼서 beforeunload 경고 팝업이 안 뜨게 함
+  _hasUnsaved = false;
+  window._skipUnloadWarn = true;
+  location.reload();
 }
 
 function manualSave() {
@@ -6832,6 +6828,7 @@ function doLogin(){
 <script>
 // 미저장 상태에서 페이지 이탈 경고
 window.addEventListener('beforeunload', function(e){
+  if(window._skipUnloadWarn) return;
   if(_hasUnsaved){
     e.preventDefault();
     e.returnValue = '저장하지 않은 변경사항이 있습니다. 페이지를 떠나시겠습니까?';
@@ -6841,6 +6838,7 @@ window.addEventListener('beforeunload', function(e){
 </script>
 <script>
 window.addEventListener('beforeunload',function(e){
+  if(window._skipUnloadWarn) return;
   if(_hasUnsaved){e.preventDefault();e.returnValue='저장하지 않은 변경사항이 있습니다!';}
 });
 </script>
