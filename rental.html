@@ -2395,33 +2395,6 @@ function tryAdminLogin(){
 var _onlineInterval = null;
 var _onlineUnsubscribe = null;
 
-function updateOnlineUI(users){
-  var countEl=document.getElementById('online-count');
-  if(countEl) countEl.textContent=users.length;
-  var othersEditing=users.filter(function(u){
-    return u.id!==_currentUserId && u.editing===true;
-  });
-  // [신규] 다른 PC의 편집 상태를 전역에 보관 -> 내가 작업 시작하기 전에 경고할 때 사용
-  window._othersEditing = othersEditing.map(function(u){ return u.id; });
-  _renderEditingBanner();
-  var btn=document.getElementById('manual-save-btn');
-  if(btn){
-    if(_hasUnsaved){
-      btn.style.background='#ef4444'; btn.style.color='#fff';
-      btn.style.animation='pulse 1.5s infinite';
-      btn.textContent='💾 저장하기 *';
-    } else if(othersEditing.length>0){
-      var names=othersEditing.map(function(u){return u.id;}).join(', ');
-      btn.style.background='#f59e0b'; btn.style.color='#fff';
-      btn.style.animation='pulse 2s infinite';
-      btn.textContent='✏️ '+names+' 편집 중';
-    } else {
-      btn.style.background='#3b82f6'; btn.style.color='#fff';
-      btn.style.animation=''; btn.textContent='💾 저장하기';
-    }
-  }
-}
-
 function initOnlinePresence(){
   if(!window._db || !_currentUserId) return;
   var db = window._db;
@@ -2432,15 +2405,13 @@ function initOnlinePresence(){
   userRef.set({
     id: userId,
     role: window.isAdmin ? '관리자' : '사용자',
+    editing: false,
     loginAt: new Date().toISOString(),
     lastSeen: new Date().toISOString()
   }).catch(function(){});
 
-  // [개선] 30초 -> 60초 갱신 (Firebase 쓰기/읽기 절반으로 절감)
-  //  * 90초로 늘리려다 되돌림: 브라우저가 백그라운드 탭의 타이머를 늦추기 때문에
-  //    (Chrome은 1분에 1회로 제한) 90초 간격이 실제로는 120초를 넘길 수 있고,
-  //    그러면 아래 활성판정(240초)에 걸려 접속자 문서가 삭제되는 사고가 남.
-  //  * update() -> set(merge) 로 변경: 문서가 삭제됐어도 스스로 복구됨.
+  // [개선] 60초마다 lastSeen 갱신 (set merge -> 문서 삭제됐어도 자가복구)
+  if(_onlineInterval) clearInterval(_onlineInterval);
   _onlineInterval = setInterval(function(){
     userRef.set({
       id: userId,
@@ -2454,16 +2425,13 @@ function initOnlinePresence(){
     var now = Date.now();
     var users = [];
     snap.forEach(function(doc){
-      var d = doc.data();
-      // [개선] 2분 -> 4분 이내 lastSeen을 활성으로 판정
-      //  갱신 주기(60초) 대비 4배 여유. 백그라운드 탭 타이머 지연/네트워크 지연에도
-      //  접속자가 잘못 삭제되지 않도록 함.
+      var d = doc.data();   // editing 필드 포함해서 통째로 전달
+      // [개선] 4분 이내 lastSeen을 활성으로 판정
       var lastSeen = d.lastSeen ? new Date(d.lastSeen).getTime() : 0;
       if(now - lastSeen < 240000){
         users.push(d);
       } else {
-        // 오래된 접속자 삭제
-        doc.ref.delete().catch(function(){});
+        doc.ref.delete().catch(function(){});   // 오래된 접속자 정리
       }
     });
     updateOnlineUI(users);
@@ -2480,6 +2448,13 @@ function updateOnlineUI(users){
   var countEl = document.getElementById('online-count');
   var listEl = document.getElementById('online-list');
   if(countEl) countEl.textContent = users.length;
+
+  // [신규] 다른 PC의 "작업중(editing)" 상태를 추출 -> 표시등/배너에 반영
+  var othersEditing = users.filter(function(u){
+    return u.id !== _currentUserId && u.editing === true;
+  });
+  window._othersEditing = othersEditing.map(function(u){ return u.id; });
+  if(typeof _renderEditingBanner === 'function') _renderEditingBanner();
   if(listEl){
     if(users.length === 0){
       listEl.innerHTML = '<div style="color:#9ca3af;font-size:11px">접속자 없음</div>';
