@@ -3753,6 +3753,18 @@ function confirmEditWhileOthers(){
   return go;
 }
 
+// [신규] 저장버튼을 '저장됨(파란불)' 상태로 되돌림 (새로고침/저장완료 후 공용)
+function setSaveBtnSaved(){
+  var btn = document.getElementById('manual-save-btn');
+  if(btn){
+    btn.style.background = '#3b82f6';
+    btn.style.color = '#fff';
+    btn.style.animation = '';
+    btn.disabled = false;
+    btn.textContent = '💾 저장하기';
+  }
+}
+
 function markUnsaved() {
   var wasClean = !_hasUnsaved;
   _hasUnsaved = true;
@@ -3828,6 +3840,9 @@ function safeReload(){
   loadFromApi(function(ok){
     if(btn){ btn.textContent = '🔄 새로고침'; btn.disabled = false; }
     if(ok){
+      // 미저장 상태 완전 해제 + 저장버튼 파란불로
+      _hasUnsaved = false;
+      setSaveBtnSaved();
       showSaveStatus('✅ 최신 데이터로 새로고침됨', '#86efac');
       if(typeof _renderEditingBanner === 'function') _renderEditingBanner();
     } else {
@@ -4021,6 +4036,9 @@ function loadFromApi(callback) {
             setLoadingProgress(100, '완료!');
             setTimeout(function(){
               window._isLoading = false; // 로딩 완료
+              // [보장] 데이터를 막 불러온 직후는 '변경 없음' 상태 -> 저장버튼 파란불
+              _hasUnsaved = false;
+              if(typeof setSaveBtnSaved === 'function') setSaveBtnSaved();
               hideLoadingScreen();
               showSaveStatus('✅ 클라우드에서 불러옴', '#86efac');
               // 접속자 현황 시작
