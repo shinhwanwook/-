@@ -1679,6 +1679,16 @@ function renderList(){
     document.getElementById('pg-next').disabled  = page >= totalPages-1;
     document.getElementById('pg-last').disabled  = page >= totalPages-1;
   }
+
+  // [수정] 첫 렌더 직후 컬럼 너비 적용
+  //   기존에는 페이지 로드 100ms 뒤에 한 번만 적용해서,
+  //   첫 로그인처럼 데이터 로딩이 느리면 테이블이 아직 안 그려져 적용 실패
+  //   -> 컬럼이 왼쪽으로 몰림. 이제 목록을 실제로 그린 직후에 적용.
+  if(!window._colWidthsApplied){
+    window._colWidthsApplied = true;
+    if(typeof loadColWidths === 'function') loadColWidths();
+    if(typeof attachResizers === 'function') attachResizers();
+  }
 }
 
 // ══ 계약 상세 ══
@@ -2537,8 +2547,9 @@ function adminLogout(){
   var regTitle = document.getElementById('reg-title');
   if(regTitle) regTitle.textContent = '신규 임대업체 등록';
 
-  // ── 로그인 화면으로 전환 (아이디/비번은 그대로 유지) ──
-  // 자동로그인 토큰 제거 (재입력 없이 바로 진입 방지)
+  // ── 로그인 화면으로 전환 ──
+  // 자동진입 토큰만 제거(다음 사람이 자동으로 들어가지 않게).
+  // 단, 아이디/비번 기억(REMEMBER_KEY)은 유지 -> 재로그인시 입력칸에 자동으로 채워짐.
   try{ localStorage.removeItem(AUTO_LOGIN_KEY); }catch(e){}
 
   // 현재 탭/아이디 기억
@@ -6455,7 +6466,26 @@ function saveAccountsToStorage(){
   }
 }
 const AUTO_LOGIN_KEY = 'rental_auto_login_v8';
+const REMEMBER_KEY = 'rental_remember_v8';  // 자동로그인 체크시 아이디/비번 기억 (로그아웃해도 유지)
 let _loginTab = 'admin'; // 현재 선택된 탭
+
+// [신규] 기억된 아이디/비번을 로그인칸에 채움 (자동로그인 체크하고 로그인했던 경우)
+function prefillRemembered(){
+  try{
+    var r = localStorage.getItem(REMEMBER_KEY);
+    if(!r) return false;
+    var parts = atob(r).split(':');
+    var id = parts[0];
+    var pw = parts.slice(1).join(':');
+    var idEl = document.getElementById('login-id');
+    var pwEl = document.getElementById('login-pw');
+    var chk  = document.getElementById('auto-login-chk');
+    if(idEl) idEl.value = id;
+    if(pwEl) pwEl.value = pw;
+    if(chk)  chk.checked = true;   // 기억된 상태였으므로 체크도 켜둠
+    return true;
+  }catch(e){ return false; }
+}
 
 function switchLoginTab(tab){
   _loginTab = tab;
@@ -6468,11 +6498,13 @@ function switchLoginTab(tab){
   // 설명
   document.getElementById('login-desc').textContent =
     isAdminTab ? '관리자 계정으로 로그인합니다' : '사용자 계정으로 로그인합니다';
-  // 입력 초기화
+  // 입력 초기화 (단, 기억된 아이디/비번이 있으면 그걸로 채움)
   document.getElementById('login-id').value = '';
   document.getElementById('login-pw').value = '';
   document.getElementById('login-err').style.display = 'none';
-  document.getElementById('login-id').focus();
+  var hadRemembered = false;
+  try{ hadRemembered = prefillRemembered(); }catch(e){}
+  if(!hadRemembered) document.getElementById('login-id').focus();
 }
 
 function showApp(role){
@@ -6537,7 +6569,13 @@ function doLogin(){
     window.isAdmin = false; // 반드시 초기화
     window._isLoading = true; // 데이터 로딩 전 저장 차단
     if(document.getElementById('auto-login-chk').checked){
+      // 자동로그인 체크: 자동진입 토큰 + 아이디/비번 기억 모두 저장
       try{ localStorage.setItem(AUTO_LOGIN_KEY, btoa(matchedKey+':'+inputId+':'+inputPw)); }catch(e){}
+      try{ localStorage.setItem(REMEMBER_KEY, btoa(inputId+':'+inputPw)); }catch(e){}
+    } else {
+      // 체크 해제: 기억된 것 모두 삭제
+      try{ localStorage.removeItem(AUTO_LOGIN_KEY); }catch(e){}
+      try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
     }
     showApp(acct.role);
     } else {
@@ -6871,10 +6909,12 @@ function doLogin(){
           }
         }
       }catch(e){ console.log('자동로그인 오류:',e); }
+      // 자동진입은 안 하지만, 기억된 아이디/비번이 있으면 로그인칸에 채워줌
+      try{ prefillRemembered(); }catch(e){}
       document.body.classList.add('locked');
       setTimeout(function(){
         var el=document.getElementById('login-id');
-        if(el) el.focus();
+        if(el && !el.value) el.focus();
       },100);
     });
   }); // whenFirebaseReady 콜백 닫기
