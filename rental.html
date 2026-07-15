@@ -3784,6 +3784,11 @@ function markUnsaved() {
 //   - 서버(Firebase)의 최신 데이터를 다시 불러옴 -> 빨간불이 파란불로
 //   - 자동로그인이 켜져 있으면 로그인은 그대로 유지됨
 // ═══════════════════════════════════════════════════════════════
+// [새로고침] 로그인 유지한 채, 서버 최신 데이터만 다시 불러옴
+//   - 페이지를 통째로 새로고침하지 않음 (로그인/세션 그대로)
+//   - 내 미저장 내용은 버려지고, Firebase의 최신 상태로 화면 갱신
+//   - 빨간불 -> 파란불 / 다른 사람 데이터는 저장하지 않으므로 안 건드림
+// ═══════════════════════════════════════════════════════════════
 function safeReload(){
   if(window._isSaving){
     alert('저장 중입니다. 잠시 후 다시 눌러주세요.');
@@ -3791,13 +3796,32 @@ function safeReload(){
   }
   if(_hasUnsaved){
     if(!confirm('저장하지 않은 작업 내용을 버리고\n서버의 최신 상태로 새로고침합니다.\n\n계속하시겠습니까?')){
-      return;  // 사용자가 취소 -> 아무것도 안 함
+      return;
     }
   }
-  // 미저장 플래그를 꺼서 beforeunload 경고 팝업이 안 뜨게 함
+  var btn = document.getElementById('safe-reload-btn');
+  if(btn){ btn.textContent = '⏳ 불러오는 중...'; btn.disabled = true; }
+
+  // 미저장 상태 해제 (버리기)
   _hasUnsaved = false;
-  window._skipUnloadWarn = true;
-  location.reload();
+  window._editWarnShown = false;
+  if(typeof broadcastEditState === 'function') broadcastEditState(false);
+
+  // 접속자 구독을 잠시 해제 (loadFromApi가 끝에서 다시 시작함 -> 중복 방지)
+  if(window._onlineUnsubscribe){ try{ window._onlineUnsubscribe(); }catch(e){} window._onlineUnsubscribe=null; }
+  if(window._onlineInterval){ clearInterval(window._onlineInterval); window._onlineInterval=null; }
+
+  // 서버 최신 데이터만 다시 로드 (페이지 새로고침 아님 -> 로그인 유지)
+  loadFromApi(function(ok){
+    if(btn){ btn.textContent = '🔄 새로고침'; btn.disabled = false; }
+    if(ok){
+      showSaveStatus('✅ 최신 데이터로 새로고침됨', '#86efac');
+      if(typeof _renderEditingBanner === 'function') _renderEditingBanner();
+    } else {
+      showSaveStatus('⚠ 새로고침 실패 - 다시 시도', '#fbbf24');
+      alert('데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  });
 }
 
 function manualSave() {
