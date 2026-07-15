@@ -3807,6 +3807,19 @@ function safeReload(){
   window._editWarnShown = false;
   if(typeof broadcastEditState === 'function') broadcastEditState(false);
 
+  // [중요] 열려있는 입력폼/모달도 초기화 (신규등록 중이던 내용 등 화면에 남은 것 제거)
+  //   loadFromApi는 저장된 데이터만 새로 불러오므로, input칸에 타이핑 중이던
+  //   내용은 그대로 남는다. 그래서 여기서 직접 비워준다.
+  try {
+    document.querySelectorAll('.modal-bg.open').forEach(function(m){ m.classList.remove('open'); });
+    if(typeof clearForm === 'function') clearForm();          // 신규등록 폼 비우기
+    if(typeof closeInvForm === 'function') closeInvForm();    // 장비/소모품 입력폼 닫기 (인라인 패널)
+    var regTitle = document.getElementById('reg-title');
+    if(regTitle) regTitle.textContent = '신규 임대업체 등록';
+    // 계약 목록 화면으로 이동 (신규등록/편집 화면에서 빠져나옴)
+    if(typeof showPage === 'function') showPage('list');
+  } catch(e){ console.warn('폼 초기화 중 경고:', e); }
+
   // 접속자 구독을 잠시 해제 (loadFromApi가 끝에서 다시 시작함 -> 중복 방지)
   if(window._onlineUnsubscribe){ try{ window._onlineUnsubscribe(); }catch(e){} window._onlineUnsubscribe=null; }
   if(window._onlineInterval){ clearInterval(window._onlineInterval); window._onlineInterval=null; }
