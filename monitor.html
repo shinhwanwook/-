@@ -183,9 +183,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 <nav class="nav">
   <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
-  <div class="nav-tab" onclick="showPage(&#39;monitor&#39;)">📊 현황판</div>
+  <div class="nav-tab active" onclick="showPage(&#39;monitor&#39;)">📊 현황판</div>
   <div class="nav-tab" onclick="showPage(&#39;history&#39;)">📅 히스토리</div>
-  <div class="nav-tab active" onclick="showPage(&#39;devices&#39;)">⚙️ 기기관리</div>
+  <div class="nav-tab" onclick="showPage(&#39;devices&#39;)">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage(&#39;usage&#39;)">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage(&#39;guide&#39;)">📋 설치안내</div>
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
@@ -204,7 +204,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 </nav>
 
 <!-- ══ PAGE: 현황판 ══ -->
-<div class="page" id="page-monitor">
+<div class="page active" id="page-monitor">
 
   <!-- 요약 통계 -->
   <div class="stats" id="summary-stats">
@@ -427,7 +427,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 
 <!-- ══ PAGE: 기기관리 ══ -->
-<div class="page active" id="page-devices">
+<div class="page" id="page-devices">
   <div class="card">
     <div class="card-header">
       <span class="card-title">⚙️ 기기 관리</span>
