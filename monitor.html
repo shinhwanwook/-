@@ -693,6 +693,14 @@ function tryAutoLogin(tries){
     try{ monPrefillRemembered(); }catch(e){}
     return;
   }
+  // [수정] 방금 로그아웃했으면 자동진입 건너뜀 (플래그는 한 번 쓰고 제거)
+  var justLoggedOut = false;
+  try{ justLoggedOut = sessionStorage.getItem('mon_just_logged_out')==='1'; }catch(e){}
+  if(justLoggedOut){
+    try{ sessionStorage.removeItem('mon_just_logged_out'); }catch(e){}
+    try{ monPrefillRemembered(); }catch(e){}
+    return;
+  }
   var saved = null;
   try{ saved = localStorage.getItem(MON_AUTO_LOGIN_KEY); }catch(e){}
   if(!saved){
@@ -837,8 +845,10 @@ function doLogout(){
   _currentUser = null;
   // 자동진입 토큰 제거 (다음 사람/새로고침 시 자동진입 방지). 아이디/비번 기억은 유지.
   try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
-  // [수정] 화면 전환만 하면 Ctrl+Shift+R 등으로 이전 상태가 되살아날 수 있음.
-  //   페이지를 완전히 새로고침해서 확실하게 로그인 화면으로 초기화한다.
+  // [수정] 방금 로그아웃했다는 플래그를 세운다. 새로고침 직후 tryAutoLogin이
+  //   이 플래그를 보고 자동진입을 건너뛴다 (한 번만). sessionStorage라 탭 닫으면 사라짐.
+  try{ sessionStorage.setItem('mon_just_logged_out', '1'); }catch(e){}
+  // 페이지를 완전히 새로고침해서 확실하게 로그인 화면으로 초기화.
   //   (아이디/비번은 REMEMBER 키에 남아 있어 새로고침 후 자동으로 채워짐)
   location.reload();
 }
