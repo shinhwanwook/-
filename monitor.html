@@ -835,15 +835,12 @@ function applyPermissions(){
 }
 function doLogout(){
   _currentUser = null;
-  // 자동진입 토큰만 제거 (다음 사람 자동진입 방지). 아이디/비번 기억은 유지.
+  // 자동진입 토큰 제거 (다음 사람/새로고침 시 자동진입 방지). 아이디/비번 기억은 유지.
   try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
-  document.getElementById('app-wrapper').style.display  = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-id').value = '';
-  document.getElementById('login-pw').value = '';
-  document.getElementById('login-err').style.display = 'none';
-  // 기억된 아이디/비번이 있으면 다시 채워줌
-  try{ monPrefillRemembered(); }catch(e){}
+  // [수정] 화면 전환만 하면 Ctrl+Shift+R 등으로 이전 상태가 되살아날 수 있음.
+  //   페이지를 완전히 새로고침해서 확실하게 로그인 화면으로 초기화한다.
+  //   (아이디/비번은 REMEMBER 키에 남아 있어 새로고침 후 자동으로 채워짐)
+  location.reload();
 }
 
 // ══════════════════════════════════════
