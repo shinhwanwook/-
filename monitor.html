@@ -364,11 +364,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:12px">🖨️ 거래처 선택 후 배치파일 다운로드</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 후 선택..."
-            oninput="_monDeb('guide',searchGuideContract)" style="flex:1;min-width:200px">
-          <button class="btn btn-primary" onclick="downloadAgentForContract()">
-            ⬇ 배치파일 다운로드
-          </button>
+          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 → 장비 선택 → 목록에 담기..."
+            oninput="_monDeb('guide',searchGuideContract)" style="flex:1;min-width:220px">
           <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe"
             class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
             target="_blank">
@@ -381,8 +378,18 @@ tbody td{padding:9px 12px;vertical-align:middle}
         </div>
         <!-- 검색 결과 드롭다운 -->
         <div id="guide-search-result" style="display:none;margin-top:8px;border:1px solid #93c5fd;border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
-        <!-- 선택된 거래처 정보 -->
-        <div id="guide-selected" style="display:none;margin-top:10px;padding:10px;background:#dbeafe;border-radius:6px;font-size:13px"></div>
+
+        <!-- 담긴 장비 목록 -->
+        <div id="guide-basket-wrap" style="display:none;margin-top:12px">
+          <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:6px">
+            🖨️ 이 PC에 설치할 장비 목록 <span id="guide-basket-count" style="color:#0891b2"></span>
+          </div>
+          <div id="guide-basket" style="border:1px solid #93c5fd;border-radius:6px;background:#fff;overflow:hidden"></div>
+          <button class="btn btn-primary" onclick="downloadAgentForContract()"
+            style="margin-top:10px;width:100%;padding:10px;font-size:14px;font-weight:700">
+            ⬇ 배치파일 다운로드 (담긴 장비 전체)
+          </button>
+        </div>
         <div style="font-size:12px;color:#64748b;margin-top:8px">
           ※ 임대관리에 IP가 등록된 거래처만 표시됩니다
         </div>
@@ -1433,6 +1440,7 @@ function renderGuideList(){
 // ══════════════════════════════════════════
 // 선택된 거래처 정보
 var _selectedContract = null;
+var _basket = [];  // 담긴 장비 목록 [{name, ip, type, model}]
 var _allContractsForGuide = [];
 
 // 임대관리에서 IP 등록된 거래처 로드
@@ -1451,23 +1459,62 @@ function loadGuideContracts(){
 
 // 거래처 선택
 function selectGuideContract(el){
-  _selectedContract = {
+  var item = {
     name:  el.getAttribute('data-name'),
     ip:    el.getAttribute('data-ip'),
     type:  el.getAttribute('data-type'),
     model: el.getAttribute('data-model')
   };
 
-  document.getElementById('guide-srch').value = _selectedContract.name;
-  document.getElementById('guide-search-result').style.display='none';
+  // IP가 없으면 담을 수 없음
+  if(!item.ip || !item.ip.trim()){
+    alert('이 거래처는 IP가 등록되어 있지 않습니다.\n임대관리에서 IP를 먼저 입력해 주세요.');
+    return;
+  }
 
-  var sel = document.getElementById('guide-selected');
-  sel.style.display='block';
-  sel.innerHTML =
-    '<strong>✅ 선택됨:</strong> '+esc(_selectedContract.name)+
-    ' &nbsp;|&nbsp; IP: <code>'+esc(_selectedContract.ip)+'</code>'+
-    ' &nbsp;|&nbsp; 제조사: <strong>'+esc(_selectedContract.type)+'</strong>'+
-    (_selectedContract.model ? ' &nbsp;|&nbsp; 모델: '+esc(_selectedContract.model) : '');
+  // 같은 IP가 이미 담겨 있으면 중복 방지
+  var dup = _basket.some(function(b){ return b.ip.trim() === item.ip.trim(); });
+  if(dup){
+    alert('이미 담긴 장비입니다.\nIP: ' + item.ip);
+  } else {
+    _basket.push(item);
+  }
+
+  document.getElementById('guide-srch').value = '';
+  document.getElementById('guide-search-result').style.display='none';
+  renderBasket();
+}
+
+// 담긴 장비 목록 그리기
+function renderBasket(){
+  var wrap = document.getElementById('guide-basket-wrap');
+  var box  = document.getElementById('guide-basket');
+  var cnt  = document.getElementById('guide-basket-count');
+  if(!_basket.length){
+    wrap.style.display='none';
+    box.innerHTML='';
+    return;
+  }
+  wrap.style.display='block';
+  cnt.textContent = '(' + _basket.length + '대)';
+  box.innerHTML = _basket.map(function(b, i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;'+
+      (i>0?'border-top:1px solid #e5e7eb;':'')+'font-size:13px">'+
+      '<span style="background:#1d4ed8;color:#fff;width:22px;height:22px;border-radius:50%;'+
+      'display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'+(i+1)+'</span>'+
+      '<span style="flex:1"><strong>'+esc(b.name)+'</strong>'+
+      ' &nbsp;|&nbsp; IP: <code style="background:#eff6ff;padding:2px 6px;border-radius:4px">'+esc(b.ip)+'</code>'+
+      ' &nbsp;|&nbsp; '+esc(b.type||'')+(b.model?' ('+esc(b.model)+')':'')+'</span>'+
+      '<button onclick="removeFromBasket('+i+')" style="background:#fee2e2;color:#dc2626;border:none;'+
+      'border-radius:5px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0">✕ 제거</button>'+
+      '</div>';
+  }).join('');
+}
+
+// 담긴 장비 제거
+function removeFromBasket(i){
+  _basket.splice(i, 1);
+  renderBasket();
 }
 
 // 거래처별 배치파일 다운로드
@@ -1484,14 +1531,15 @@ function downloadSnmpModules(){
 }
 
 function downloadAgentForContract(){
-  if(!_selectedContract){
-    alert('거래처를 먼저 선택해 주세요!\n\n거래처명을 입력하면 목록이 표시됩니다.');
+  if(!_basket.length){
+    alert('담긴 장비가 없습니다!\n\n거래처명을 검색해서 장비를 목록에 담아 주세요.');
     return;
   }
 
-  var ip   = _selectedContract.ip;
-  var name = _selectedContract.name;
-  var no   = _selectedContract.no || '';
+  // 담긴 장비들 = 이 PC(사무실)에 설치할 전체 장비
+  // 대표 이름은 첫 장비의 거래처명 사용 (보통 같은 거래처)
+  var name = _basket[0].name;
+  var no   = _basket[0].no || '';
 
   // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
   var installBat = [
@@ -1522,20 +1570,26 @@ function downloadAgentForContract(){
     'pause'
   ].join('\r\n');
 
+  // 담긴 장비 각각을 target "printer_1", "printer_2", ... 로 생성
+  var targetLines = [];
+  _basket.forEach(function(dev, idx){
+    targetLines.push('  target "printer_' + (idx+1) + '" {');
+    targetLines.push('    address     = "' + dev.ip.trim() + '"');
+    targetLines.push('    module      = "printer_mib"');
+    targetLines.push('    auth        = "public_v2"');
+    targetLines.push('    walk_params = "default"');
+    targetLines.push('  }');
+  });
+
   // printers.alloy 내용 생성
   var printersAlloy = [
-    '// ' + name + ' - Printer Monitoring Agent',
+    '// ' + name + ' - Printer Monitoring Agent (' + _basket.length + '대)',
     'local.file "snmp_config" {',
     '  filename = "C:\\\\alloy\\\\snmp_modules.yml"',
     '}',
     'prometheus.exporter.snmp "printers" {',
-    '  config = local.file.snmp_config.content',
-    '  target "printer_1" {',
-    '    address     = "' + ip + '"',
-    '    module      = "printer_mib"',
-    '    auth        = "public_v2"',
-    '    walk_params = "default"',
-    '  }',
+    '  config = local.file.snmp_config.content'
+  ].concat(targetLines).concat([
     '  walk_param "default" { retries = "2" }',
     '}',
     'prometheus.scrape "printers" {',
@@ -1553,7 +1607,7 @@ function downloadAgentForContract(){
     '    url = "http://161.33.35.210:8428/api/v1/write"',
     '  }',
     '}'
-  ].join('\n');
+  ]).join('\n');
 
   // 파일들 다운로드
   // 1. install.bat
@@ -1572,7 +1626,10 @@ function downloadAgentForContract(){
     a2.click();
   }, 500);
 
-  alert('install.bat + printers.alloy 다운로드!\n\nalloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n같은 폴더에 넣고 install.bat 실행하세요!');
+  alert(name + ' - ' + _basket.length + '대 장비\n\n' +
+    'install.bat + printers.alloy 다운로드 완료!\n\n' +
+    'alloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n' +
+    '같은 폴더에 넣고 install.bat 를 관리자권한으로 실행하세요!');
 }
 
 
