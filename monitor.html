@@ -1439,7 +1439,6 @@ function renderGuideList(){
 //  배치파일 다운로드 생성
 // ══════════════════════════════════════════
 // 선택된 거래처 정보
-var _selectedContract = null;
 var _basket = [];  // 담긴 장비 목록 [{name, ip, type, model}]
 var _allContractsForGuide = [];
 
@@ -2254,11 +2253,6 @@ function filterUsageTable(){
 function searchGuideContract(){
   var q = document.getElementById('guide-srch').value.trim().toLowerCase();
   var resultEl = document.getElementById('guide-search-result');
-  var selectedEl = document.getElementById('guide-selected');
-
-  // 선택 초기화
-  _selectedContract = null;
-  selectedEl.style.display='none';
 
   if(!q || q.length < 1){
     resultEl.style.display='none';
