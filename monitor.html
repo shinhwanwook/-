@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0029)https://ink79.kr/monitor.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>프린터 모니터링</title>
 <style>
@@ -156,84 +156,74 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <body>
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
-  onerror="alert('Firebase 로딩 실패. 인터넷 연결을 확인하세요.')"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"
-  onerror="alert('Firebase Firestore 로딩 실패.')"></script>
+<script src="./프린터 모니터링_files/firebase-app-compat.js.다운로드" onerror="alert(&#39;Firebase 로딩 실패. 인터넷 연결을 확인하세요.&#39;)"></script>
+<script src="./프린터 모니터링_files/firebase-firestore-compat.js.다운로드" onerror="alert(&#39;Firebase Firestore 로딩 실패.&#39;)"></script>
 
 <!-- ══ 로그인 화면 ══ -->
-<div id="login-screen">
+<div id="login-screen" style="display: none;">
   <div id="login-box">
     <div class="logo">🖨️</div>
     <h2>프린터 모니터링</h2>
     <p>아이디와 비밀번호를 입력하세요</p>
-    <input type="text" id="login-id" placeholder="아이디"
-      onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
-    <input type="password" id="login-pw" placeholder="비밀번호"
-      onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="text" id="login-id" placeholder="아이디" onkeydown="if(event.key===&#39;Enter&#39;)document.getElementById(&#39;login-pw&#39;).focus()">
+    <input type="password" id="login-pw" placeholder="비밀번호" onkeydown="if(event.key===&#39;Enter&#39;)doLogin()">
     <div style="display:flex;align-items:center;gap:6px;margin:4px 0 10px;font-size:13px;color:#555">
-      <input type="checkbox" id="auto-login-chk" checked style="width:15px;height:15px;cursor:pointer">
+      <input type="checkbox" id="auto-login-chk" checked="" style="width:15px;height:15px;cursor:pointer">
       <label for="auto-login-chk" style="cursor:pointer;user-select:none">자동 로그인</label>
     </div>
     <button class="login-btn" onclick="doLogin()">로그인</button>
-    <div class="login-err" id="login-err">아이디 또는 비밀번호가 틀립니다.</div>
+    <div class="login-err" id="login-err" style="display: none;">로그인 중...</div>
   </div>
 </div>
 
 <!-- ══ 앱 본체 ══ -->
-<div id="app-wrapper" style="display:none">
+<div id="app-wrapper" style="display: block;">
 
 <nav class="nav">
   <div class="nav-logo">🖨️ 프린터모니터링<span>v1.0</span></div>
-  <div class="nav-tab active" onclick="showPage('monitor')">📊 현황판</div>
-  <div class="nav-tab" onclick="showPage('history')">📅 히스토리</div>
-  <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
-  <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
-  <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
+  <div class="nav-tab" onclick="showPage(&#39;monitor&#39;)">📊 현황판</div>
+  <div class="nav-tab" onclick="showPage(&#39;history&#39;)">📅 히스토리</div>
+  <div class="nav-tab active" onclick="showPage(&#39;devices&#39;)">⚙️ 기기관리</div>
+  <div class="nav-tab" onclick="showPage(&#39;usage&#39;)">📈 사용량조회</div>
+  <div class="nav-tab" onclick="showPage(&#39;guide&#39;)">📋 설치안내</div>
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
-    <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
-    <button onclick="refreshAll()" id="refresh-btn"
-      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
-      🔄 새로고침
-    </button>
-    <button onclick="importFromRental()"
-      style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+    <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)">최근: 오후 3:12:01</span>
+    <button onclick="refreshAll()" id="refresh-btn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">🔄 새로고침</button>
+    <button onclick="importFromRental()" style="background:rgba(100,220,100,.25);border:1px solid rgba(100,220,100,.5);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       📥 임대관리 가져오기
     </button>
-    <a href="rental.html"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
+    <a href="https://ink79.kr/rental.html" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;text-decoration:none">
       📋 임대관리
     </a>
-    <button onclick="doLogout()"
-      style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+    <button onclick="doLogout()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
       🚪 로그아웃
     </button>
   </div>
 </nav>
 
 <!-- ══ PAGE: 현황판 ══ -->
-<div class="page active" id="page-monitor">
+<div class="page" id="page-monitor">
 
   <!-- 요약 통계 -->
   <div class="stats" id="summary-stats">
     <div class="stat" style="background:#eff6ff;border-color:#93c5fd">
-      <div class="stat-n" style="color:#1d4ed8" id="st-total">-</div>
+      <div class="stat-n" style="color:#1d4ed8" id="st-total">9</div>
       <div class="stat-l">📋 전체 기기</div>
     </div>
     <div class="stat" style="background:#f0fdf4;border-color:#86efac">
-      <div class="stat-n" style="color:#166534" id="st-online">-</div>
+      <div class="stat-n" style="color:#166534" id="st-online">4</div>
       <div class="stat-l">🟢 온라인</div>
     </div>
     <div class="stat" style="background:#fee2e2;border-color:#fca5a5">
-      <div class="stat-n" style="color:#dc2626" id="st-offline">-</div>
+      <div class="stat-n" style="color:#dc2626" id="st-offline">5</div>
       <div class="stat-l">🔴 오프라인</div>
     </div>
     <div class="stat" style="background:#fef3c7;border-color:#fcd34d">
-      <div class="stat-n" style="color:#d97706" id="st-warn">-</div>
+      <div class="stat-n" style="color:#d97706" id="st-warn">3</div>
       <div class="stat-l">⚠️ 토너 경고</div>
     </div>
     <div class="stat" style="background:#f5f3ff;border-color:#c4b5fd">
-      <div class="stat-n" style="color:#6d28d9" id="st-today">-</div>
+      <div class="stat-n" style="color:#6d28d9" id="st-today">130,969</div>
       <div class="stat-l">📄 오늘 총 출력</div>
     </div>
   </div>
@@ -249,7 +239,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb('dev',renderDevices)">
+      <input class="inp inp-search" id="dev-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb(&#39;dev&#39;,renderDevices)">
       <select class="inp" id="dev-filter" onchange="renderDevices()">
         <option value="">전체 상태</option>
         <option value="online">🟢 온라인만</option>
@@ -257,11 +247,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="warn">⚠️ 토너 경고만</option>
       </select>
     </div>
-    <div class="info-row" id="dev-info"></div>
+    <div class="info-row" id="dev-info">총 9대 표시 중 (전체 9대)</div>
 
     <!-- 카드 뷰 -->
     <div id="card-view">
-      <div class="device-grid" id="device-grid"></div>
+      <div class="device-grid" id="device-grid"><div class="device-card warn" onclick="openDetail(&#39;device_3&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트3</div><div style="font-size:11px;color:var(--text3);margin-top:2px">HP8610 · 192.168.10.155</div></div><span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🟢 온라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">29,090</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">154</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div></div><div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:5px 8px;border-radius:5px;margin-bottom:6px;text-align:center">⚠️ 토너 교체 필요!</div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-16 00:30:02</div></div><div class="device-card warn" onclick="openDetail(&#39;device_9&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트4(신용균)</div><div style="font-size:11px;color:var(--text3);margin-top:2px">hp8710 · 192.168.0.168</div></div><span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🟢 온라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">86,101</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:98%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">98%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div></div><div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:5px 8px;border-radius:5px;margin-bottom:6px;text-align:center">⚠️ 토너 교체 필요!</div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-16 04:15:01</div></div><div class="device-card warn" onclick="openDetail(&#39;device_14&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트6</div><div style="font-size:11px;color:var(--text3);margin-top:2px">hp8710 · 192.168.10.4</div></div><span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🔴 오프라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">85,329</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">83,011</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#dc2626"></div></div><div class="toner-pct" style="color:#dc2626">0%</div></div></div><div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:5px 8px;border-radius:5px;margin-bottom:6px;text-align:center">⚠️ 토너 교체 필요!</div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-16 02:15:01</div></div><div class="device-card" onclick="openDetail(&#39;device_1&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트1</div><div style="font-size:11px;color:var(--text3);margin-top:2px">리코-MPC2004sp · 192.168.10.199</div></div><span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🟢 온라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">73,866</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">57,103</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:20%;background:#d97706"></div></div><div class="toner-pct" style="color:#d97706">20%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:20%;background:#d97706"></div></div><div class="toner-pct" style="color:#d97706">20%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:30%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">30%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:30%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">30%</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-16 00:45:02</div></div><div class="device-card" onclick="openDetail(&#39;device_12&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트2</div><div style="font-size:11px;color:var(--text3);margin-top:2px">교세라-3212i · 192.168.10.166</div></div><span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🟢 온라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">296,197</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:64%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">64%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-16 00:30:02</div></div><div class="device-card offline" onclick="openDetail(&#39;device_13&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">신현태</div><div style="font-size:11px;color:var(--text3);margin-top:2px">hp8710 · 192.168.219.100</div></div><span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🔴 오프라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">85,409</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-15 02:15:01</div></div><div class="device-card offline" onclick="openDetail(&#39;device_15&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">한일산업개발㈜ (평택현장)</div><div style="font-size:11px;color:var(--text3);margin-top:2px">hp9730 · 192.168.0.199</div></div><span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🔴 오프라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">84,203</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:97%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">97%</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:99%;background:#166534"></div></div><div class="toner-pct" style="color:#166534">99%</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 2026-07-15 08:00:02</div></div><div class="device-card offline" onclick="openDetail(&#39;device_16&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트5 삼성</div><div style="font-size:11px;color:var(--text3);margin-top:2px">SL-M3870 · 192.168.10.133</div></div><span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🔴 오프라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">-</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 수집 없음</div></div><div class="device-card offline" onclick="openDetail(&#39;device_17&#39;)"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">테스트7 캐논</div><div style="font-size:11px;color:var(--text3);margin-top:2px">LBP212 · 192.168.10.122</div></div><span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">🔴 오프라인</span></div><div class="counter-wrap"><div class="counter-box"><div class="counter-label">흑백 카운터</div><div class="counter-val">-</div></div><div class="counter-box"><div class="counter-label">컬러 카운터</div><div class="counter-val" style="color:var(--blue)">-</div></div></div><div class="toner-wrap"><div class="toner-item"><div class="toner-label">K(검)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">C(청)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">M(홍)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div><div class="toner-item"><div class="toner-label">Y(황)</div><div class="toner-bar-bg"><div class="toner-bar-fill" style="width:0%;background:#9ca3af"></div></div><div class="toner-pct" style="color:#9ca3af">-</div></div></div><div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;text-align:right">📅 수집 없음</div></div></div>
     </div>
 
     <!-- 테이블 뷰 -->
@@ -282,7 +272,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
               <th>수집일시</th>
             </tr>
           </thead>
-          <tbody id="device-tbody"></tbody>
+          <tbody id="device-tbody"><tr onclick="openDetail(&#39;device_3&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트3</div><div style="font-size:11px;color:var(--text3)">HP8610</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.155</td><td><span class="badge b-ok">🟢 온라인</span></td><td style="text-align:right;font-weight:600">29,090</td><td style="text-align:right;color:var(--blue)">154</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="font-size:11px;color:var(--text3)">2026-07-16 00:30:02</td></tr><tr onclick="openDetail(&#39;device_9&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트4(신용균)</div><div style="font-size:11px;color:var(--text3)">hp8710</div></td><td style="font-size:12px;color:var(--text3)">192.168.0.168</td><td><span class="badge b-ok">🟢 온라인</span></td><td style="text-align:right;font-weight:600">86,101</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#166534">🟢 98%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="font-size:11px;color:var(--text3)">2026-07-16 04:15:01</td></tr><tr onclick="openDetail(&#39;device_14&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트6</div><div style="font-size:11px;color:var(--text3)">hp8710</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.4</td><td><span class="badge b-late">🔴 오프라인</span></td><td style="text-align:right;font-weight:600">85,329</td><td style="text-align:right;color:var(--blue)">83,011</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="text-align:center;font-weight:700;color:#dc2626">🔴 0%</td><td style="font-size:11px;color:var(--text3)">2026-07-16 02:15:01</td></tr><tr onclick="openDetail(&#39;device_1&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트1</div><div style="font-size:11px;color:var(--text3)">리코-MPC2004sp</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.199</td><td><span class="badge b-ok">🟢 온라인</span></td><td style="text-align:right;font-weight:600">73,866</td><td style="text-align:right;color:var(--blue)">57,103</td><td style="text-align:center;font-weight:700;color:#d97706">🟡 20%</td><td style="text-align:center;font-weight:700;color:#d97706">🟡 20%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 30%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 30%</td><td style="font-size:11px;color:var(--text3)">2026-07-16 00:45:02</td></tr><tr onclick="openDetail(&#39;device_12&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트2</div><div style="font-size:11px;color:var(--text3)">교세라-3212i</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.166</td><td><span class="badge b-ok">🟢 온라인</span></td><td style="text-align:right;font-weight:600">296,197</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#166534">🟢 64%</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="font-size:11px;color:var(--text3)">2026-07-16 00:30:02</td></tr><tr onclick="openDetail(&#39;device_13&#39;)" style="cursor:pointer"><td><div style="font-weight:600">신현태</div><div style="font-size:11px;color:var(--text3)">hp8710</div></td><td style="font-size:12px;color:var(--text3)">192.168.219.100</td><td><span class="badge b-late">🔴 오프라인</span></td><td style="text-align:right;font-weight:600">85,409</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="font-size:11px;color:var(--text3)">2026-07-15 02:15:01</td></tr><tr onclick="openDetail(&#39;device_15&#39;)" style="cursor:pointer"><td><div style="font-weight:600">한일산업개발㈜ (평택현장)</div><div style="font-size:11px;color:var(--text3)">hp9730</div></td><td style="font-size:12px;color:var(--text3)">192.168.0.199</td><td><span class="badge b-late">🔴 오프라인</span></td><td style="text-align:right;font-weight:600">84,203</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#166534">🟢 97%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="text-align:center;font-weight:700;color:#166534">🟢 99%</td><td style="font-size:11px;color:var(--text3)">2026-07-15 08:00:02</td></tr><tr onclick="openDetail(&#39;device_16&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트5 삼성</div><div style="font-size:11px;color:var(--text3)">SL-M3870</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.133</td><td><span class="badge b-late">🔴 오프라인</span></td><td style="text-align:right;font-weight:600">-</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="font-size:11px;color:var(--text3)">-</td></tr><tr onclick="openDetail(&#39;device_17&#39;)" style="cursor:pointer"><td><div style="font-weight:600">테스트7 캐논</div><div style="font-size:11px;color:var(--text3)">LBP212</div></td><td style="font-size:12px;color:var(--text3)">192.168.10.122</td><td><span class="badge b-late">🔴 오프라인</span></td><td style="text-align:right;font-weight:600">-</td><td style="text-align:right;color:var(--blue)">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="text-align:center;font-weight:700;color:#9ca3af">-</td><td style="font-size:11px;color:var(--text3)">-</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -296,10 +286,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📅 수집 히스토리</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb('hist',renderHistory)" style="flex:1;min-width:180px">
-      <select class="inp" id="hist-device" style="min-width:180px" onchange="renderHistory()">
-        <option value="">전체 기기</option>
-      </select>
+      <input class="inp inp-search" id="hist-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb(&#39;hist&#39;,renderHistory)" style="flex:1;min-width:180px">
+      <select class="inp" id="hist-device" style="min-width:180px" onchange="renderHistory()"><option value="">기기 선택...</option><option value="device_1">테스트1</option><option value="device_12">테스트2</option><option value="device_13">신현태</option><option value="device_14">테스트6</option><option value="device_15">한일산업개발㈜ (평택현장)</option><option value="device_16">테스트5 삼성</option><option value="device_17">테스트7 캐논</option><option value="device_3">테스트3</option><option value="device_9">테스트4(신용균)</option></select>
       <select class="inp" id="hist-type-filter" onchange="renderHistory()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -364,15 +352,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:12px">🖨️ 거래처 선택 후 배치파일 다운로드</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 → 장비 선택 → 목록에 담기..."
-            oninput="_monDeb('guide',searchGuideContract)" style="flex:1;min-width:220px">
-          <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe"
-            class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
-            target="_blank">
+          <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 → 장비 선택 → 목록에 담기..." oninput="_monDeb(&#39;guide&#39;,searchGuideContract)" style="flex:1;min-width:220px">
+          <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe" class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px" target="_blank">
             ⬇ Alloy 설치파일 (v1.17.0)
           </a>
-          <button onclick="downloadSnmpModules()"
-            class="btn" style="background:#0891b2;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;border:none">
+          <button onclick="downloadSnmpModules()" class="btn" style="background:#0891b2;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;border:none">
             ⬇ snmp_modules.yml
           </button>
         </div>
@@ -385,8 +369,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
             🖨️ 이 PC에 설치할 장비 목록 <span id="guide-basket-count" style="color:#0891b2"></span>
           </div>
           <div id="guide-basket" style="border:1px solid #93c5fd;border-radius:6px;background:#fff;overflow:hidden"></div>
-          <button class="btn btn-primary" onclick="downloadAgentForContract()"
-            style="margin-top:10px;width:100%;padding:10px;font-size:14px;font-weight:700">
+          <button class="btn btn-primary" onclick="downloadAgentForContract()" style="margin-top:10px;width:100%;padding:10px;font-size:14px;font-weight:700">
             ⬇ 배치파일 다운로드 (담긴 장비 전체)
           </button>
         </div>
@@ -432,7 +415,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
               <th>NO</th><th>거래처명</th><th>기기모델</th><th>IP주소</th><th>마지막수집</th><th>상태</th>
             </tr>
           </thead>
-          <tbody id="guide-device-list"></tbody>
+          <tbody id="guide-device-list"><tr><td>1</td><td style="font-weight:600">테스트1</td><td style="color:var(--text3)">리코-MPC2004sp</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.199</code></td><td style="font-size:12px;color:var(--text3)">2026-07-16 00:45:02</td><td><span class="badge b-ok">🟢 온라인</span></td></tr><tr><td>2</td><td style="font-weight:600">테스트2</td><td style="color:var(--text3)">교세라-3212i</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.166</code></td><td style="font-size:12px;color:var(--text3)">2026-07-16 00:30:02</td><td><span class="badge b-ok">🟢 온라인</span></td></tr><tr><td>3</td><td style="font-weight:600">신현태</td><td style="color:var(--text3)">hp8710</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.219.100</code></td><td style="font-size:12px;color:var(--text3)">2026-07-15 02:15:01</td><td><span class="badge b-late">🔴 오프라인</span></td></tr><tr><td>4</td><td style="font-weight:600">테스트6</td><td style="color:var(--text3)">hp8710</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.4</code></td><td style="font-size:12px;color:var(--text3)">2026-07-16 02:15:01</td><td><span class="badge b-late">🔴 오프라인</span></td></tr><tr><td>5</td><td style="font-weight:600">한일산업개발㈜ (평택현장)</td><td style="color:var(--text3)">hp9730</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.0.199</code></td><td style="font-size:12px;color:var(--text3)">2026-07-15 08:00:02</td><td><span class="badge b-late">🔴 오프라인</span></td></tr><tr><td>6</td><td style="font-weight:600">테스트5 삼성</td><td style="color:var(--text3)">SL-M3870</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.133</code></td><td style="font-size:12px;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td></tr><tr><td>7</td><td style="font-weight:600">테스트7 캐논</td><td style="color:var(--text3)">LBP212</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.122</code></td><td style="font-size:12px;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td></tr><tr><td>8</td><td style="font-weight:600">테스트3</td><td style="color:var(--text3)">HP8610</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.155</code></td><td style="font-size:12px;color:var(--text3)">2026-07-16 00:30:02</td><td><span class="badge b-ok">🟢 온라인</span></td></tr><tr><td>9</td><td style="font-weight:600">테스트4(신용균)</td><td style="color:var(--text3)">hp8710</td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.0.168</code></td><td style="font-size:12px;color:var(--text3)">2026-07-16 04:15:01</td><td><span class="badge b-ok">🟢 온라인</span></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -442,7 +425,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 
 <!-- ══ PAGE: 기기관리 ══ -->
-<div class="page" id="page-devices">
+<div class="page active" id="page-devices">
   <div class="card">
     <div class="card-header">
       <span class="card-title">⚙️ 기기 관리</span>
@@ -452,7 +435,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb('devmgr',renderDeviceManager)" style="flex:1;min-width:200px">
+      <input class="inp inp-search" id="device-mgr-srch" placeholder="🔍 거래처명, 기기명, IP 검색..." oninput="_monDeb(&#39;devmgr&#39;,renderDeviceManager)" style="flex:1;min-width:200px">
       <select class="inp" id="device-mgr-type" onchange="renderDeviceManager()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -467,7 +450,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="offline">🔴 오프라인</option>
       </select>
     </div>
-    <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
+    <div class="info-row" id="device-mgr-info">총 9대 등록 / 9대 표시</div>
     <div class="tbl-wrap">
       <table>
         <thead>
@@ -476,7 +459,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th>IP 주소</th><th>약정(흑백)</th><th>약정(컬러)</th><th>시작(흑백)</th><th>시작(컬러)</th><th>상태</th><th>관리</th>
           </tr>
         </thead>
-        <tbody id="device-mgr-tbody"></tbody>
+        <tbody id="device-mgr-tbody"><tr><td style="color:var(--text3)">1</td><td style="font-weight:600">신현태</td><td style="font-size:12px;color:var(--text3)">hp8710</td><td><span class="badge b-gray">hp</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.219.100</code></td><td style="text-align:right">20</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">85,000</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_13">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_13" data-name="신현태">🗑️</button></td></tr><tr><td style="color:var(--text3)">2</td><td style="font-weight:600">테스트1</td><td style="font-size:12px;color:var(--text3)">리코-MPC2004sp</td><td><span class="badge b-gray">ricoh</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.199</code></td><td style="text-align:right">50</td><td style="text-align:right">20</td><td style="text-align:right;color:var(--text3)">73,000</td><td style="text-align:right;color:var(--text3)">57,000</td><td><span class="badge b-ok">🟢 온라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_1">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_1" data-name="테스트1">🗑️</button></td></tr><tr><td style="color:var(--text3)">3</td><td style="font-weight:600">테스트2</td><td style="font-size:12px;color:var(--text3)">교세라-3212i</td><td><span class="badge b-gray">kyocera</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.166</code></td><td style="text-align:right">30</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">296,170</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-ok">🟢 온라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_12">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_12" data-name="테스트2">🗑️</button></td></tr><tr><td style="color:var(--text3)">4</td><td style="font-weight:600">테스트3</td><td style="font-size:12px;color:var(--text3)">HP8610</td><td><span class="badge b-gray">hp</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.155</code></td><td style="text-align:right">30</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">28,986</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-ok">🟢 온라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_3">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_3" data-name="테스트3">🗑️</button></td></tr><tr><td style="color:var(--text3)">5</td><td style="font-weight:600">테스트4(신용균)</td><td style="font-size:12px;color:var(--text3)">hp8710</td><td><span class="badge b-gray">hp</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.0.168</code></td><td style="text-align:right">20</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">86,000</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-ok">🟢 온라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_9">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_9" data-name="테스트4(신용균)">🗑️</button></td></tr><tr><td style="color:var(--text3)">6</td><td style="font-weight:600">테스트5 삼성</td><td style="font-size:12px;color:var(--text3)">SL-M3870</td><td><span class="badge b-gray">samsung</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.133</code></td><td style="text-align:right">20</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">86,238</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_16">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_16" data-name="테스트5 삼성">🗑️</button></td></tr><tr><td style="color:var(--text3)">7</td><td style="font-weight:600">테스트6</td><td style="font-size:12px;color:var(--text3)">hp8710</td><td><span class="badge b-gray">hp</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.4</code></td><td style="text-align:right">1,000</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">85,324</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_14">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_14" data-name="테스트6">🗑️</button></td></tr><tr><td style="color:var(--text3)">8</td><td style="font-weight:600">테스트7 캐논</td><td style="font-size:12px;color:var(--text3)">LBP212</td><td><span class="badge b-gray">canon</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.10.122</code></td><td style="text-align:right">10</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">37,306</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_17">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_17" data-name="테스트7 캐논">🗑️</button></td></tr><tr><td style="color:var(--text3)">9</td><td style="font-weight:600">한일산업개발㈜ (평택현장)</td><td style="font-size:12px;color:var(--text3)">hp9730</td><td><span class="badge b-gray">hp</span></td><td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">192.168.0.199</code></td><td style="text-align:right">5,000</td><td style="text-align:right">-</td><td style="text-align:right;color:var(--text3)">82,848</td><td style="text-align:right;color:var(--text3)">-</td><td><span class="badge b-late">🔴 오프라인</span></td><td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="device_15">✏️</button> <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="device_15" data-name="한일산업개발㈜ (평택현장)">🗑️</button></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -489,7 +472,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">📈 기간별 사용량 조회</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb('usage',filterUsageTable)" style="flex:1;min-width:180px">
+      <input class="inp inp-search" id="usage-srch" placeholder="🔍 거래처명, 기기명 검색..." oninput="_monDeb(&#39;usage&#39;,filterUsageTable)" style="flex:1;min-width:180px">
       <select class="inp" id="usage-type-filter" onchange="filterUsageTable()" style="min-width:130px">
         <option value="">전체 제조사</option>
         <option value="ricoh">리코</option>
@@ -625,7 +608,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 
 
-</div><!-- /app-wrapper -->
+<!-- /app-wrapper -->
 
 <!-- 상세 모달 -->
 <div class="modal-bg" id="detail-modal">
@@ -1462,7 +1445,8 @@ function selectGuideContract(el){
     name:  el.getAttribute('data-name'),
     ip:    el.getAttribute('data-ip'),
     type:  el.getAttribute('data-type'),
-    model: el.getAttribute('data-model')
+    model: el.getAttribute('data-model'),
+    no:    el.getAttribute('data-no') || ''
   };
 
   // IP가 없으면 담을 수 없음
@@ -1577,6 +1561,12 @@ function downloadAgentForContract(){
     targetLines.push('    module      = "printer_mib"');
     targetLines.push('    auth        = "public_v2"');
     targetLines.push('    walk_params = "default"');
+    // [수정] 장비마다 고유 거래처명·NO를 labels로 부여 (여러 대여도 각각 구분됨)
+    //   실제 작동 배치파일(printers-test4.alloy)과 동일한 방식.
+    targetLines.push('    labels = {');
+    targetLines.push('      customer  = "' + (dev.name || '') + '",');
+    targetLines.push('      device_no = "' + (dev.no || '') + '",');
+    targetLines.push('    }');
     targetLines.push('  }');
   });
 
@@ -1598,10 +1588,6 @@ function downloadAgentForContract(){
     '  scrape_timeout  = "30s"',
     '}',
     'prometheus.remote_write "central" {',
-    '  external_labels = {',
-    '    customer = "' + name + '",',
-    '    device_no = "' + no + '",',
-    '  }',
     '  endpoint {',
     '    url = "http://161.33.35.210:8428/api/v1/write"',
     '  }',
@@ -1698,7 +1684,11 @@ function renderDeviceManager(){
         var d=doc.data(); d._id=doc.id; devices.push(d);
       }
     });
-    devices.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    devices.sort(function(a,b){
+      var na=parseInt(a.contract_no)||99999, nb=parseInt(b.contract_no)||99999;
+      if(na!==nb) return na-nb;
+      return (a.name||'').localeCompare(b.name||'');
+    });
 
     var total = devices.length;
 
@@ -1731,8 +1721,9 @@ function renderDeviceManager(){
 
     document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
       var online = (d.is_online||'').toLowerCase()==='true';
+      var noDisp = (d.contract_no && parseInt(d.contract_no)>0) ? parseInt(d.contract_no) : (i+1);
       return '<tr>'+
-        '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td style="color:var(--text3)">'+noDisp+'</td>'+
         '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
         '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
@@ -2277,6 +2268,7 @@ function searchGuideContract(){
     div.setAttribute('data-ip',c.printer_ip||'');
     div.setAttribute('data-type',c.printer_type||'ricoh');
     div.setAttribute('data-model',c.etc||'');
+    div.setAttribute('data-no',c.no||'');
     div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid #e5e7eb;font-size:13px';
     div.onmouseover=function(){this.style.background='#eff6ff';};
     div.onmouseout=function(){this.style.background='';};
@@ -2296,14 +2288,15 @@ function searchGuideContract(){
   <div class="modal" style="max-width:420px">
     <div class="modal-head">
       <h3>📋 카운터 상세</h3>
-      <button class="modal-close" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">×</button>
+      <button class="modal-close" onclick="document.getElementById(&#39;usage-detail-modal&#39;).classList.remove(&#39;open&#39;)">×</button>
     </div>
     <div class="modal-body" id="usage-detail-body"></div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="document.getElementById('usage-detail-modal').classList.remove('open')">닫기</button>
+      <button class="btn btn-ghost" onclick="document.getElementById(&#39;usage-detail-modal&#39;).classList.remove(&#39;open&#39;)">닫기</button>
     </div>
   </div>
 </div>
 
-</body>
-</html>
+
+
+</body></html>
