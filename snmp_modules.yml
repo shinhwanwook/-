@@ -14,7 +14,7 @@
 auths:
   public_v2:
     community: public      # 프린터 SNMP 커뮤니티 (장비 설정에 맞게)
-    version: 2
+    version: 1
 
 modules:
   printer_mib:
