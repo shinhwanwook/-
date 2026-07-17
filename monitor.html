@@ -1547,33 +1547,54 @@ function downloadAgentForContract(){
   var no   = _basket[0].no || '';
 
   // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
+  // PING 테스트 라인 (담긴 장비 각각) - 한글 대신 IP/번호만 써서 인코딩 깨짐 방지
+  var pingLines = [];
+  _basket.forEach(function(dev, idx){
+    var ip = dev.ip.trim();
+    pingLines.push('ping -n 1 -w 1000 ' + ip + ' >nul 2>&1');
+    pingLines.push('if %errorLevel% equ 0 (echo   [ OK ]  ' + ip + '  printer_' + (idx+1) + '  connected) else (echo   [FAIL]  ' + ip + '  printer_' + (idx+1) + '  NO RESPONSE)');
+  });
+
   var installBat = [
     '@echo off',
+    'chcp 65001 >nul',
     'net session >nul 2>&1',
     'if %errorLevel% neq 0 (',
     '  echo [Error] Administrator rights required!',
     '  echo Right-click and select Run as administrator',
     '  pause & exit /b 1',
     ')',
-    'set "ALLOY_DIR=C:\alloy"',
-    'echo [1/4] Prepare config folder: %ALLOY_DIR%',
+    'set "ALLOY_DIR=C:\\alloy"',
+    'echo [1/5] Prepare config folder: %ALLOY_DIR%',
     'if not exist "%ALLOY_DIR%" mkdir "%ALLOY_DIR%"',
-    'echo [2/4] Copy config files',
-    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\printers.alloy"   >nul',
-    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\snmp_modules.yml" >nul',
-    'echo [3/4] Install Alloy',
+    'echo [2/5] Copy config files',
+    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\\printers.alloy"   >nul',
+    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\\snmp_modules.yml" >nul',
+    'echo [3/5] Install Alloy (please wait...)',
     '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
-    'echo [4/4] Restart Alloy service',
+    'echo [4/5] Restart Alloy service',
     'net stop Alloy >nul 2>&1',
     'net start Alloy >nul 2>&1',
+    'echo [5/5] Power settings - prevent sleep (monitoring stays alive)',
+    'powercfg /change standby-timeout-ac 0',
+    'powercfg /change hibernate-timeout-ac 0',
+    'powercfg /change monitor-timeout-ac 10',
     'echo.',
     'echo ============================================================',
-    'echo  Done! - ' + name,
-    'echo  Check 1: services.msc - Alloy Running',
-    'echo  Check 2: http://localhost:12345',
+    'echo  [Auto Check] Printer network connection test (PING)',
+    'echo ============================================================'
+  ].concat(pingLines).concat([
     'echo ============================================================',
+    'echo  Install Done!   Printers: ' + _basket.length,
+    'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
+    'echo  Check 1: services.msc  -  Alloy = Running',
+    'echo  Check 2: http://localhost:12345  -  Graph tab',
+    'echo ============================================================',
+    'echo  * If any printer shows [FAIL] above:',
+    'echo    - Check printer power / IP address',
+    'echo    - Check PC and printer are on same network',
     'pause'
-  ].join('\r\n');
+  ]).join('\r\n');
 
   // 담긴 장비 각각을 target "printer_1", "printer_2", ... 로 생성
   var targetLines = [];
@@ -1617,7 +1638,7 @@ function downloadAgentForContract(){
 
   // 파일들 다운로드
   // 1. install.bat
-  var blob1 = new Blob([installBat], {type:'text/plain;charset=windows-1252'});
+  var blob1 = new Blob(['\ufeff'+installBat], {type:'text/plain;charset=utf-8'});
   var a1 = document.createElement('a');
   a1.href = URL.createObjectURL(blob1);
   a1.download = 'install.bat';
@@ -1625,7 +1646,7 @@ function downloadAgentForContract(){
 
   // 2. printers.alloy
   setTimeout(function(){
-    var blob2 = new Blob([printersAlloy], {type:'text/plain'});
+    var blob2 = new Blob([printersAlloy], {type:'text/plain;charset=utf-8'});
     var a2 = document.createElement('a');
     a2.href = URL.createObjectURL(blob2);
     a2.download = 'printers.alloy';
