@@ -1527,7 +1527,10 @@ function removeFromBasket(i){
 
 // 거래처별 배치파일 다운로드
 function downloadSnmpModules(){
-  fetch('https://raw.githubusercontent.com/shinhwanwook/-/main/snmp_modules.yml')
+  // 캐시 우회: URL에 타임스탬프 + no-cache 옵션 -> 항상 GitHub 최신 파일을 받음
+  //   (안 하면 브라우저가 옛날 버전을 캐시해서 줄 수 있음)
+  var _ver = '?t=' + Date.now();
+  fetch('https://raw.githubusercontent.com/shinhwanwook/-/main/snmp_modules.yml' + _ver, {cache:'no-store'})
     .then(function(r){ return r.text(); })
     .then(function(text){
       var blob = new Blob([text], {type:'text/plain'});
