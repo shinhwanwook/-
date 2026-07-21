@@ -151,6 +151,17 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .nav-tab{padding:0 7px;font-size:11px}
 }
 .nav::-webkit-scrollbar{display:none}
+/* ── 거래처 자동완성 드롭다운 ── */
+.ac-wrap{position:relative;flex:1;min-width:180px;display:flex}
+.ac-wrap>input{flex:1;width:100%}
+.ac-list{position:absolute;top:100%;left:0;right:0;z-index:200;background:#fff;border:1px solid #cbd5e1;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 6px 16px rgba(0,0,0,.12);max-height:280px;overflow-y:auto;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:9px 13px;cursor:pointer;font-size:13px;color:#1e293b;border-bottom:1px solid #f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:#eff6ff;color:#1d4ed8}
+.ac-item .ac-no{display:inline-block;min-width:34px;color:#64748b;font-size:11px;font-weight:600}
+.ac-item .ac-hl{color:#1d4ed8;font-weight:700}
+.ac-empty{padding:10px 13px;color:#94a3b8;font-size:12px}
 </style>
 </head>
 <body>
@@ -917,6 +928,138 @@ function _monDeb(key, fn, ms){
   _monDebTimers[key] = setTimeout(fn, ms||250);
 }
 
+// ══════════════════════════════════════
+//  거래처 자동완성 (검색창에 글자 입력 시 관련 거래처 목록 표시 → 클릭 선택)
+// ══════════════════════════════════════
+var _acState = {}; // 각 검색창별 상태 (활성 항목 인덱스 등)
+
+// 검색창을 자동완성으로 감싸고 목록 컨테이너를 만든다 (한 번만)
+function _acSetup(inputId, onPick){
+  var input = document.getElementById(inputId);
+  if(!input || input._acReady) return;
+  input._acReady = true;
+  // input을 .ac-wrap로 감싸기
+  var wrap = document.createElement('div');
+  wrap.className = 'ac-wrap';
+  // input의 기존 flex 스타일을 wrap으로 옮김
+  if(input.style.flex){ wrap.style.flex = input.style.flex; input.style.flex=''; }
+  if(input.style.minWidth){ wrap.style.minWidth = input.style.minWidth; input.style.minWidth=''; }
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+  var list = document.createElement('div');
+  list.className = 'ac-list';
+  list.id = inputId + '-aclist';
+  wrap.appendChild(list);
+  _acState[inputId] = {active:-1, onPick:onPick};
+
+  // 입력할 때마다 목록 갱신
+  input.addEventListener('input', function(){ _acRender(inputId); });
+  input.addEventListener('focus', function(){ if(input.value.trim()) _acRender(inputId); });
+  // 키보드 위/아래/엔터/ESC
+  input.addEventListener('keydown', function(e){
+    var st = _acState[inputId];
+    var items = list.querySelectorAll('.ac-item');
+    if(!list.classList.contains('show') || !items.length) return;
+    if(e.key==='ArrowDown'){ e.preventDefault(); st.active=Math.min(st.active+1,items.length-1); _acHighlight(inputId); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); st.active=Math.max(st.active-1,0); _acHighlight(inputId); }
+    else if(e.key==='Enter'){ if(st.active>=0){ e.preventDefault(); items[st.active].click(); } }
+    else if(e.key==='Escape'){ _acHide(inputId); }
+  });
+  // 바깥 클릭하면 목록 닫기
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)) _acHide(inputId);
+  });
+}
+
+// 거래처 이름 목록 만들기 (중복 이름은 한 번만, NO 포함해 구분)
+function _acRender(inputId){
+  var input = document.getElementById(inputId);
+  var list = document.getElementById(inputId+'-aclist');
+  if(!input || !list) return;
+  var q = (input.value||'').trim().toLowerCase();
+  var st = _acState[inputId];
+  st.active = -1;
+  if(!q){ _acHide(inputId); return; }
+  // _devices에서 이름이 q로 시작하거나 포함하는 거래처 수집 (거래처명 기준)
+  var seen = {}, matches = [];
+  (_devices||[]).forEach(function(d){
+    var nm = d.name||'';
+    if(!nm) return;
+    var low = nm.toLowerCase();
+    if(low.indexOf(q)===-1) return;
+    var no = (d.contract_no && parseInt(d.contract_no)>0) ? parseInt(d.contract_no) : '';
+    var key = nm + '|' + no;
+    if(seen[key]) return;
+    seen[key] = true;
+    // 앞자리 일치를 우선 정렬하기 위해 시작 위치 기록
+    matches.push({name:nm, no:no, pos:low.indexOf(q)});
+  });
+  // 앞자리 일치(pos=0) 우선, 그다음 이름순
+  matches.sort(function(a,b){
+    if(a.pos!==b.pos) return a.pos-b.pos;
+    return a.name.localeCompare(b.name);
+  });
+  if(!matches.length){
+    list.innerHTML = '<div class="ac-empty">일치하는 거래처가 없습니다</div>';
+    list.classList.add('show');
+    return;
+  }
+  // 최대 30개까지 표시
+  var html = matches.slice(0,30).map(function(m){
+    // 입력한 부분 강조
+    var low = m.name.toLowerCase();
+    var i = low.indexOf(q);
+    var disp = m.name;
+    if(i>=0){
+      disp = _esc(m.name.slice(0,i)) + '<span class="ac-hl">' + _esc(m.name.slice(i,i+q.length)) + '</span>' + _esc(m.name.slice(i+q.length));
+    } else {
+      disp = _esc(m.name);
+    }
+    var noBadge = m.no!=='' ? '<span class="ac-no">'+m.no+'</span>' : '<span class="ac-no"></span>';
+    return '<div class="ac-item" data-name="'+_esc(m.name)+'">'+noBadge+disp+'</div>';
+  }).join('');
+  list.innerHTML = html;
+  list.classList.add('show');
+  // 각 항목 클릭 시 선택
+  list.querySelectorAll('.ac-item').forEach(function(el){
+    el.addEventListener('click', function(){
+      var nm = el.getAttribute('data-name');
+      input.value = nm;
+      _acHide(inputId);
+      // 선택한 거래처로 검색 실행 (해당 검색창의 콜백 호출)
+      if(st.onPick) st.onPick();
+    });
+  });
+}
+
+function _acHighlight(inputId){
+  var list = document.getElementById(inputId+'-aclist');
+  var st = _acState[inputId];
+  var items = list.querySelectorAll('.ac-item');
+  items.forEach(function(el,i){ el.classList.toggle('active', i===st.active); });
+  if(st.active>=0 && items[st.active]) items[st.active].scrollIntoView({block:'nearest'});
+}
+
+function _acHide(inputId){
+  var list = document.getElementById(inputId+'-aclist');
+  if(list){ list.classList.remove('show'); }
+  if(_acState[inputId]) _acState[inputId].active=-1;
+}
+
+// 간단한 HTML 이스케이프 (esc 함수가 이미 있으면 그걸 씀)
+function _esc(s){
+  if(typeof esc==='function') return esc(s);
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 4개 검색창에 자동완성 연결 (데이터 로드 후 호출)
+function _acInitAll(){
+  _acSetup('dev-srch',        function(){ renderDevices(); });
+  _acSetup('hist-srch',       function(){ renderHistory(); });
+  _acSetup('device-mgr-srch', function(){ renderDeviceManager(); });
+  _acSetup('usage-srch',      function(){ filterUsageTable(); });
+}
+
 function tonerColor(pct){
   var v = parseInt(pct);
   if(isNaN(v)||v<0) return {color:'#9ca3af',bg:'#f3f4f6',icon:'❓'};
@@ -1002,6 +1145,7 @@ function loadAllDevices(silent){
     renderDevices();
     renderGuideList();
     updateSummary();
+    _acInitAll(); // 거래처 자동완성 연결 (데이터 로드 후)
 
   }).catch(function(e){
     if(btn) btn.innerHTML = '🔄 새로고침';
