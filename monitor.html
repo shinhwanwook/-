@@ -341,7 +341,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div style="display:flex;gap:8px;align-items:center">
         <select class="inp" id="view-mode" style="font-size:12px;padding:5px 8px" onchange="renderDevices()">
           <option value="card">카드 보기</option>
-          <option value="table">테이블 보기</option>
+          <option value="table" selected>테이블 보기</option>
         </select>
       </div>
     </div>
@@ -357,16 +357,17 @@ tbody td{padding:9px 12px;vertical-align:middle}
     <div class="info-row" id="dev-info"></div>
 
     <!-- 카드 뷰 -->
-    <div id="card-view">
+    <div id="card-view" style="display:none">
       <div class="device-grid" id="device-grid"></div>
     </div>
 
     <!-- 테이블 뷰 -->
-    <div id="table-view" style="display:none">
+    <div id="table-view">
       <div class="tbl-wrap">
         <table>
           <thead>
             <tr>
+              <th style="text-align:center">NO</th>
               <th>거래처 / 기기명</th>
               <th>IP</th>
               <th>상태</th>
@@ -430,6 +431,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th id="hist-date-th" onclick="toggleHistSort()" style="cursor:pointer;user-select:none" title="클릭하여 정렬">날짜 <span id="hist-sort-icon">▼</span></th>
             <th>시간</th>
             <th>기기명</th>
+            <th style="text-align:center">NO</th>
             <th id="hist-name-th" style="display:none">거래처명</th>
             <th style="text-align:right">흑백카운터</th>
             <th style="text-align:right">컬러카운터</th>
@@ -618,6 +620,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
+            <th style="text-align:center">NO</th>
             <th>거래처명</th>
             <th>기기명</th>
             <th style="text-align:right">흑백(시작)</th>
@@ -641,6 +644,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <table>
         <thead>
           <tr>
+            <th style="text-align:center">NO</th>
             <th>거래처명</th>
             <th>기기명</th>
             <th style="text-align:right">흑백(시작)</th>
@@ -1523,6 +1527,7 @@ function renderDevices(){
         ? '<span class="badge b-ok">🟢 온라인</span>'
         : '<span class="badge b-late">🔴 오프라인</span>';
       return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
+        '<td style="text-align:center;font-weight:600;color:var(--text3)">'+esc(d.contract_no||d.device_no||'-')+'</td>'+
         '<td><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3)">'+esc(d.model||'-')+'</div></td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.ip||'-')+'</td>'+
@@ -1533,7 +1538,7 @@ function renderDevices(){
         '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
         '</tr>';
     }).join('') :
-    '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
+    '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
 }
 
 // ══════════════════════════════════════════
@@ -1589,14 +1594,14 @@ function renderHistory(){
 
   if(!devId && !srch && !typeF){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">거래처명 검색 또는 기기를 선택 후 🔍 조회 버튼을 누르세요.</td></tr>';
+      '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)">거래처명 검색 또는 기기를 선택 후 🔍 조회 버튼을 누르세요.</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
 
   document.getElementById('hist-info').textContent = '불러오는 중...';
   document.getElementById('hist-tbody').innerHTML =
-    '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
+    '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)"><span class="spinning">🔄</span> 로딩 중...</td></tr>';
 
   // 검색 대상 기기
   var targetDevices = (_devices||[]).filter(function(d){
@@ -1608,7 +1613,7 @@ function renderHistory(){
 
   if(!targetDevices.length){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
+      '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)">검색 결과 없음</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
@@ -1664,6 +1669,7 @@ function renderHistory(){
       var d = doc.data();
       d._docId    = doc.id;
       d._devNo    = no;
+      d._devDispNo = dev.contract_no||dev.device_no||no;
       d._devName  = dev.name||'';
       d._devModel = dev.model||'';
       d._isBase   = dateStr < startStr; // 기준값 여부
@@ -1751,7 +1757,7 @@ function renderHistory(){
 
     if(!allRows.length){
       document.getElementById('hist-tbody').innerHTML =
-        '<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
+        '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)">해당 기간 데이터 없음</td></tr>';
       return;
     }
 
@@ -1774,6 +1780,7 @@ function renderHistory(){
         '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
         '<td style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
+        '<td style="text-align:center;font-size:12px;color:var(--text3)">'+esc(r._devDispNo||'-')+'</td>'+
         (multiDev?'<td style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
         '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
@@ -1786,7 +1793,7 @@ function renderHistory(){
     }).join('');
   }).catch(function(e){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
+      '<tr><td colspan="15" style="text-align:center;padding:24px;color:#dc2626">오류: '+e.message+'</td></tr>';
     console.error('renderHistory error:', e);
   });
 }
@@ -2639,6 +2646,7 @@ function filterUsageTable(){
     }
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
+      '<td style="text-align:center;color:var(--text3)">'+esc(dev.contract_no||dev.device_no||'-')+'</td>'+
       '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
       // 흑백
