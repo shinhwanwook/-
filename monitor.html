@@ -227,10 +227,24 @@ tbody td{padding:9px 12px;vertical-align:middle}
 @media print{
   body * { visibility:hidden; }
   #bill-sheet, #bill-sheet * { visibility:visible; }
-  #bill-sheet{position:absolute;left:0;top:0;width:100%;padding:20px 24px;max-width:100%}
+  #bill-sheet{position:absolute;left:0;top:0;width:100%;padding:0;max-width:100%;font-size:11px}
   .bill-uinput,.bill-minput,.bill-modelinput{border:none;background:transparent;padding:0}
   .bill-del{display:none}
-  @page{margin:14mm}
+  @page{margin:9mm}
+  /* ── 1페이지에 담기게 인쇄 시 간격 압축 ── */
+  .bill-doc-head{padding-bottom:9px;margin-bottom:3px}
+  .bill-doc-title{font-size:21px;letter-spacing:4px}
+  .bill-doc-no{margin:4px 0 11px}
+  .bill-party{margin-bottom:11px}
+  .bill-provider{line-height:1.5}
+  .bill-terms{padding:7px 11px;line-height:1.55;font-size:11px}
+  .bill-sec-row{margin:11px 0 5px}
+  .bill-table{font-size:11px}
+  .bill-table thead th{padding:5px 4px}
+  .bill-table tbody td{padding:5px 4px}
+  .bill-total-row{margin-top:9px;padding-top:9px}
+  .bill-memo{margin-top:11px;padding-top:8px;min-height:0}
+  .bill-sign-date{margin-bottom:11px}
 }
 </style>
 </style>
