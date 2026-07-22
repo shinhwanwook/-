@@ -2808,6 +2808,12 @@ function findContractByName(name){
   return _allBillContracts.find(function(c){ return (c.name||'')===name; }) || null;
 }
 
+// 거래처 NO(contract_no)로 임대관리 거래처 찾기 (수집이 NO 기준이라 이름보다 안정적)
+function findContractByNo(no){
+  if(no==null||no==='') return null;
+  return (_allBillContracts||[]).find(function(c){ return String(c.no)===String(no); }) || null;
+}
+
 // 거래처 추가단가 가져오기 (없으면 기본값)
 function getContractUnit(name){
   var c=findContractByName(name);
@@ -2831,14 +2837,17 @@ function loadBillFromUsage(){
   var startStr=startDate.replace(/-/g,'');
   var endStr=endDate.replace(/-/g,'');
   var cname=_billContract.name;
+  var cno=_billContract.no;
 
-  // 이 거래처의 device들 찾기 (name 일치)
+  // 이 거래처의 device 찾기 (NO 우선, 이름 예비)
   db.collection('device_status').get().then(function(snap){
     var devices=[];
     snap.forEach(function(doc){
       if(!doc.id.startsWith('hist_')){
         var dd=doc.data();
-        if((dd.name||'')===cname){ dd._id=doc.id; devices.push(dd); }
+        var byNo   = (cno!=null&&cno!=='') && String(dd.contract_no||'')===String(cno);
+        var byName = (dd.name||'')===cname;
+        if(byNo || byName){ dd._id=doc.id; devices.push(dd); }
       }
     });
     if(!devices.length){ alert('이 거래처에 연결된 모니터링 기기가 없습니다.\n검침값을 직접 입력해 주세요.'); return; }
@@ -2859,10 +2868,17 @@ function loadBillFromUsage(){
         eRows.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
         var sData=sRows[0]||null, eData=eRows[0]||null;
         if(!eData && parseInt(dev.bw_count||0)>0) eData=dev;
-        if(!sData && (parseInt(dev.start_bw||0)>0||parseInt(dev.start_color||0)>0)){
-          sData={bw_count:parseInt(dev.start_bw)||0,color_count:parseInt(dev.start_color)||0};
+        // 임대관리 거래처(기기 NO로 매칭) 우선 — 시작매수·약정·단가를 임대관리에서 직접 읽음
+        var ct = findContractByNo(dev.contract_no) || _billContract || {};
+        var startBwC    = parseInt(ct.start_bw||0)    || parseInt(dev.start_bw||0)    || 0;
+        var startColorC = parseInt(ct.start_color||0) || parseInt(dev.start_color||0) || 0;
+        var quotaBwC    = parseInt(ct.quota_bw||0)    || parseInt(dev.quota_bw||0)    || 0;
+        var quotaColorC = parseInt(ct.quota_color||0) || parseInt(dev.quota_color||0) || 0;
+        var unitBwC    = (ct.extra_bw!=null&&ct.extra_bw!=='')     ? parseFloat(ct.extra_bw)||0    : 10;
+        var unitColorC = (ct.extra_color!=null&&ct.extra_color!=='') ? parseFloat(ct.extra_color)||0 : 80;
+        if(!sData && (startBwC>0||startColorC>0)){
+          sData={bw_count:startBwC,color_count:startColorC};
         }
-        var u=getContractUnit(dev.name);
         return {
           model: dev.model||dev.name||'기종',
           _src: dev._id,
@@ -2870,9 +2886,9 @@ function loadBillFromUsage(){
           curBw:  eData?parseInt(eData.bw_count||0):0,
           prevColor: sData?parseInt(sData.color_count||0):0,
           curColor:  eData?parseInt(eData.color_count||0):0,
-          bwFree: parseInt(dev.quota_bw||0)||0,
-          colorFree: parseInt(dev.quota_color||0)||0,
-          bwUnit:u.bwUnit, colorUnit:u.colorUnit
+          bwFree: quotaBwC,
+          colorFree: quotaColorC,
+          bwUnit:unitBwC, colorUnit:unitColorC
         };
       });
     });
