@@ -718,7 +718,11 @@ body.locked { overflow:hidden; }
       <button class="btn btn-primary" onclick="openServiceAdd()">＋ 이력 등록</button>
     </div>
     <div class="controls">
-      <input class="inp inp-search" type="text" id="svc-srch" placeholder="🔍 거래처명, 내용 검색...">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input class="inp" type="text" id="svc-srch" autocomplete="off" style="width:100%" placeholder="🔍 거래처명 앞글자 입력 → 선택, 또는 내용 검색..."
+          oninput="filterSvcSrchClients(this.value)" onfocus="filterSvcSrchClients(this.value)">
+        <div id="svc-srch-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;max-height:230px;overflow-y:auto;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15)"></div>
+      </div>
       <select class="inp" id="svc-type"><option value="">전체 유형</option><option value="방문">방문</option><option value="A/S">A/S</option><option value="기타">기타</option></select>
       <select class="inp" id="svc-staff"><option value="">전체 담당자</option></select>
       <select class="inp" id="svc-year"><option value="">전체 연도</option></select>
@@ -3052,6 +3056,41 @@ document.addEventListener('click', function(e){
   if(dd && !dd.contains(e.target) && e.target.id!=='sm-no-search'){
     dd.style.display = 'none';
   }
+});
+
+// ── 방문/AS 목록: 거래처 앞글자 자동완성 ──
+function filterSvcSrchClients(q){
+  var dd = document.getElementById('svc-srch-dropdown');
+  if(!dd) return;
+  var kw = (q||'').trim().toLowerCase();
+  if(!kw){ dd.style.display='none'; dd.innerHTML=''; return; }
+  var list = (typeof CONTRACTS!=='undefined'?CONTRACTS:[]).filter(function(c){
+    return !c.terminated && (c.name||'').toLowerCase().indexOf(kw)>=0;
+  }).slice(0,12);
+  if(!list.length){ dd.style.display='none'; dd.innerHTML=''; return; }
+  dd.innerHTML = list.map(function(c){
+    var safe = String(c.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return '<div onmousedown="selectSvcSrchClient(\''+safe+'\')" '
+      +'style="padding:8px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0" '
+      +'onmouseover="this.style.background=\'#f3f6fb\'" onmouseout="this.style.background=\'#fff\'">'
+      +'<span style="font-weight:600">'+esc(c.name||'')+'</span>'
+      +'<span style="color:var(--text3);font-size:11px;margin-left:7px">NO '+esc(String(c.no||''))+'</span>'
+      +'</div>';
+  }).join('');
+  dd.style.display='block';
+}
+
+function selectSvcSrchClient(name){
+  var el = document.getElementById('svc-srch');
+  if(el) el.value = name;
+  var dd = document.getElementById('svc-srch-dropdown');
+  if(dd){ dd.style.display='none'; dd.innerHTML=''; }
+  if(typeof renderService==='function') renderService();
+}
+
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('svc-srch-dropdown');
+  if(dd && !dd.contains(e.target) && e.target.id!=='svc-srch'){ dd.style.display='none'; }
 });
 
 var _svcDetailNo = null;
