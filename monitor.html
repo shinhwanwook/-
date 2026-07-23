@@ -1919,43 +1919,86 @@ function downloadAgentForContract(){
   var no   = _basket[0].no || '';
 
   // install.bat 내용 생성 (inkworld 방식 그대로 + 우리 서버 URL)
-  // PING 테스트 라인 (담긴 장비 각각) - 한글 대신 IP/번호만 써서 인코딩 깨짐 방지
-  var pingLines = [];
+  // ── 설치 결과를 "한글 팝업창"으로 보여주는 PowerShell 스크립트 생성 ──
+  // 배치파일에 한글을 직접 넣으면 인코딩이 깨지므로, 스크립트를 base64로 실어 보냄
+  var psArr = [];
+  psArr.push('Add-Type -AssemblyName System.Windows.Forms');
+  psArr.push('$printers = @(');
   _basket.forEach(function(dev, idx){
-    var ip = dev.ip.trim();
-    pingLines.push('ping -n 1 -w 1000 ' + ip + ' >nul 2>&1');
-    pingLines.push('if %errorLevel% equ 0 (echo   [ OK ]  ' + ip + '  printer_' + (idx+1) + '  connected) else (echo   [FAIL]  ' + ip + '  printer_' + (idx+1) + '  NO RESPONSE)');
+    var nm = String(dev.name||'').replace(/'/g, "''");
+    psArr.push("  @{ ip = '" + dev.ip.trim() + "'; nm = '" + nm + "' }" + (idx < _basket.length-1 ? ',' : ''));
   });
+  psArr.push(')');
+  psArr.push('$pkt = [byte[]](48,41,2,1,1,4,6,112,117,98,108,105,99,160,28,2,4,18,52,86,120,2,1,0,2,1,0,48,14,48,12,6,8,43,6,1,2,1,1,1,0,5,0)');
+  psArr.push('$ok = 0; $bad = 0; $lines = @()');
+  psArr.push('foreach ($p in $printers) {');
+  psArr.push('  $canPing = $false');
+  psArr.push('  try { $pg = New-Object System.Net.NetworkInformation.Ping; $rr = $pg.Send($p.ip, 1500); if ($rr.Status -eq "Success") { $canPing = $true } } catch { $canPing = $false }');
+  psArr.push('  $snmp = $false');
+  psArr.push('  if ($canPing) {');
+  psArr.push('    try {');
+  psArr.push('      $u = New-Object System.Net.Sockets.UdpClient');
+  psArr.push('      $u.Client.ReceiveTimeout = 3000');
+  psArr.push('      $u.Connect($p.ip, 161)');
+  psArr.push('      [void]$u.Send($pkt, $pkt.Length)');
+  psArr.push('      $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)');
+  psArr.push('      $resp = $u.Receive([ref]$ep)');
+  psArr.push('      if ($resp.Length -gt 0) { $snmp = $true }');
+  psArr.push('      $u.Close()');
+  psArr.push('    } catch { $snmp = $false }');
+  psArr.push('  }');
+  psArr.push('  if ($canPing -and $snmp) {');
+  psArr.push('    $ok++');
+  psArr.push('    $lines += ("[정상]  " + $p.ip + "  ->  수집 준비 완료")');
+  psArr.push('  } elseif (-not $canPing) {');
+  psArr.push('    $bad++');
+  psArr.push('    $lines += ("[실패]  " + $p.ip + "  ->  프린터에 연결되지 않습니다" + "`r`n" + "          할 일 : 프린터 전원 켜기 / IP주소 확인 / 같은 네트워크인지 확인")');
+  psArr.push('  } else {');
+  psArr.push('    $bad++');
+  psArr.push('    $lines += ("[실패]  " + $p.ip + "  ->  프린터의 SNMP 기능이 꺼져 있습니다" + "`r`n" + "          할 일 : 프린터 웹페이지 접속 - 네트워크 - SNMP - 사용(v1/v2) 켜기" + "`r`n" + "                  커뮤니티 이름은 public (읽기전용)")');
+  psArr.push('  }');
+  psArr.push('}');
+  psArr.push('$title = "프린터 모니터링 설치 결과"');
+  psArr.push('if ($bad -eq 0) {');
+  psArr.push('  $head = "설치 완료!  모든 프린터가 정상입니다."');
+  psArr.push('  $tail = "그대로 두고 창을 닫으시면 됩니다." + "`r`n" + "약 20분 뒤 사무실 모니터링 화면에 숫자가 올라옵니다."');
+  psArr.push('  $icon = [System.Windows.Forms.MessageBoxIcon]::Information');
+  psArr.push('} else {');
+  psArr.push('  $head = "조치가 필요합니다!  아래 프린터를 확인해 주세요."');
+  psArr.push('  $tail = "이 창을 사진 찍어 사무실로 보내주세요." + "`r`n" + "조치 후 install.bat 를 한 번 더 실행하면 다시 검사합니다."');
+  psArr.push('  $icon = [System.Windows.Forms.MessageBoxIcon]::Error');
+  psArr.push('}');
+  psArr.push('$msg = $head + "`r`n`r`n" + ($lines -join "`r`n") + "`r`n`r`n" + ("정상 " + $ok + "대 / 문제 " + $bad + "대") + "`r`n`r`n" + $tail');
+  psArr.push('try {');
+  psArr.push('  $desk = [Environment]::GetFolderPath("Desktop")');
+  psArr.push('  $stamp = Get-Date -Format "yyyy-MM-dd HH:mm"');
+  psArr.push('  ($stamp + "`r`n" + $msg) | Out-File -FilePath (Join-Path $desk "프린터설치결과.txt") -Encoding UTF8');
+  psArr.push('} catch { }');
+  psArr.push('[void][System.Windows.Forms.MessageBox]::Show($msg, $title, [System.Windows.Forms.MessageBoxButtons]::OK, $icon)');
 
-  // SNMP 응답 검사 라인 (프린터에 SNMP가 실제로 켜져 있는지 물어봄)
-  // PowerShell로 SNMP v2c GET(sysDescr) 패킷을 보내고 응답 유무로 판정
-  var snmpLines = [
+  var psText = psArr.join('\r\n');
+  var psB64 = (function(s){
+    var bytes = new TextEncoder().encode(s);
+    var bin = '';
+    for (var bi2=0; bi2<bytes.length; bi2++) bin += String.fromCharCode(bytes[bi2]);
+    return btoa(bin);
+  })(psText);
+
+  var checkLines = [
     'echo.',
-    'echo ============================================================',
-    'echo  [Auto Check] SNMP test  (v1/v2c, community: public)',
-    'echo ============================================================',
-    'set "PSF=%TEMP%\\snmpchk.ps1"',
-    'echo param([string]$ip) > "%PSF%"',
-    'echo $ErrorActionPreference = "SilentlyContinue" >> "%PSF%"',
-    'echo $pkt = [byte[]](48,41,2,1,1,4,6,112,117,98,108,105,99,160,28,2,4,18,52,86,120,2,1,0,2,1,0,48,14,48,12,6,8,43,6,1,2,1,1,1,0,5,0) >> "%PSF%"',
-    'echo $u = New-Object System.Net.Sockets.UdpClient >> "%PSF%"',
-    'echo $u.Client.ReceiveTimeout = 3000 >> "%PSF%"',
-    'echo try { >> "%PSF%"',
-    'echo   $u.Connect($ip, 161) >> "%PSF%"',
-    'echo   [void]$u.Send($pkt, $pkt.Length) >> "%PSF%"',
-    'echo   $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0) >> "%PSF%"',
-    'echo   $resp = $u.Receive([ref]$ep) >> "%PSF%"',
-    'echo   if ($resp.Length -gt 0) { Write-Output "OK" } else { Write-Output "NG" } >> "%PSF%"',
-    'echo } catch { Write-Output "NG" } >> "%PSF%"',
-    'echo $u.Close() >> "%PSF%"'
+    'echo Checking printers... please wait',
+    'set "B64=%TEMP%\\pmchk.b64"',
+    'set "PS1=%TEMP%\\pmchk.ps1"',
+    'if exist "%B64%" del "%B64%" >nul 2>&1',
+    'if exist "%PS1%" del "%PS1%" >nul 2>&1'
   ];
-  _basket.forEach(function(dev, idx){
-    var ip = dev.ip.trim();
-    snmpLines.push('set "SNMPR=NG"');
-    snmpLines.push('for /f "delims=" %%R in (\'powershell -NoProfile -ExecutionPolicy Bypass -File "%PSF%" -ip ' + ip + '\') do set "SNMPR=%%R"');
-    snmpLines.push('if "%SNMPR%"=="OK" (echo   [ OK ]  ' + ip + '  printer_' + (idx+1) + '  SNMP ON - counter read OK) else (echo   [FAIL]  ' + ip + '  printer_' + (idx+1) + '  SNMP OFF - no counter data!)');
-  });
-  snmpLines.push('del "%PSF%" >nul 2>&1');
+  for (var bi=0; bi<psB64.length; bi+=150) {
+    checkLines.push('echo ' + psB64.substr(bi,150) + ' >> "%B64%"');
+  }
+  checkLines.push('powershell -NoProfile -Command "[IO.File]::WriteAllBytes(\'%PS1%\', [Convert]::FromBase64String(((Get-Content \'%B64%\' -Raw) -replace \'\\s\',\'\')))"');
+  checkLines.push('powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%"');
+  checkLines.push('del "%B64%" >nul 2>&1');
+  checkLines.push('del "%PS1%" >nul 2>&1');
 
   var installBat = [
     '@echo off',
@@ -1985,18 +2028,12 @@ function downloadAgentForContract(){
     'echo ============================================================',
     'echo  [Auto Check] Printer network connection test (PING)',
     'echo ============================================================'
-  ].concat(pingLines).concat(snmpLines).concat([
+  ].concat(checkLines).concat([
+    'echo.',
     'echo ============================================================',
-    'echo  Install Done!   Printers: ' + _basket.length,
-    'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
-    'echo  Check 1: services.msc  -  Alloy = Running',
-    'echo  Check 2: http://localhost:12345  -  Graph tab',
+    'echo  Finished.  Please read the popup window (Korean).',
+    'echo  Result file saved on Desktop:  PrinterResult.txt',
     'echo ============================================================',
-    'echo  * If any printer shows [FAIL] above:',
-    'echo    - PING FAIL  : Check printer power / IP address / same network',
-    'echo    - SNMP FAIL  : Printer web page - Network - SNMP',
-    'echo                   Enable SNMPv1/v2, community name = public (read only)',
-    'echo                   Without SNMP, counters will NOT be collected!',
     'pause'
   ]).join('\r\n');
 
