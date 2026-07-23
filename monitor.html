@@ -1936,16 +1936,19 @@ function downloadAgentForContract(){
   psArr.push('  try { $pg = New-Object System.Net.NetworkInformation.Ping; $rr = $pg.Send($p.ip, 1500); if ($rr.Status -eq "Success") { $canPing = $true } } catch { $canPing = $false }');
   psArr.push('  $snmp = $false');
   psArr.push('  if ($canPing) {');
-  psArr.push('    try {');
-  psArr.push('      $u = New-Object System.Net.Sockets.UdpClient');
-  psArr.push('      $u.Client.ReceiveTimeout = 3000');
-  psArr.push('      $u.Connect($p.ip, 161)');
-  psArr.push('      [void]$u.Send($pkt, $pkt.Length)');
-  psArr.push('      $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)');
-  psArr.push('      $resp = $u.Receive([ref]$ep)');
-  psArr.push('      if ($resp.Length -gt 0) { $snmp = $true }');
-  psArr.push('      $u.Close()');
-  psArr.push('    } catch { $snmp = $false }');
+  psArr.push('    foreach ($try in 1..3) {');
+  psArr.push('      if ($snmp) { break }');
+  psArr.push('      try {');
+  psArr.push('        $u = New-Object System.Net.Sockets.UdpClient');
+  psArr.push('        $u.Client.ReceiveTimeout = 5000');
+  psArr.push('        $u.Connect($p.ip, 161)');
+  psArr.push('        [void]$u.Send($pkt, $pkt.Length)');
+  psArr.push('        $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)');
+  psArr.push('        $resp = $u.Receive([ref]$ep)');
+  psArr.push('        if ($resp.Length -gt 0) { $snmp = $true }');
+  psArr.push('        $u.Close()');
+  psArr.push('      } catch { try { $u.Close() } catch { } }');
+  psArr.push('    }');
   psArr.push('  }');
   psArr.push('  if ($canPing -and $snmp) {');
   psArr.push('    $ok++');
@@ -1978,7 +1981,7 @@ function downloadAgentForContract(){
 
   var psText = psArr.join('\r\n');
   var psB64 = (function(s){
-    var bytes = new TextEncoder().encode(s);
+    var bytes = new TextEncoder().encode('\ufeff' + s);   // BOM: PowerShell 한글 인식용
     var bin = '';
     for (var bi2=0; bi2<bytes.length; bi2++) bin += String.fromCharCode(bytes[bi2]);
     return btoa(bin);
