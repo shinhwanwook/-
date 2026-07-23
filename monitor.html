@@ -2243,7 +2243,7 @@ function renderDeviceManager(){
     document.getElementById('device-mgr-tbody').innerHTML=devices.map(function(d,i){
       var online = (d.is_online||'').toLowerCase()==='true';
       // NO는 임대관리에서 가져온 거래처 번호(contract_no). 없으면 순번.
-      var noDisp = (d.contract_no && parseInt(d.contract_no)>0) ? parseInt(d.contract_no) : (i+1);
+      var noDisp = (d.contract_no && parseInt(d.contract_no)>0) ? parseInt(d.contract_no) : '-';
       return '<tr>'+
         '<td style="color:var(--text3)">'+noDisp+'</td>'+
         '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
@@ -2283,8 +2283,13 @@ function importFromRental(){
       return;
     }
     var allContracts = (doc.data().CONTRACTS)||[];
+    var skippedOff = 0;
     var contracts = allContracts.filter(function(c){
-      return c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated;
+      if(!(c.printer_ip && c.printer_ip.trim()!=='' && !c.terminated)) return false;
+      // 임대관리에서 '모니터링 연동' 체크를 끈 거래처는 가져오지 않음 (삭제해도 다시 생기는 문제 방지)
+      var monOn = (c.monitoring_on!==undefined) ? !!c.monitoring_on : true;
+      if(!monOn){ skippedOff++; return false; }
+      return true;
     });
 
     if(!contracts.length){
@@ -2336,7 +2341,8 @@ function importFromRental(){
       });
 
       batch.commit().then(function(){
-        var msg = '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트';
+        var msg = '완료! 신규 '+added+'대 추가 / '+updated+'대 업데이트'
+                + (skippedOff>0 ? ' (모니터링 연동 꺼짐 '+skippedOff+'건 제외)' : '');
         if(document.getElementById('device-mgr-info')) document.getElementById('device-mgr-info').textContent=msg;
         alert(msg);
         renderDeviceManager();
