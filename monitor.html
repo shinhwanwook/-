@@ -1927,6 +1927,36 @@ function downloadAgentForContract(){
     pingLines.push('if %errorLevel% equ 0 (echo   [ OK ]  ' + ip + '  printer_' + (idx+1) + '  connected) else (echo   [FAIL]  ' + ip + '  printer_' + (idx+1) + '  NO RESPONSE)');
   });
 
+  // SNMP 응답 검사 라인 (프린터에 SNMP가 실제로 켜져 있는지 물어봄)
+  // PowerShell로 SNMP v2c GET(sysDescr) 패킷을 보내고 응답 유무로 판정
+  var snmpLines = [
+    'echo.',
+    'echo ============================================================',
+    'echo  [Auto Check] SNMP test  (v1/v2c, community: public)',
+    'echo ============================================================',
+    'set "PSF=%TEMP%\\snmpchk.ps1"',
+    'echo param([string]$ip) > "%PSF%"',
+    'echo $ErrorActionPreference = "SilentlyContinue" >> "%PSF%"',
+    'echo $pkt = [byte[]](48,41,2,1,1,4,6,112,117,98,108,105,99,160,28,2,4,18,52,86,120,2,1,0,2,1,0,48,14,48,12,6,8,43,6,1,2,1,1,1,0,5,0) >> "%PSF%"',
+    'echo $u = New-Object System.Net.Sockets.UdpClient >> "%PSF%"',
+    'echo $u.Client.ReceiveTimeout = 3000 >> "%PSF%"',
+    'echo try { >> "%PSF%"',
+    'echo   $u.Connect($ip, 161) >> "%PSF%"',
+    'echo   [void]$u.Send($pkt, $pkt.Length) >> "%PSF%"',
+    'echo   $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0) >> "%PSF%"',
+    'echo   $resp = $u.Receive([ref]$ep) >> "%PSF%"',
+    'echo   if ($resp.Length -gt 0) { Write-Output "OK" } else { Write-Output "NG" } >> "%PSF%"',
+    'echo } catch { Write-Output "NG" } >> "%PSF%"',
+    'echo $u.Close() >> "%PSF%"'
+  ];
+  _basket.forEach(function(dev, idx){
+    var ip = dev.ip.trim();
+    snmpLines.push('set "SNMPR=NG"');
+    snmpLines.push('for /f "delims=" %%R in (\'powershell -NoProfile -ExecutionPolicy Bypass -File "%PSF%" -ip ' + ip + '\') do set "SNMPR=%%R"');
+    snmpLines.push('if "%SNMPR%"=="OK" (echo   [ OK ]  ' + ip + '  printer_' + (idx+1) + '  SNMP ON - counter read OK) else (echo   [FAIL]  ' + ip + '  printer_' + (idx+1) + '  SNMP OFF - no counter data!)');
+  });
+  snmpLines.push('del "%PSF%" >nul 2>&1');
+
   var installBat = [
     '@echo off',
     'chcp 65001 >nul',
@@ -1955,7 +1985,7 @@ function downloadAgentForContract(){
     'echo ============================================================',
     'echo  [Auto Check] Printer network connection test (PING)',
     'echo ============================================================'
-  ].concat(pingLines).concat([
+  ].concat(pingLines).concat(snmpLines).concat([
     'echo ============================================================',
     'echo  Install Done!   Printers: ' + _basket.length,
     'echo  Power: Sleep OFF (PC stays awake), Screen OFF after 10min',
@@ -1963,8 +1993,10 @@ function downloadAgentForContract(){
     'echo  Check 2: http://localhost:12345  -  Graph tab',
     'echo ============================================================',
     'echo  * If any printer shows [FAIL] above:',
-    'echo    - Check printer power / IP address',
-    'echo    - Check PC and printer are on same network',
+    'echo    - PING FAIL  : Check printer power / IP address / same network',
+    'echo    - SNMP FAIL  : Printer web page - Network - SNMP',
+    'echo                   Enable SNMPv1/v2, community name = public (read only)',
+    'echo                   Without SNMP, counters will NOT be collected!',
     'pause'
   ]).join('\r\n');
 
