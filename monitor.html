@@ -1097,16 +1097,16 @@ function doLogout(){
 }
 
 // ══════════════════════════════════════
-//  5분 자동 로그아웃
+//  10분 자동 로그아웃
 // ══════════════════════════════════════
 var _autoLogoutTimer = null;
-var _AUTO_LOGOUT_MS  = 5 * 60 * 1000; // 5분
+var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
 
 function resetAutoLogout(){
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
   _autoLogoutTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
-      alert('5분 동안 활동이 없어 자동 로그아웃 됩니다.');
+      alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
       doLogout();
     }
   }, _AUTO_LOGOUT_MS);
