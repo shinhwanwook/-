@@ -2891,9 +2891,32 @@ function fillContractInfo(c){
   // 청구번호 자동 생성 (비어있을 때만)
   var noEl=document.getElementById('bill-no');
   if(!noEl.textContent || noEl.textContent==='-'){
-    var t=new Date();
-    noEl.textContent=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-001';
+    noEl.textContent='...';
+    nextBillNo(function(no){
+      // 그 사이 사용자가 직접 입력했거나 이력에서 불러왔으면 건드리지 않음
+      var cur=noEl.textContent;
+      if(!cur || cur==='-' || cur==='...') noEl.textContent=no;
+    });
   }
+}
+
+// 오늘 날짜 기준 다음 청구번호 만들기 (예: 2026-0725-001 → 002 → 003)
+function nextBillNo(cb){
+  var t=new Date();
+  var prefix=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'-';
+  if(!_fbReady||!db){ cb(prefix+'001'); return; }
+  db.collection('billing')
+    .where('bill_no','>=',prefix)
+    .where('bill_no','<',prefix+'\uf8ff')
+    .get().then(function(snap){
+      var max=0;
+      snap.forEach(function(doc){
+        var bn=String((doc.data()||{}).bill_no||'');
+        var m=bn.match(/-(\d+)$/);
+        if(m){ var n=parseInt(m[1],10); if(!isNaN(n)&&n>max) max=n; }
+      });
+      cb(prefix+String(max+1).padStart(3,'0'));
+    }).catch(function(){ cb(prefix+'001'); });
 }
 
 // device의 거래처명으로 rental에서 거래처 찾기
