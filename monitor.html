@@ -2052,6 +2052,7 @@ function downloadAgentForContract(){
     'echo [2/5] Copy config files',
     'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\\printers.alloy"   >nul',
     'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\\snmp_modules.yml" >nul',
+    'powershell -NoProfile -Command "(Get-Content \'%ALLOY_DIR%\\printers.alloy\' -Raw) -replace \'__PCNAME__\', $env:COMPUTERNAME | Set-Content -Path \'%ALLOY_DIR%\\printers.alloy\' -Encoding UTF8"',
     'echo [3/5] Install Alloy (please wait...)',
     '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
     'echo [4/5] Restart Alloy service',
@@ -2086,6 +2087,9 @@ function downloadAgentForContract(){
     targetLines.push('    labels = {');
     targetLines.push('      customer  = "' + (dev.name || '') + '",');
     targetLines.push('      device_no = "' + (dev.no || '') + '",');
+    // ip: 어느 프린터인지 구분 / pc: 어느 PC가 수집했는지 구분 (여러 PC 설치 대비)
+    targetLines.push('      ip        = "' + dev.ip.trim() + '",');
+    targetLines.push('      pc        = "__PCNAME__",');
     targetLines.push('    }');
     targetLines.push('  }');
   });
