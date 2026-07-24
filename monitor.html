@@ -1570,9 +1570,11 @@ function renderHistory(){
   var startD = document.getElementById('hist-start') ? document.getElementById('hist-start').value : '';
   var endD   = document.getElementById('hist-end')   ? document.getElementById('hist-end').value   : '';
 
-  if(!devId && !srch && !typeF){
+  // 조건이 없어도 전체 거래처를 자동으로 보여줌 (현황판·기기관리와 동일하게)
+  // 단, 기기가 아주 많으면 읽기량이 커지므로 검색을 권함
+  if(!devId && !srch && !typeF && (_devices||[]).length > 100){
     document.getElementById('hist-tbody').innerHTML =
-      '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)">거래처명 검색 또는 기기를 선택 후 🔍 조회 버튼을 누르세요.</td></tr>';
+      '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text3)">기기가 많습니다. 거래처명 검색 또는 기기를 선택 후 🔍 조회를 눌러 주세요.</td></tr>';
     document.getElementById('hist-info').textContent = '';
     return;
   }
@@ -1606,15 +1608,15 @@ function renderHistory(){
   //   -> 검색 대상 기기가 소수면, 그 기기들의 hist_ 범위만 쿼리해서 읽는다.
   var FieldPath = firebase.firestore.FieldPath;
   var histQueries = [];
-  if(targetDevices.length <= 20){
-    // 대상 기기별로 hist_<no>_ 범위만 조회 (대폭 절감)
+  if(targetDevices.length <= 100){
+    // 대상 기기별로 hist_<no>_<날짜> 범위만 조회 (기간까지 좁혀 읽기량 대폭 절감)
     targetDevices.forEach(function(d){
       var no = (d._id||'').replace('device_','');
       var pfx = 'hist_'+no+'_';
       histQueries.push(
         db.collection('device_status')
-          .where(FieldPath.documentId(), '>=', pfx)
-          .where(FieldPath.documentId(), '<', pfx+'￿')
+          .where(FieldPath.documentId(), '>=', pfx+baseStartStr)
+          .where(FieldPath.documentId(), '<', pfx+endStr+'￿')
           .get()
       );
     });
@@ -1781,7 +1783,7 @@ function resetHistFilter(){
   var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
   if(document.getElementById('hist-srch'))        document.getElementById('hist-srch').value='';
   if(document.getElementById('hist-type-filter')) document.getElementById('hist-type-filter').value='';
-  if(document.getElementById('hist-start'))       document.getElementById('hist-start').value=y+'-'+m+'-01';
+  if(document.getElementById('hist-start'))       document.getElementById('hist-start').value=y+'-'+m+'-'+d;
   if(document.getElementById('hist-end'))         document.getElementById('hist-end').value=y+'-'+m+'-'+d;
   document.getElementById('hist-device').value='';
   renderHistory();
@@ -2176,7 +2178,7 @@ function showPage(id){
   var y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
   var hStart = document.getElementById('hist-start');
   var hEnd   = document.getElementById('hist-end');
-  if(hStart) hStart.value = y+'-'+m+'-01';
+  if(hStart) hStart.value = y+'-'+m+'-'+d;   // 기본: 오늘
   if(hEnd)   hEnd.value   = y+'-'+m+'-'+d;
 })();
 
