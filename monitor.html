@@ -1346,6 +1346,14 @@ function loadAllDevices(silent){
         _devices.push(d);
       }
     });
+    // NO(임대번호) 순으로 통일 정렬 — 현황판·사용량조회·히스토리 드롭다운 모두 이 배열을 사용
+    // (NO 없는 기기는 뒤로, 같으면 거래처명 가나다)
+    _devices.sort(function(a,b){
+      var na=parseInt(a.contract_no)||parseInt(a.device_no)||99999;
+      var nb=parseInt(b.contract_no)||parseInt(b.device_no)||99999;
+      if(na!==nb) return na-nb;
+      return (a.name||'').localeCompare(b.name||'','ko');
+    });
 
     // 히스토리 기기 드롭다운 업데이트
     var sel = document.getElementById('hist-device');
@@ -1725,11 +1733,15 @@ function renderHistory(){
     // 기준값 행 제거 (표시 안함)
     allRows = allRows.filter(function(r){ return !r._isBase; });
 
-    // 3단계: 표시 방향으로 재정렬
+    // 3단계: 표시 방향으로 재정렬 (날짜·시간 우선, 같으면 NO 순으로 통일)
     allRows.sort(function(a,b){
       var ka=(a.date||'')+(a.time||'');
       var kb=(b.date||'')+(b.time||'');
-      return _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
+      var cmp = _histSortAsc ? ka.localeCompare(kb) : kb.localeCompare(ka);
+      if(cmp!==0) return cmp;
+      var na=parseInt(a._devDispNo)||99999, nb=parseInt(b._devDispNo)||99999;
+      if(na!==nb) return na-nb;
+      return (a._devName||'').localeCompare(b._devName||'','ko');
     });
 
     document.getElementById('hist-info').textContent =
@@ -2554,6 +2566,13 @@ function renderUsageReport(){
         var d=doc.data(); d._id=doc.id;
         devices.push(d);
       }
+    });
+    // NO(임대번호) 순 정렬 — 다른 화면과 통일
+    devices.sort(function(a,b){
+      var na=parseInt(a.contract_no)||parseInt(a.device_no)||99999;
+      var nb=parseInt(b.contract_no)||parseInt(b.device_no)||99999;
+      if(na!==nb) return na-nb;
+      return (a.name||'').localeCompare(b.name||'','ko');
     });
 
     if(!devices.length){
