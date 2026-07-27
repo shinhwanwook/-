@@ -227,10 +227,10 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 /* 모바일: 목록 거래처/기기명 셀 확대 + 한 줄 표시 (PC 영향 없음) */
 @media(max-width:768px){
-  .list-tbl td:nth-child(2){ min-width:168px; white-space:nowrap; }
-  .list-tbl td:nth-child(2) div{ white-space:nowrap; overflow:visible; text-overflow:clip; }
-  .list-tbl td:nth-child(1){ white-space:nowrap; padding-left:8px; padding-right:8px; }
-  .list-tbl th:nth-child(2){ min-width:168px; white-space:nowrap; }
+  /* 거래처명·기기명 셀: 클래스로 정확히 지정 (표마다 열 위치가 달라 nth-child 대신 클래스 사용) */
+  .col-name{ min-width:168px; white-space:nowrap; }
+  .col-name div{ white-space:nowrap; overflow:visible; text-overflow:clip; }
+  .col-collected{ white-space:nowrap; }
   /* 모바일 청구서: 한 화면에 들어오도록 축소 */
   #page-billing #bill-sheet{ font-size:9px; }
   #page-billing .bill-sheet{ padding:12px 10px; }
@@ -1536,14 +1536,14 @@ function renderDevices(){
         : '<span class="badge b-late">🔴 오프라인</span>';
       return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
         '<td style="text-align:center;font-weight:600;color:var(--text3)">'+esc(d.contract_no||d.device_no||'-')+'</td>'+
-        '<td><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
+        '<td class="col-name"><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
             '<div style="font-size:11px;color:var(--text3)">'+esc(d.model||'-')+'</div></td>'+
         '<td style="font-size:12px;color:var(--text3)">'+esc(d.ip||'-')+'</td>'+
         '<td>'+badge+'</td>'+
         '<td style="text-align:right;font-weight:600">'+((d.bw_count&&parseInt(d.bw_count)>0)?parseInt(d.bw_count).toLocaleString():'-')+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+((d.color_count&&parseInt(d.color_count)>0)?parseInt(d.color_count).toLocaleString():'-')+'</td>'+
         tonerTd(d.toner_k)+tonerTd(d.toner_c)+tonerTd(d.toner_m)+tonerTd(d.toner_y)+
-        '<td style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
+        '<td class="col-collected" style="font-size:11px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
         '</tr>';
     }).join('') :
     '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">표시할 기기 없음</td></tr>';
@@ -1792,10 +1792,10 @@ function renderHistory(){
       }
       return '<tr>'+
         '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+esc(r.time||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(r.time||'-')+'</td>'+
         '<td style="text-align:center;font-size:12px;color:var(--text3)">'+esc(r._devDispNo||'-')+'</td>'+
-        '<td style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
-        (multiDev?'<td style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
+        '<td class="col-name" style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
+        (multiDev?'<td class="col-name" style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
         '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
@@ -1837,10 +1837,10 @@ function renderGuideList(){
     var online = isOnline(d);
     return '<tr>'+
       '<td>'+( i+1)+'</td>'+
-      '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+      '<td class="col-name" style="font-weight:600">'+esc(d.name||'-')+'</td>'+
       '<td style="color:var(--text3)">'+esc(d.model||'-')+'</td>'+
       '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
-      '<td style="font-size:12px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
+      '<td class="col-collected" style="font-size:12px;color:var(--text3)">'+esc(d.collected_at||'-')+'</td>'+
       '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
       '</tr>';
   }).join('');
@@ -2287,8 +2287,8 @@ function renderDeviceManager(){
       var noDisp = (d.contract_no && parseInt(d.contract_no)>0) ? parseInt(d.contract_no) : '-';
       return '<tr>'+
         '<td style="color:var(--text3)">'+noDisp+'</td>'+
-        '<td style="font-weight:600">'+esc(d.name||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
+        '<td class="col-name" style="font-weight:600">'+esc(d.name||'-')+'</td>'+
+        '<td class="col-name" style="font-size:12px;color:var(--text3)">'+esc(d.model||'-')+'</td>'+
         '<td><span class="badge b-gray">'+esc(d.printer_type||d.type||'-')+'</span></td>'+
         '<td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">'+esc(d.ip||'-')+'</code></td>'+
         '<td style="text-align:right">'+(d.quota_bw?parseInt(d.quota_bw).toLocaleString():'-')+'</td>'+
@@ -2784,8 +2784,8 @@ function filterUsageTable(){
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
       '<td style="text-align:center;color:var(--text3)">'+esc(dev.contract_no||dev.device_no||'-')+'</td>'+
-      '<td style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
-      '<td style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
+      '<td class="col-name" style="font-weight:600">'+esc(dev.name||'-')+'</td>'+
+      '<td class="col-name" style="font-size:12px;color:var(--text3)">'+esc(dev.model||'-')+'</td>'+
       // 흑백
       '<td style="text-align:right;color:var(--text3)">'+startBw.toLocaleString()+'</td>'+
       '<td style="text-align:right;font-weight:600">'+endBw.toLocaleString()+'</td>'+
