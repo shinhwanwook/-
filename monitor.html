@@ -2836,12 +2836,22 @@ function initBillingPage(){
   if(!document.getElementById('bill-date').textContent || document.getElementById('bill-date').textContent==='-'){
     document.getElementById('bill-date').textContent=y+'년 '+(t.getMonth()+1)+'월 '+t.getDate()+'일';
   }
+  // 청구 이력 조회기간 기본값: 최근 한 달 (전월 오늘 ~ 오늘)
+  var hs=document.getElementById('bill-hist-start');
+  var he=document.getElementById('bill-hist-end');
+  if(hs && !hs.value){
+    var pv=new Date(t); pv.setMonth(pv.getMonth()-1);
+    hs.value=pv.getFullYear()+'-'+String(pv.getMonth()+1).padStart(2,'0')+'-'+String(pv.getDate()).padStart(2,'0');
+  }
+  if(he && !he.value){ he.value=y+'-'+m+'-'+d; }
   // 거래처 목록 로드 (사용량/설치안내와 동일 소스)
   loadBillContracts();
   if(!_billData.devices.length){
     _billData.devices=[{model:'기종명 입력',prevBw:0,curBw:0,prevColor:0,curColor:0,bwFree:0,colorFree:0,bwUnit:10,colorUnit:80}];
   }
   billCalc();
+  // 거래처명 없이도 기간 내 전체 청구건 자동 표시 (탭 열면 바로 보이게)
+  setTimeout(function(){ loadBillHistory(''); }, 100);
 }
 
 function loadBillContracts(){
@@ -3362,9 +3372,8 @@ function deleteBillRecord(idx){
 // 이력관리: 거래처 검색칸(또는 작성 중 거래처)으로 청구 이력 조회
 function loadBillHistorySearch(){
   var q=(document.getElementById('bill-hist-contract').value||'').trim();
-  var name = q || (_billContract? _billContract.name : '');
-  if(!name){ alert('거래처명을 입력해 주세요. (또는 청구서 작성에서 거래처를 먼저 선택)'); return; }
-  loadBillHistory(name);
+  // 거래처명이 비어 있으면 기간 내 전체 청구건을 조회 (거래처 지정 시 그 거래처만)
+  loadBillHistory(q);
 }
 
 // 청구서 재발행: 저장된 청구 내역을 작성창으로 불러와 다시 출력
@@ -3400,10 +3409,13 @@ function clearHistFilter(){
 }
 
 function loadBillHistory(cname){
-  if(!_fbReady||!db||!cname) return;
+  if(!_fbReady||!db) return;
   var el=document.getElementById('bill-history-list');
   el.innerHTML='조회 중...';
-  db.collection('billing').where('contract','==',cname).get().then(function(snap){
+  // 거래처명이 있으면 그 거래처만, 없으면 전체(기간 필터로 제한)
+  var query = cname ? db.collection('billing').where('contract','==',cname)
+                    : db.collection('billing');
+  query.get().then(function(snap){
     var recs=[];
     snap.forEach(function(doc){ var d=doc.data(); d._docId=doc.id; recs.push(d); });
     recs.sort(function(a,b){ return b.created-a.created; });
