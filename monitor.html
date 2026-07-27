@@ -1433,12 +1433,8 @@ function renderDevices(){
     return true;
   });
 
-  // 정렬: 토너경고 → 온라인 → 오프라인, 같은 상태 안에서는 NO 순
+  // 정렬: 무조건 NO(임대번호) 순 (상태별은 상단 필터로 조회)
   list.sort(function(a,b){
-    var aw = hasTonerWarn(a)?2:0, bw = hasTonerWarn(b)?2:0;
-    var ao = isOnline(a)?1:0,     bo = isOnline(b)?1:0;
-    var s = (bw+bo)-(aw+ao);
-    if(s!==0) return s;
     var na=parseInt(a.contract_no)||parseInt(a.device_no)||99999;
     var nb=parseInt(b.contract_no)||parseInt(b.device_no)||99999;
     if(na!==nb) return na-nb;
