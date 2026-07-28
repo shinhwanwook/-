@@ -170,9 +170,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-btn-group{display:flex;gap:6px;align-items:center}
 .bill-btn-right{margin-left:auto}
 .btn-bill-save{background:#1e7e34;color:#fff}
-/* 청구 이력: 거래처 열 좌측 고정 (좌우 스크롤 시 거래처는 남고 나머지 밀려들어감) */
-.bill-hist-sticky{position:sticky;left:0;background:#fff;z-index:2;box-shadow:2px 0 4px -2px rgba(0,0,0,.15)}
-.bill-hist-sticky-h{background:var(--gray-bg);z-index:3}
+.vat-label-short{display:none}
+.vat-label-full{display:inline}
+/* 청구 이력: 청구번호+거래처 열 좌측 고정 (좌우 스크롤 시 두 열은 남고 나머지가 그 안쪽으로 밀려들어감) */
+.bill-hist-tbl td, .bill-hist-tbl th{ padding:8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.bh-stick{ position:sticky; background:#fff; z-index:2; }
+.bh-stick-h{ background:#eef0f3; z-index:4; }
+.bh-stick2{ box-shadow:3px 0 5px -2px rgba(0,0,0,.18); }  /* 거래처 열 오른쪽 경계 그림자 */
+.bill-hist-tbl tbody tr:nth-child(even) .bh-stick{ background:#fafbfc; }
 
 
 .bill-vat-toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);margin-right:auto}
@@ -251,6 +256,21 @@ tbody td{padding:9px 12px;vertical-align:middle}
   #page-billing .bill-table th,
   #page-billing .bill-table td{ padding:3px 4px; font-size:8.5px; }
   #page-billing .bill-sec-title{ margin:8px 0; font-size:11px; }
+  /* 검침일 2칸이 화면 안에 다 보이도록 축소 */
+  #page-billing .bill-meter-dates{ gap:6px; }
+  #page-billing .bill-meter-dates label{ font-size:11px; }
+  #page-billing .bill-meter-dates input[type=date]{ font-size:11px; padding:5px 4px; }
+  /* 청구 버튼: 짧은 라벨로 한 화면에 다 표시 */
+  #page-billing .bill-actions{ flex-wrap:nowrap; gap:4px; padding:8px 6px; justify-content:space-between; align-items:center; }
+  #page-billing .bill-btn-group{ gap:3px; flex:0 0 auto; }
+  #page-billing .bill-btn-right{ margin-left:0; }
+  #page-billing .btn-bill{ padding:7px 6px; font-size:11px; white-space:nowrap; }
+  #page-billing .btn-bill[data-short]{ font-size:0; }
+  #page-billing .btn-bill[data-short]::before{ content:attr(data-short); font-size:11px; }
+  #page-billing .bill-vat-toggle{ font-size:11px; flex:0 0 auto; gap:3px; }
+  #page-billing .vat-label-full{ display:none; }
+  #page-billing .vat-label-short{ display:inline; }
+  #page-billing .bill-vat-toggle select{ font-size:11px !important; padding:3px 4px !important; }
 }
 
 @media print{
@@ -701,20 +721,20 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="card" style="padding:0;overflow:hidden">
     <div class="bill-actions">
       <label class="bill-vat-toggle">
-        세액 처리
+        <span class="vat-label-full">세액 처리</span><span class="vat-label-short">세액</span>
         <select id="bill-vat-mode" onchange="billCalc()" style="font-family:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;cursor:pointer">
           <option value="separate">별도</option>
           <option value="included">포함</option>
         </select>
       </label>
       <div class="bill-btn-group">
-        <button class="btn-bill btn-bill-ghost" onclick="openBillDevicePicker()" title="모니터링에서 수집 중인 장비를 검색해 추가">＋ 기종 자동추가</button>
-        <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 직접 입력">＋ 기종 수동추가</button>
+        <button class="btn-bill btn-bill-ghost" onclick="openBillDevicePicker()" title="모니터링에서 수집 중인 장비를 검색해 추가" data-short="＋자동">＋ 기종 자동추가</button>
+        <button class="btn-bill btn-bill-ghost" onclick="billAddDevice()" title="모니터링에 없는 장비를 직접 입력" data-short="＋수동">＋ 기종 수동추가</button>
       </div>
       <div class="bill-btn-group bill-btn-right">
-        <button class="btn-bill btn-bill-save" onclick="saveBillHistory()">💾 청구 저장</button>
-        <button class="btn-bill btn-bill-print" onclick="printBill()">🖨 인쇄 / PDF</button>
-        <button class="btn-bill btn-bill-reset" onclick="resetBill()" title="작성 내용을 모두 비우고 새로 시작">↺ 새 청구서</button>
+        <button class="btn-bill btn-bill-save" onclick="saveBillHistory()" data-short="💾저장">💾 청구 저장</button>
+        <button class="btn-bill btn-bill-print" onclick="printBill()" data-short="🖨인쇄">🖨 인쇄 / PDF</button>
+        <button class="btn-bill btn-bill-reset" onclick="resetBill()" title="작성 내용을 모두 비우고 새로 시작" data-short="↺새로">↺ 새 청구서</button>
       </div>
     </div>
 
@@ -3492,10 +3512,10 @@ function loadBillHistory(cname){
 
     var sumTotal=recs.reduce(function(a,r){ return a+(r.total||0); },0);
     var html='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'+
-      '<table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'+
+      '<table class="bill-hist-tbl" style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'+
       '<thead><tr style="background:var(--gray-bg)">'+
-      '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">청구번호</th>'+
-      '<th class="bill-hist-sticky bill-hist-sticky-h" style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">거래처</th>'+
+      '<th class="bh-stick bh-stick-h" style="left:0;min-width:104px">청구번호</th>'+
+      '<th class="bh-stick bh-stick-h bh-stick2" style="left:104px;min-width:120px">거래처</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">청구기간</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">발행일</th>'+
       '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">공급가액</th>'+
@@ -3505,8 +3525,8 @@ function loadBillHistory(cname){
       '</tr></thead><tbody>';
     recs.forEach(function(r,i){
       html+='<tr>'+
-        '<td style="padding:8px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.bill_no||'-')+'</td>'+
-        '<td class="bill-hist-sticky" style="padding:8px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+esc(r.contract||'-')+'</td>'+
+        '<td class="bh-stick" style="left:0;min-width:104px">'+esc(r.bill_no||'-')+'</td>'+
+        '<td class="bh-stick bh-stick2" style="left:104px;min-width:120px;font-weight:600">'+esc(r.contract||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.period||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.date||'-')+'</td>'+
         '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">'+(r.supply||0).toLocaleString()+'</td>'+
