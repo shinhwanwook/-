@@ -544,12 +544,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
 
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (3단계)</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (5단계)</div>
         <div style="font-size:13px;line-height:2;color:#1e3a5f">
           <b>1단계.</b> 위에서 거래처 검색 후 선택<br>
           <b>2단계.</b> "배치파일 다운로드" 클릭 → 파일 2개 자동 다운로드<br>
           <b>3단계.</b> 고객사 PC 바탕화면에 파일 2개 복사<br>
-          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> 더블클릭 → Online: True 확인!
+          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> <b>우클릭 → 관리자 권한으로 실행</b> → 한글 팝업에서 <b>[정상]</b> 확인<br>
+          <b>5단계.</b> 설치한 그 PC에서 <a href="http://localhost:12345/api/v0/web/components" target="_blank" style="background:#1d4ed8;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600">📋 수집 상태 확인 (localhost:12345)</a><br>
+          <span style="font-size:12px;color:#475569;padding-left:14px">→ 열리는 화면에서 <b>4개 항목이 모두 초록색 Healthy</b> 이고, <code style="background:#e2e8f0;padding:1px 4px;border-radius:3px">prometheus.exporter.snmp.printers</code> 의 <b>View</b>를 눌러 <b>프린터가 보이면</b> 정상 수집 중입니다.</span>
         </div>
       </div>
 
