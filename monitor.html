@@ -3515,7 +3515,7 @@ function loadBillHistory(cname){
       '<table class="bill-hist-tbl" style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'+
       '<thead><tr style="background:var(--gray-bg)">'+
       '<th class="bh-stick bh-stick-h" style="left:0;min-width:104px">청구번호</th>'+
-      '<th class="bh-stick bh-stick-h bh-stick2" style="left:104px;min-width:120px">거래처</th>'+
+      '<th class="bh-stick bh-stick-h bh-stick2" style="left:104px;min-width:96px;max-width:100px">거래처</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">청구기간</th>'+
       '<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">발행일</th>'+
       '<th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">공급가액</th>'+
@@ -3526,7 +3526,7 @@ function loadBillHistory(cname){
     recs.forEach(function(r,i){
       html+='<tr>'+
         '<td class="bh-stick" style="left:0;min-width:104px">'+esc(r.bill_no||'-')+'</td>'+
-        '<td class="bh-stick bh-stick2" style="left:104px;min-width:120px;font-weight:600">'+esc(r.contract||'-')+'</td>'+
+        '<td class="bh-stick bh-stick2" style="left:104px;min-width:96px;max-width:100px;font-weight:600;overflow:hidden;text-overflow:ellipsis" title="'+esc(r.contract||'')+'">'+esc(r.contract||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.period||'-')+'</td>'+
         '<td style="padding:8px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.date||'-')+'</td>'+
         '<td style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">'+(r.supply||0).toLocaleString()+'</td>'+
