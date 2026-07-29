@@ -550,14 +550,16 @@ body.locked { overflow:hidden; }
             </div>
             <div class="form-group" style="margin:0">
               <label>제조사</label>
-              <select class="inp" id="f-printer-type">
+              <select class="inp" id="f-printer-type" onchange="onPrinterTypeChange()">
                 <option value="">선택안함</option>
                 <option value="ricoh">리코 (RICOH)</option>
                 <option value="kyocera">교세라 (Kyocera)</option>
                 <option value="hp">HP</option>
                 <option value="samsung">삼성 (Samsung)</option>
                 <option value="canon">캐논 (Canon)</option>
+                <option value="__custom__">✏️ 직접입력</option>
               </select>
+              <input class="inp" id="f-printer-type-custom" placeholder="제조사 직접 입력 (예: 브라더, 신도리코)" style="display:none;margin-top:6px">
             </div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:13px;color:#166534;font-weight:600">
@@ -1955,10 +1957,41 @@ function switchDtab(i){
 }
 
 // ══ 계약 등록/수정 ══
+// 제조사 셀렉트에서 "직접입력" 선택 시 입력칸 표시/숨김
+function onPrinterTypeChange(){
+  var sel = document.getElementById('f-printer-type');
+  var box = document.getElementById('f-printer-type-custom');
+  if(!sel || !box) return;
+  if(sel.value === '__custom__'){ box.style.display=''; box.focus(); }
+  else { box.style.display='none'; box.value=''; }
+}
+// 저장용: 실제 제조사 값 (직접입력이면 그 텍스트, 아니면 셀렉트 값)
+function getPrinterTypeValue(){
+  var sel = document.getElementById('f-printer-type');
+  var box = document.getElementById('f-printer-type-custom');
+  if(sel && sel.value === '__custom__') return (box ? box.value.trim() : '');
+  return sel ? sel.value : '';
+}
+// 불러오기용: 저장된 값을 셀렉트/직접입력에 반영
+function setPrinterTypeValue(val){
+  var sel = document.getElementById('f-printer-type');
+  var box = document.getElementById('f-printer-type-custom');
+  if(!sel) return;
+  val = val || '';
+  var known = ['','ricoh','kyocera','hp','samsung','canon'];
+  if(val !== '' && known.indexOf(val) === -1){
+    // 목록에 없는 값 = 직접입력했던 제조사
+    sel.value = '__custom__';
+    if(box){ box.value = val; box.style.display=''; }
+  } else {
+    sel.value = val;
+    if(box){ box.value=''; box.style.display='none'; }
+  }
+}
 function clearForm(){
   ['f-name','f-manager','f-phone','f-email','f-payday','f-etc','f-address','f-memo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-printer-ip').value='';
-  document.getElementById('f-printer-type').value='';
+  document.getElementById('f-printer-type').value=''; var _ptc=document.getElementById('f-printer-type-custom'); if(_ptc){ _ptc.value=''; _ptc.style.display='none'; }
   document.getElementById('f-monitoring-on').checked=false;
   var _repArea=document.getElementById('f-replace-area');
   if(_repArea) _repArea.style.display='none';
@@ -2080,7 +2113,7 @@ function editContract(no){
   document.getElementById('f-start-color').value=_sc.toLocaleString();
   document.getElementById('f-start-color').dataset.raw=String(_sc);
   document.getElementById('f-printer-ip').value=c.printer_ip||'';
-  document.getElementById('f-printer-type').value=c.printer_type||'';
+  setPrinterTypeValue(c.printer_type||'');
   // monitoring_on: 필드 있으면 그 값, 없으면(기존 거래처) IP가 있으면 ON
   document.getElementById('f-monitoring-on').checked =
     (c.monitoring_on!==undefined) ? !!c.monitoring_on : !!(c.printer_ip && c.printer_ip.trim());
@@ -2129,7 +2162,7 @@ function saveContract(){
     c.memo=document.getElementById('f-memo').value.trim();
     c.tax=document.getElementById('f-tax').value;
     c.printer_ip=document.getElementById('f-printer-ip').value.trim();
-    c.printer_type=document.getElementById('f-printer-type').value;
+    c.printer_type=getPrinterTypeValue();
     c.monitoring_on=document.getElementById('f-monitoring-on').checked;
     c.quota_bw=getRawNum('f-quota-bw');
     c.quota_color=getRawNum('f-quota-color');
@@ -2162,7 +2195,7 @@ function saveContract(){
       memo:document.getElementById('f-memo').value.trim(),
       tax:document.getElementById('f-tax').value,
       printer_ip:document.getElementById('f-printer-ip').value.trim(),
-      printer_type:document.getElementById('f-printer-type').value,
+      printer_type:getPrinterTypeValue(),
       monitoring_on:document.getElementById('f-monitoring-on').checked,
       quota_bw:getRawNum('f-quota-bw'),
       quota_color:getRawNum('f-quota-color'),
