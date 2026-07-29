@@ -1450,16 +1450,20 @@ function refreshAll(){
 //  요약 통계 업데이트
 // ══════════════════════════════════════════
 function updateSummary(){
-  var total   = _devices.length;
-  var online  = _devices.filter(isOnline).length;
+  // 해지된 거래처는 통계에서 제외 (현황판 목록과 동일 기준)
+  var actives = _devices.filter(function(d){ return d.archived!==true; });
+  var total   = actives.length;
+  var online  = actives.filter(isOnline).length;
   var offline = total - online;
-  var warns   = _devices.filter(hasTonerWarn).length;
+  var warns   = actives.filter(hasTonerWarn).length;
 
-  // 오늘 총 출력 (bw+color 합계)
+  // 오늘 총 출력 (bw+color 합계) — collected_at(실제 수집시각)의 날짜로 비교
+  //   date 필드는 갱신이 늦을 수 있어, 수집시각 앞 10자(YYYY-MM-DD)를 오늘과 비교
   var today = new Date().toISOString().slice(0,10);
   var todayTotal = 0;
-  _devices.forEach(function(d){
-    if(d.date === today){
+  actives.forEach(function(d){
+    var dday = (d.collected_at || d.date || '').slice(0,10);
+    if(dday === today){
       todayTotal += (parseInt(d.bw_count)||0) + (parseInt(d.color_count)||0);
     }
   });
