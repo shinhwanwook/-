@@ -3915,8 +3915,21 @@ function safeReload(){
     if(typeof closeInvForm === 'function') closeInvForm();    // 장비/소모품 입력폼 닫기 (인라인 패널)
     var regTitle = document.getElementById('reg-title');
     if(regTitle) regTitle.textContent = '신규 임대업체 등록';
-    // 계약 목록 화면으로 이동 (신규등록/편집 화면에서 빠져나옴)
-    if(typeof showPage === 'function') showPage('list');
+    editingNo = null; window._fromEditContract = false;
+
+    // [개선] 모든 화면의 조회칸(검색 입력) 비우기 — 직원 요청: 새로고침 시 검색어도 초기화
+    ['srch','pay-srch','svc-srch','doc-srch','sm-no-search','stat-pay-srch',
+     'inv-srch','inv-client-srch','tax-srch','tc-srch'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    var svcDrop = document.getElementById('svc-srch-dropdown');
+    if(svcDrop) svcDrop.style.display = 'none';
+
+    // [개선] 목록으로 튕기지 않고 '작업하던 그 화면'을 그대로 유지하며 새로 고침
+    var activePage = document.querySelector('.page.active');
+    var curPageId = activePage ? activePage.id.replace('page-','') : 'list';
+    if(typeof showPage === 'function') showPage(curPageId);
   } catch(e){ console.warn('폼 초기화 중 경고:', e); }
 
   // 접속자 구독을 잠시 해제 (loadFromApi가 끝에서 다시 시작함 -> 중복 방지)
