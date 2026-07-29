@@ -379,8 +379,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div class="stat-l">⚠️ 토너 경고</div>
     </div>
     <div class="stat" style="background:#f5f3ff;border-color:#c4b5fd">
-      <div class="stat-n" style="color:#6d28d9" id="st-today">-</div>
-      <div class="stat-l">📄 오늘 총 출력</div>
+      <div class="stat-n" style="color:#6d28d9;font-size:13px;line-height:1.5;font-weight:600" id="st-makers">-</div>
+      <div class="stat-l">🖨 제조사별 기기</div>
     </div>
   </div>
 
@@ -1457,22 +1457,25 @@ function updateSummary(){
   var offline = total - online;
   var warns   = actives.filter(hasTonerWarn).length;
 
-  // 오늘 총 출력 (bw+color 합계) — collected_at(실제 수집시각)의 날짜로 비교
-  //   date 필드는 갱신이 늦을 수 있어, 수집시각 앞 10자(YYYY-MM-DD)를 오늘과 비교
-  var today = new Date().toISOString().slice(0,10);
-  var todayTotal = 0;
+  // 제조사별 기기 수 집계 (printer_type 기준)
+  var MAKER_KO = { ricoh:'리코', kyocera:'교세라', hp:'HP', samsung:'삼성', canon:'캐논', brother:'브라더', epson:'엡손', xerox:'제록스', sindoh:'신도리코' };
+  var makerCnt = {};
   actives.forEach(function(d){
-    var dday = (d.collected_at || d.date || '').slice(0,10);
-    if(dday === today){
-      todayTotal += (parseInt(d.bw_count)||0) + (parseInt(d.color_count)||0);
-    }
+    var t = (d.printer_type || d.type || '').toLowerCase().trim();
+    var label = MAKER_KO[t] || (t ? (t.charAt(0).toUpperCase()+t.slice(1)) : '기타');
+    makerCnt[label] = (makerCnt[label]||0) + 1;
   });
+  // 많은 순 정렬 후 "리코 3 · 캐논 1" 형태로
+  var makerText = Object.keys(makerCnt)
+    .sort(function(a,b){ return makerCnt[b]-makerCnt[a]; })
+    .map(function(k){ return k+' '+makerCnt[k]; })
+    .join(' · ');
 
   document.getElementById('st-total').textContent   = total;
   document.getElementById('st-online').textContent  = online;
   document.getElementById('st-offline').textContent = offline;
   document.getElementById('st-warn').textContent    = warns;
-  document.getElementById('st-today').textContent   = todayTotal > 0 ? todayTotal.toLocaleString() : '-';
+  document.getElementById('st-makers').textContent  = makerText || '-';
 }
 
 // ══════════════════════════════════════════
