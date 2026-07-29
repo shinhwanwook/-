@@ -1443,7 +1443,27 @@ function loadAllDevices(silent){
 }
 
 function refreshAll(){
+  // [개선] 모든 화면 조회칸(검색 입력) 비우기 — 새로고침 시 검색어도 초기화
+  ['dev-srch','hist-srch','guide-srch','device-mgr-srch','usage-srch','bill-srch','bill-picker-srch']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  // 검색 결과 드롭다운/패널 숨김
+  ['guide-search-result','bill-search-result'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  // 상태/유형 필터도 기본값(전체)으로 되돌림
+  ['dev-filter','device-mgr-type','device-mgr-status','hist-type-filter'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+
+  // 서버 최신 데이터 다시 로드
   loadAllDevices(false);
+
+  // [개선] 목록으로 튕기지 않고 '작업하던 그 화면'을 그대로 유지하며 새로 그림
+  try{
+    var activePage = document.querySelector('.page.active');
+    var curId = activePage ? activePage.id.replace('page-','') : 'monitor';
+    if(typeof showPage === 'function') showPage(curId);
+  }catch(e){}
 }
 
 // ══════════════════════════════════════════
