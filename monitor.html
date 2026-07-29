@@ -612,9 +612,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="canon">캐논</option>
       </select>
       <select class="inp" id="device-mgr-status" onchange="renderDeviceManager()" style="min-width:110px">
-        <option value="">전체 상태</option>
+        <option value="">전체(해지 제외)</option>
         <option value="online">🟢 온라인</option>
         <option value="offline">🔴 오프라인</option>
+        <option value="archived">🔒 해지됨</option>
+        <option value="all">전체(해지 포함)</option>
       </select>
     </div>
     <div class="info-row" id="device-mgr-info">임대관리에서 가져오기 버튼을 클릭하면 IP가 등록된 거래처를 자동으로 불러옵니다.</div>
@@ -1483,6 +1485,7 @@ function renderDevices(){
 
   // 필터링
   var list = _devices.filter(function(d){
+    if(d.archived===true) return false;   // 해지된 거래처는 현황판에서 제외 (데이터는 보존)
     if(srch && !((d.name||'')+(d.model||'')+(d.ip||'')).toLowerCase().includes(srch)) return false;
     if(filter==='online'  && !isOnline(d))    return false;
     if(filter==='offline' && isOnline(d))     return false;
@@ -1567,9 +1570,11 @@ function renderDevices(){
   document.getElementById('device-tbody').innerHTML = list.length ?
     list.map(function(d){
       var online = isOnline(d);
-      var badge  = online
-        ? '<span class="badge b-ok">🟢 온라인</span>'
-        : '<span class="badge b-late">🔴 오프라인</span>';
+      var badge  = (d.archived===true)
+        ? '<span class="badge" style="background:#f3f4f6;color:#6b7280">🔒 해지됨</span>'
+        : (online
+          ? '<span class="badge b-ok">🟢 온라인</span>'
+          : '<span class="badge b-late">🔴 오프라인</span>');
       return '<tr onclick="openDetail(\''+d._id+'\')" style="cursor:pointer">'+
         '<td style="text-align:center;font-weight:600;color:var(--text3)">'+esc(d.contract_no||d.device_no||'-')+'</td>'+
         '<td class="col-name"><div style="font-weight:600">'+esc(d.name||'-')+'</div>'+
@@ -2304,11 +2309,20 @@ function renderDeviceManager(){
         return (d.printer_type||d.type||'') === typeF;
       });
     }
-    if(statF){
+    // 해지 기기 처리: 기본은 제외, '해지됨'만 보기 / '전체(해지포함)'는 모두
+    if(statF==='archived'){
+      devices = devices.filter(function(d){ return d.archived===true; });
+    } else if(statF==='all'){
+      // 해지 포함 전체 — 필터 안 함
+    } else if(statF==='online' || statF==='offline'){
       devices = devices.filter(function(d){
+        if(d.archived===true) return false;
         var on = (d.is_online||'').toLowerCase()==='true';
         return statF==='online' ? on : !on;
       });
+    } else {
+      // 전체(해지 제외) 기본
+      devices = devices.filter(function(d){ return d.archived!==true; });
     }
 
     document.getElementById('device-mgr-info').textContent=
@@ -2336,7 +2350,10 @@ function renderDeviceManager(){
         '<td style="text-align:right;color:var(--text3)">'+(d.start_color?parseInt(d.start_color).toLocaleString():'-')+'</td>'+
         '<td>'+(online?'<span class="badge b-ok">🟢 온라인</span>':'<span class="badge b-late">🔴 오프라인</span>')+'</td>'+
         '<td><button class="btn btn-ghost btn-xs" onclick="editDevice(this)" data-id="'+d._id+'">✏️</button> '+
-            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'">🗑️</button></td>'+
+            (d.archived===true
+              ? '<button class="btn btn-ghost btn-xs" style="color:#0d9488" onclick="restoreDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="복원">↩️</button> '
+              : '<button class="btn btn-ghost btn-xs" style="color:#d97706" onclick="archiveDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="해지(데이터 보존)">🔒</button> ')+
+            '<button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="deleteDevice(this)" data-id="'+d._id+'" data-name="'+esc(d.name||'')+'" title="완전 삭제">🗑️</button></td>'+
         '</tr>';
     }).join('');
   }).catch(function(e){
@@ -2507,6 +2524,44 @@ function saveDeviceModal(){
   });
 }
 
+// 거래처 해지 (데이터 보존 — 수집만 중단, archived 표시)
+function archiveDevice(btn){
+  var id   = btn.getAttribute('data-id');
+  var name = btn.getAttribute('data-name');
+  if(!confirm('['+name+'] 거래처 해지\n\n' +
+    '• 데이터(현재 상태 + 히스토리)는 그대로 보존됩니다.\n' +
+    '• 현황판·수집에서 제외되고, 기기관리에서 "해지됨"으로 표시됩니다.\n' +
+    '• 나중에 언제든 복원할 수 있습니다.\n\n' +
+    '※ 고객사 PC의 작업 스케줄러(수집)는 별도로 정리해 주세요.\n\n' +
+    '해지하시겠습니까?')) return;
+  var infoEl=document.getElementById('device-mgr-info');
+  if(infoEl) infoEl.textContent=name+' 해지 처리 중...';
+  db.collection('device_status').doc(id).set({
+    archived:true,
+    archived_at:new Date().toISOString().slice(0,10),
+    monitoring_on:false
+  },{merge:true}).then(function(){
+    alert('['+name+'] 해지 완료.\n데이터는 보존되었습니다. 필요 시 기기관리에서 복원하세요.');
+    loadAllDevices(true); renderDeviceManager();
+  }).catch(function(e){
+    alert('해지 실패: '+e.message);
+    if(infoEl) infoEl.textContent='';
+  });
+}
+// 해지 거래처 복원
+function restoreDevice(btn){
+  var id   = btn.getAttribute('data-id');
+  var name = btn.getAttribute('data-name');
+  if(!confirm('['+name+'] 복원\n\n다시 현황판·수집 대상에 포함됩니다.\n\n' +
+    '※ 수집을 재개하려면 고객사 PC에 배치파일을 다시 설치해야 할 수 있습니다.\n\n복원하시겠습니까?')) return;
+  db.collection('device_status').doc(id).set({
+    archived:false,
+    monitoring_on:true
+  },{merge:true}).then(function(){
+    alert('['+name+'] 복원 완료.');
+    loadAllDevices(true); renderDeviceManager();
+  }).catch(function(e){ alert('복원 실패: '+e.message); });
+}
 function deleteDevice(btn){
   var id   = btn.getAttribute('data-id');
   var name = btn.getAttribute('data-name');
@@ -2628,6 +2683,8 @@ function renderUsageReport(){
         devices.push(d);
       }
     });
+    // 해지된 거래처 제외 (데이터는 보존, 조회에서만 제외)
+    devices = devices.filter(function(d){ return d.archived!==true; });
     // NO(임대번호) 순 정렬 — 다른 화면과 통일
     devices.sort(function(a,b){
       var na=parseInt(a.contract_no)||parseInt(a.device_no)||99999;
