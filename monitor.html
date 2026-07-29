@@ -2029,19 +2029,22 @@ function downloadAgentForContract(){
   psArr.push('      if ($v1) { break }');
   psArr.push('    }');
   psArr.push('  }');
+  psArr.push('  $ipLine = ""; $snmpLine = ""')
+  psArr.push('  if ($canPing) { $ipLine = "   - IP 통신(Ping) : 정상" } else { $ipLine = "   - IP 통신(Ping) : 실패" }')
+  psArr.push('  if ($v1) { $snmpLine = "   - SNMP 통신     : 정상 (v1)" } elseif ($v2) { $snmpLine = "   - SNMP 통신     : 정상 (v2c 자동전환)" } elseif ($canPing) { $snmpLine = "   - SNMP 통신     : 실패" } else { $snmpLine = "   - SNMP 통신     : 확인 불가 (IP 통신 안 됨)" }')
   psArr.push('  if ($canPing -and $v1) {');
   psArr.push('    $ok++');
-  psArr.push('    $lines += ("[정상]  " + $p.ip + "  ->  수집 준비 완료")');
+  psArr.push('    $lines += ("[정상]  " + $p.nm + "  (" + $p.ip + ")" + "`r`n" + $ipLine + "`r`n" + $snmpLine + "`r`n" + "   => 수집 준비 완료")');
   psArr.push('  } elseif ($canPing -and $v2) {');
   psArr.push('    $ok++');
   psArr.push('    $needV2c += $p.ip');
-  psArr.push('    $lines += ("[정상]  " + $p.ip + "  ->  수집 준비 완료 (SNMPv2c 로 자동 전환)")');
+  psArr.push('    $lines += ("[정상]  " + $p.nm + "  (" + $p.ip + ")" + "`r`n" + $ipLine + "`r`n" + $snmpLine + "`r`n" + "   => 수집 준비 완료")');
   psArr.push('  } elseif (-not $canPing) {');
   psArr.push('    $bad++');
-  psArr.push('    $lines += ("[실패]  " + $p.ip + "  ->  프린터에 연결되지 않습니다" + "`r`n" + "          할 일 : 프린터 전원 켜기 / IP주소 확인 / 같은 네트워크인지 확인")');
+  psArr.push('    $lines += ("[실패]  " + $p.nm + "  (" + $p.ip + ")" + "`r`n" + $ipLine + "`r`n" + $snmpLine + "`r`n" + "   => 할 일 : 프린터 전원 켜기 / IP주소 확인 / 같은 네트워크인지 확인")');
   psArr.push('  } else {');
   psArr.push('    $bad++');
-  psArr.push('    $lines += ("[실패]  " + $p.ip + "  ->  SNMP 응답이 없습니다" + "`r`n" + "          할 일 : 프린터 웹페이지 접속 - 네트워크 - SNMP - 사용(v1 또는 v2c) 켜기" + "`r`n" + "                  커뮤니티 이름은 public (읽기전용)" + "`r`n" + "          참고 : 프린터가 절전 중이면 이렇게 나올 수 있습니다. 깨운 뒤 다시 실행해 보세요.")');
+  psArr.push('    $lines += ("[실패]  " + $p.nm + "  (" + $p.ip + ")" + "`r`n" + $ipLine + "`r`n" + $snmpLine + "`r`n" + "   => 할 일 : 프린터 웹페이지 - 네트워크 - SNMP - 사용(v1 또는 v2c) 켜기, 커뮤니티 public" + "`r`n" + "      참고 : 절전 중이면 이렇게 나올 수 있으니 깨운 뒤 다시 실행")');
   psArr.push('  }');
   psArr.push('}');
 
