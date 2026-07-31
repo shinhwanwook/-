@@ -2554,7 +2554,13 @@ function confirmLogout(){
     adminLogout();
   });
 }
+// ── 뒤로가기 시 사이트 이탈 방지 (로그인 중 앱 안에 머무름) ──
+var _backGuardOn = false;
+function _backGuardHandler(e){ if(_backGuardOn){ history.pushState(null,'',location.href); } }
+function enableBackGuard(){ if(_backGuardOn) return; _backGuardOn=true; history.pushState(null,'',location.href); window.addEventListener('popstate',_backGuardHandler); }
+function disableBackGuard(){ _backGuardOn=false; window.removeEventListener('popstate',_backGuardHandler); }
 function adminLogout(){
+  disableBackGuard();
   // 접속자 현황 해제
   if(window._db && _currentUserId){
     window._db.collection('rental_online').doc(_currentUserId).delete().catch(function(){});
@@ -3576,6 +3582,117 @@ window._baseSnapshot = null;  // 내가 불러온 시점의 데이터 원본 (�
 //   1) 같은 거래처의 다른 달 입금 -> payments를 [월 단위]로 병합
 //   2) 새 레코드 번호 충돌       -> 내 것에 새 번호를 재부여
 //   3) 삭제 구분                 -> BASE와 비교해 "내가 지운 것"만 삭제
+
+// ══════════════════════════════════════════════════════════════
+//  merge3 — 3-way 병합 (빠져 있던 함수. 이게 없어서 다른 PC가 먼저
+//  저장한 순간 저장이 통째로 실패하고, 해지 등이 서버에 안 올라갔음)
+//
+//  base : 내가 불러온 시점의 원본 (공통 조상)
+//  mine : 내 화면의 현재 데이터 (내 변경 포함)
+//  srv  : 지금 서버에 있는 데이터 (다른 PC 변경 포함)
+//
+//  규칙(항목 단위, 고유키로 매칭):
+//   - 내가 바꾼 항목      -> 내 값 우선  (내 해지가 반영됨)
+//   - 나는 그대로 + 서버만 바꿈 -> 서버 값 (다른 PC 작업 보존)
+//   - 내가 추가한 항목     -> 추가
+//   - 서버만 추가한 항목    -> 유지
+//   - 내가 지운 항목      -> 삭제 반영 (단, 그 사이 서버가 그 항목을 바꿨으면 보존)
+// ══════════════════════════════════════════════════════════════
+function merge3(base, mine, srv){
+  var notes = [];
+  // 병합 결과는 mine을 토대로 시작 (버전/savedAt 등 상위 필드는 mine 사용)
+  var out = JSON.parse(JSON.stringify(mine));
+
+  // 배열별 고유키
+  var ARR_KEYS = {
+    CONTRACTS:   'no',
+    SERVICES:    'id',
+    EXTRA_PAYS:  'id',
+    INVENTORY:   'id',
+    STAFF_LIST:  'id',
+    TAX_CLIENTS: 'seq'
+  };
+
+  function idx(arr, key){
+    var m = {};
+    (arr||[]).forEach(function(it){ if(it && it[key]!=null) m[String(it[key])] = it; });
+    return m;
+  }
+  function eq(a, b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+  Object.keys(ARR_KEYS).forEach(function(name){
+    var key   = ARR_KEYS[name];
+    var bBase = idx(base && base[name], key);
+    var bMine = idx(mine && mine[name], key);
+    var bSrv  = idx(srv  && srv[name],  key);
+
+    // 등장하는 모든 키의 합집합
+    var allIds = {};
+    [bBase, bMine, bSrv].forEach(function(m){ Object.keys(m).forEach(function(k){ allIds[k]=1; }); });
+
+    var result = [];
+    Object.keys(allIds).forEach(function(id){
+      var inBase = bBase[id], inMine = bMine[id], inSrv = bSrv[id];
+
+      // 1) 내가 지운 항목 (base엔 있고 mine엔 없음)
+      if(inBase && !inMine){
+        // 그 사이 서버가 그 항목을 '변경'했다면 -> 지우지 않고 보존(안전측)
+        if(inSrv && !eq(inBase, inSrv)){
+          result.push(inSrv);
+          notes.push(name+'#'+id+': 내가 삭제했지만 다른 PC가 수정 → 보존');
+        } else {
+          notes.push(name+'#'+id+': 내가 삭제 반영');
+        }
+        return;
+      }
+
+      // 2) 내가 추가한 항목 (base엔 없고 mine엔 있음)
+      if(!inBase && inMine){
+        result.push(inMine);
+        return;
+      }
+
+      // 3) 서버만 추가한 항목 (base·mine엔 없고 srv엔 있음)
+      if(!inBase && !inMine && inSrv){
+        result.push(inSrv);
+        notes.push(name+'#'+id+': 다른 PC가 추가 → 포함');
+        return;
+      }
+
+      // 4) 양쪽 다 있는 항목 -> 누가 바꿨나로 판단
+      if(inMine){
+        var iChanged = inBase ? !eq(inBase, inMine) : true;
+        var srvChanged = (inBase && inSrv) ? !eq(inBase, inSrv) : false;
+        if(iChanged){
+          // 내가 바꿨으면 내 값 우선 (내 해지 반영)
+          result.push(inMine);
+          if(srvChanged) notes.push(name+'#'+id+': 양쪽 수정 → 내 값 우선');
+        } else if(srvChanged){
+          // 나는 그대로, 서버만 바꿈 -> 서버 값
+          result.push(inSrv);
+          notes.push(name+'#'+id+': 다른 PC 수정 반영');
+        } else {
+          result.push(inMine);
+        }
+      }
+    });
+
+    out[name] = result;
+  });
+
+  // CONFIG: nextXxx 카운터는 양쪽 중 큰 값으로 (번호 충돌 방지)
+  if(mine.CONFIG || (srv && srv.CONFIG)){
+    out.CONFIG = Object.assign({}, (srv&&srv.CONFIG)||{}, mine.CONFIG||{});
+    var counters = ['nextNo','nextSvcId','nextExtraId','nextInvId','nextStaffId','nextTaxSeq','nextDocId'];
+    counters.forEach(function(ck){
+      var mv = parseInt((mine.CONFIG||{})[ck])||0;
+      var sv = parseInt(((srv&&srv.CONFIG)||{})[ck])||0;
+      out.CONFIG[ck] = String(Math.max(mv, sv));
+    });
+  }
+
+  return { data: out, notes: notes };
+}
 
 function saveToApi(callback) {
   if (!(window._fbReady && window._fbSave)) {
@@ -6654,7 +6771,7 @@ function doLogin(){
     });
     if(matchedKey){
     var acct = ACCOUNTS[matchedKey];
-    _currentUserId = acct.id;
+    _currentUserId = acct.id; enableBackGuard();
     window.isAdmin = false; // 반드시 초기화
     window._isLoading = true; // 데이터 로딩 전 저장 차단
     if(document.getElementById('auto-login-chk').checked){
@@ -6991,7 +7108,7 @@ function doLogin(){
           });
           if(matchedKey){
             var acct = ACCOUNTS[matchedKey];
-            _currentUserId = acct.id; _loginTab = tab;
+            _currentUserId = acct.id; enableBackGuard(); _loginTab = tab;
             window.isAdmin = false;
             if(typeof showApp==='function') showApp(acct.role);
             return;
