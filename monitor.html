@@ -170,6 +170,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-btn-group{display:flex;gap:6px;align-items:center}
 .bill-btn-right{margin-left:auto}
 .btn-bill-save{background:#1e7e34;color:#fff}
+/* 거래처 연결: 스캔 on/off 토글 스위치 */
+.edge-toggle{display:inline-block;width:44px;height:24px;background:#cbd5e1;border-radius:12px;position:relative;transition:background .2s;cursor:pointer;vertical-align:middle}
+.edge-toggle.on{background:#1e7e34}
+.edge-toggle-knob{position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s}
+.edge-toggle.on .edge-toggle-knob{left:22px}
+.edge-tbl td, .edge-tbl th{border-bottom:1px solid var(--border)}
+.edge-tbl input{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px}
+
 .vat-label-short{display:none}
 .vat-label-full{display:inline}
 /* 청구 이력: 청구번호+거래처 열 좌측 고정 (좌우 스크롤 시 두 열은 남고 나머지가 그 안쪽으로 밀려들어감) */
@@ -335,6 +343,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="nav-tab" onclick="showPage('devices')">⚙️ 기기관리</div>
   <div class="nav-tab" onclick="showPage('usage')">📈 사용량조회</div>
   <div class="nav-tab" onclick="showPage('billing')">💰 청구관리</div>
+  <div class="nav-tab" onclick="showPage('edge')">🔌 거래처 연결</div>
   <div class="nav-tab" onclick="showPage('guide')">📋 설치안내</div>
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
     <span id="last-update" style="font-size:11px;color:rgba(255,255,255,.6)"></span>
@@ -501,6 +510,60 @@ tbody td{padding:9px 12px;vertical-align:middle}
 </div>
 
 <!-- ══ PAGE: 설치 안내 ══ -->
+<div class="page" id="page-edge">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">🔌 거래처 연결 (원격제어)</h2>
+      <p style="font-size:13px;color:var(--text3);margin:6px 0 0">
+        거래처별로 프린터의 시리얼·IP를 등록하고, 스캔을 켜고 끌 수 있습니다.
+        시리얼을 등록해두면 장비 IP가 바뀌어도 자동으로 따라갑니다.
+      </p>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+      <input class="inp" id="edge-contract-srch" placeholder="🔍 거래처명 또는 번호(NO) 검색" oninput="edgeSearchContract()" style="flex:1;min-width:220px">
+    </div>
+    <div id="edge-contract-result" style="display:none;margin-bottom:12px;border:1px solid var(--border);border-radius:6px;max-height:220px;overflow-y:auto;background:#fff"></div>
+
+    <div id="edge-detail" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 14px;background:var(--gray-bg);border-radius:8px;margin-bottom:14px">
+        <div>
+          <div style="font-weight:700;font-size:15px" id="edge-cur-name">-</div>
+          <div style="font-size:12px;color:var(--text3)" id="edge-cur-no">NO: -</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+          <span id="edge-scan-label">스캔 중지됨</span>
+          <span class="edge-toggle" id="edge-scan-toggle" onclick="edgeToggleScan()"><span class="edge-toggle-knob"></span></span>
+        </label>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="edge-tbl" style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">
+          <thead><tr style="background:var(--gray-bg)">
+            <th style="padding:8px;text-align:left;white-space:nowrap">프린터 이름</th>
+            <th style="padding:8px;text-align:left;white-space:nowrap">시리얼 번호 (1차)</th>
+            <th style="padding:8px;text-align:left;white-space:nowrap">IP 주소 (2차)</th>
+            <th style="padding:8px;text-align:center;white-space:nowrap">삭제</th>
+          </tr></thead>
+          <tbody id="edge-devices-body"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="edgeAddRow()">＋ 프린터 추가</button>
+        <button class="btn btn-primary" onclick="edgeSave()" style="margin-left:auto">💾 저장</button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:10px">
+        ※ 스캔을 켜면 거래처 PC가 서버에서 이 목록을 받아 수집합니다. 끄면 수집이 멈춥니다.<br>
+        ※ 시리얼만 등록하고 IP를 비워두면, 나중에 스캔이 시리얼로 찾아 IP를 채웁니다. (스캔 기능은 다음 단계에서 추가됩니다)
+      </p>
+    </div>
+
+    <div id="edge-empty" style="text-align:center;color:var(--text3);padding:40px 0;font-size:14px">
+      위에서 거래처를 검색해 선택하세요.
+    </div>
+  </div>
+</div>
 <div class="page" id="page-guide">
   <div class="card">
     <div class="card-header">
@@ -1025,7 +1088,7 @@ function tryAutoLogin(tries){
       }
       var hasPerm = matched && (matched.role==='admin' || (matched.permissions && matched.permissions.monitor));
       if(matched && hasPerm){
-        _currentUser = matched;
+        _currentUser = matched; enableBackGuard();
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app-wrapper').style.display  = 'block';
         applyPermissions();
@@ -1116,7 +1179,7 @@ function doLogin(){
         document.getElementById('login-pw').value = '';
         return;
       }
-      _currentUser = matched;
+      _currentUser = matched; enableBackGuard();
       // 자동로그인 처리 (임대관리와 동일 방식)
       if(document.getElementById('auto-login-chk') && document.getElementById('auto-login-chk').checked){
         try{ localStorage.setItem(MON_AUTO_LOGIN_KEY, btoa(id+':'+pw)); }catch(e){}
@@ -1146,8 +1209,13 @@ function applyPermissions(){
   var importBtn = document.querySelector('button[onclick="importFromRental()"]');
   if(importBtn) importBtn.style.display = '';
 }
+// ── 뒤로가기 시 사이트 이탈 방지 ──
+var _backGuardOn = false;
+function _backGuardHandler(e){ if(_backGuardOn){ history.pushState(null,'',location.href); } }
+function enableBackGuard(){ if(_backGuardOn) return; _backGuardOn=true; history.pushState(null,'',location.href); window.addEventListener('popstate',_backGuardHandler); }
+function disableBackGuard(){ _backGuardOn=false; window.removeEventListener('popstate',_backGuardHandler); }
 function doLogout(){
-  _currentUser = null;
+  _currentUser = null; disableBackGuard();
   // 자동진입 토큰 제거 (다음 사람/새로고침 시 자동진입 방지). 아이디/비번 기억은 유지.
   try{ localStorage.removeItem(MON_AUTO_LOGIN_KEY); }catch(e){}
   // 방금 로그아웃했다는 플래그. 새로고침 직후 tryAutoLogin이 이걸 보고 자동진입을 건너뜀.
@@ -2262,12 +2330,13 @@ function showPage(id){
   document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('page-'+id).classList.add('active');
   var tabs = document.querySelectorAll('.nav-tab');
-  var idx = {monitor:0,history:1,devices:2,usage:3,billing:4,guide:5}[id];
+  var idx = {monitor:0,history:1,devices:2,usage:3,billing:4,edge:5,guide:6}[id];
   if(tabs[idx]) tabs[idx].classList.add('active');
   if(id==='history') renderHistory();
   if(id==='devices') renderDeviceManager();
   if(id==='guide'){ renderGuideList(); loadGuideContracts(); }
   if(id==='billing') initBillingPage();
+  if(id==='edge') initEdgePage();
   if(id==='usage'){
     renderUsagePage();
     // 날짜 기본값 세팅 후 자동 조회
@@ -2986,6 +3055,123 @@ function searchGuideContract(){
 var _billData = { vatRate:0.10, devices:[] };
 var _billContract = null;
 var _allBillContracts = [];
+
+// ═══════════════════════════════════════════
+//  거래처 연결 (원격제어) — edge_targets
+// ═══════════════════════════════════════════
+var _edgeContract = null;      // 현재 선택된 거래처 {no, name}
+var _edgeScanOn = false;       // 스캔 켜짐 여부
+var _edgeDevices = [];         // [{name, serial, ip}, ...]
+
+function initEdgePage(){
+  // 거래처 목록 로드 (청구관리와 동일 소스 재사용)
+  if(typeof loadBillContracts === 'function') loadBillContracts();
+  // 화면 초기화
+  document.getElementById('edge-contract-srch').value='';
+  document.getElementById('edge-contract-result').style.display='none';
+  document.getElementById('edge-detail').style.display='none';
+  document.getElementById('edge-empty').style.display='';
+}
+
+function edgeSearchContract(){
+  var q=document.getElementById('edge-contract-srch').value.trim().toLowerCase();
+  var el=document.getElementById('edge-contract-result');
+  if(!q){ el.style.display='none'; return; }
+  var list=(typeof _allBillContracts!=='undefined'?_allBillContracts:[]).filter(function(c){
+    return ((c.name||'')+(c.no||'')).toLowerCase().includes(q);
+  });
+  if(!list.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">검색 결과 없음</div>'; return; }
+  el.style.display='block'; el.innerHTML='';
+  list.slice(0,15).forEach(function(c){
+    var div=document.createElement('div');
+    div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px';
+    div.onmouseover=function(){this.style.background='#eff6ff';};
+    div.onmouseout=function(){this.style.background='';};
+    div.onclick=function(){ edgeSelectContract(c); };
+    div.innerHTML='<b>'+esc(c.name||'-')+'</b> <span style="color:var(--text3)">(NO: '+esc(String(c.no||'-'))+')</span>';
+    el.appendChild(div);
+  });
+}
+
+function edgeSelectContract(c){
+  _edgeContract=c;
+  document.getElementById('edge-contract-srch').value=c.name||'';
+  document.getElementById('edge-contract-result').style.display='none';
+  document.getElementById('edge-cur-name').textContent=c.name||'-';
+  document.getElementById('edge-cur-no').textContent='NO: '+(c.no||'-');
+  document.getElementById('edge-empty').style.display='none';
+  document.getElementById('edge-detail').style.display='';
+  edgeLoadTargets(c.no);
+}
+
+// Firebase edge_targets/<NO> 읽기
+function edgeLoadTargets(no){
+  _edgeDevices=[]; _edgeScanOn=false;
+  edgeRenderScan(); edgeRenderDevices();
+  if(!_fbReady||!db||!no){ return; }
+  db.collection('edge_targets').doc(String(no)).get().then(function(snap){
+    if(snap.exists){
+      var d=snap.data();
+      _edgeScanOn = !!d.scan_on;
+      _edgeDevices = Array.isArray(d.devices) ? d.devices.map(function(x){
+        return { name:x.name||'', serial:x.serial||'', ip:x.ip||'' };
+      }) : [];
+    }
+    if(!_edgeDevices.length) _edgeDevices=[{name:'',serial:'',ip:''}];
+    edgeRenderScan(); edgeRenderDevices();
+  }).catch(function(e){
+    alert('불러오기 실패: '+e.message);
+  });
+}
+
+function edgeRenderScan(){
+  var t=document.getElementById('edge-scan-toggle');
+  var l=document.getElementById('edge-scan-label');
+  if(_edgeScanOn){ t.classList.add('on'); l.textContent='스캔 켜짐 (수집 중)'; }
+  else { t.classList.remove('on'); l.textContent='스캔 중지됨'; }
+}
+
+function edgeToggleScan(){
+  _edgeScanOn=!_edgeScanOn;
+  edgeRenderScan();
+}
+
+function edgeRenderDevices(){
+  var body=document.getElementById('edge-devices-body');
+  body.innerHTML=_edgeDevices.map(function(d,i){
+    return '<tr>'+
+      '<td style="padding:6px"><input value="'+esc(d.name||'')+'" oninput="edgeEdit('+i+',\'name\',this.value)" placeholder="예: 리코 3층"></td>'+
+      '<td style="padding:6px"><input value="'+esc(d.serial||'')+'" oninput="edgeEdit('+i+',\'serial\',this.value)" placeholder="장비 시리얼"></td>'+
+      '<td style="padding:6px"><input value="'+esc(d.ip||'')+'" oninput="edgeEdit('+i+',\'ip\',this.value)" placeholder="예: 192.168.0.50"></td>'+
+      '<td style="padding:6px;text-align:center"><button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="edgeDelRow('+i+')">🗑️</button></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function edgeEdit(i,field,val){ if(_edgeDevices[i]) _edgeDevices[i][field]=val; }
+function edgeAddRow(){ _edgeDevices.push({name:'',serial:'',ip:''}); edgeRenderDevices(); }
+function edgeDelRow(i){ _edgeDevices.splice(i,1); if(!_edgeDevices.length)_edgeDevices=[{name:'',serial:'',ip:''}]; edgeRenderDevices(); }
+
+// Firebase edge_targets/<NO> 저장
+function edgeSave(){
+  if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
+  if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도하세요.'); return; }
+  // 빈 줄(시리얼·IP 둘 다 없음) 제거
+  var clean=_edgeDevices.filter(function(d){ return (d.serial||'').trim() || (d.ip||'').trim(); })
+    .map(function(d){ return { name:(d.name||'').trim(), serial:(d.serial||'').trim(), ip:(d.ip||'').trim() }; });
+  db.collection('edge_targets').doc(String(_edgeContract.no)).set({
+    scan_on: _edgeScanOn,
+    devices: clean,
+    contract_name: _edgeContract.name||'',
+    updated_at: new Date().toISOString()
+  }).then(function(){
+    alert('저장 완료!\n\n'+(_edgeScanOn?'스캔이 켜져 있어 거래처 PC가 이 목록을 받아 수집합니다.':'스캔이 꺼져 있어 수집은 멈춰 있습니다.'));
+    _edgeDevices=clean.length?clean:[{name:'',serial:'',ip:''}];
+    edgeRenderDevices();
+  }).catch(function(e){
+    alert('저장 실패: '+e.message);
+  });
+}
 
 function initBillingPage(){
   // 날짜 기본값
