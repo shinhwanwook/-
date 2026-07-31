@@ -1701,8 +1701,9 @@ function renderList(){
 
 // ══ 계약 상세 ══
 function openDetail(no){
+  no=parseInt(no);
   currentNo=no;
-  const c=CONTRACTS.find(x=>x.no===no);
+  const c=CONTRACTS.find(x=>parseInt(x.no)===no);
   if(!c) return;
   const termBadge=c.terminated?` <span class="badge b-gray" style="font-size:12px">해지 ${c.terminate_date||''}</span>`:'';
   document.getElementById('dm-title').textContent=`No.${c.no}  ${c.name}${termBadge}`;
@@ -2727,21 +2728,25 @@ function openGdriveLink(){
 }
 
 function confirmDeleteContract(no){
-  var c = CONTRACTS.find(function(x){ return x.no===no; });
+  no = parseInt(no);
+  var c = CONTRACTS.find(function(x){ return parseInt(x.no)===no; });
   if(!c) return;
   showConfirm('⚠️ ['+c.name+'] 계약을 영구 삭제하시겠습니까?\n삭제 후 복구가 불가능합니다!', function(){
-    CONTRACTS = CONTRACTS.filter(function(x){ return x.no!==no; });
+    CONTRACTS = CONTRACTS.filter(function(x){ return parseInt(x.no)!==no; });
     closeModal('detail-modal');
     closeModal('confirm-modal');
-    applyFilters();
     window._isLoading = false;
+    applyFilters();
+    renderList();
     saveToLocal();
   markUnsaved();
   }, '삭제', false);
 }
 
 function confirmTerminate(no){
-  const c=CONTRACTS.find(x=>x.no===no);
+  no = parseInt(no);
+  const c=CONTRACTS.find(x=>parseInt(x.no)===no);
+  if(!c){ alert('해당 계약을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
   showConfirm(
     `No.${no} [${c.name}]\n\n계약을 해지 처리하시겠습니까?\n데이터는 삭제되지 않고 해지 상태로 보관됩니다.`,
     ()=>terminateContract(no),
@@ -2749,26 +2754,34 @@ function confirmTerminate(no){
   );
 }
 function confirmRestore(no){
-  const c=CONTRACTS.find(x=>x.no===no);
+  no = parseInt(no);
+  const c=CONTRACTS.find(x=>parseInt(x.no)===no);
+  if(!c){ alert('해당 계약을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
   showConfirm(`No.${no} [${c.name}] 계약을 복원하시겠습니까?`,()=>restoreContract(no),'복원',true);
 }
 function terminateContract(no){
   closeModal('confirm-modal');closeModal('detail-modal');
-  const c=CONTRACTS.find(x=>x.no===no);
+  no = parseInt(no);
+  const c=CONTRACTS.find(x=>parseInt(x.no)===no);
+  if(!c){ alert('해당 계약을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
   c.terminated=true;
   c.terminate_date=today();
-  applyFilters();
   window._isLoading=false;
+  applyFilters();   // filtered 갱신 + 내부에서 renderList()까지 실행
+  renderList();     // [근본수정] 확실히 화면 다시 그림 (해지가 목록에서 즉시 사라지도록)
   saveToLocal();
   markUnsaved();
 }
 function restoreContract(no){
   closeModal('confirm-modal');
-  const c=CONTRACTS.find(x=>x.no===no);
+  no = parseInt(no);
+  const c=CONTRACTS.find(x=>parseInt(x.no)===no);
+  if(!c){ alert('해당 계약을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
   c.terminated=false;
   c.terminate_date=null;
-  applyFilters();
   window._isLoading=false;
+  applyFilters();
+  renderList();
   saveToLocal();
   markUnsaved();
 }
@@ -4289,13 +4302,25 @@ function loadFromApi(callback) {
 }
 
 function applyRestoredData(data) {
-  if(data.CONTRACTS)   CONTRACTS   = data.CONTRACTS;
+  if(data.CONTRACTS) {
+    CONTRACTS = data.CONTRACTS;
+    // [근본수정] no 타입 통일: Firebase에 문자열/숫자가 섞여 저장돼 있으면
+    //   CONTRACTS.find(x=>x.no===no) 같은 엄격비교(===)가 실패해
+    //   해지·수정이 엉뚱하게 동작함. 로드 시점에 숫자로 정규화해 원천 차단.
+    CONTRACTS.forEach(function(c){
+      if(c && c.no != null){ var n = parseInt(c.no); if(!isNaN(n)) c.no = n; }
+    });
+  }
   if(data.SERVICES)    SERVICES    = data.SERVICES;
   if(data.EXTRA_PAYS)  EXTRA_PAYS  = data.EXTRA_PAYS;
   if(data.INVENTORY)   INVENTORY   = data.INVENTORY;
   if(data.STAFF_LIST)  STAFF_LIST  = data.STAFF_LIST;
   if(data.TAX_CLIENTS) {
     TAX_CLIENTS = data.TAX_CLIENTS;
+    // [근본수정] seq 타입 통일 (문자열/숫자 섞임 방지 → 해지/수정 엄격비교 실패 차단)
+    TAX_CLIENTS.forEach(function(t){
+      if(t && t.seq != null){ var n = parseInt(t.seq); if(!isNaN(n)) t.seq = n; }
+    });
     // 중복 seq 제거 (seq 기준 첫번째만 유지)
     var seenSeqs = {};
     TAX_CLIENTS = TAX_CLIENTS.filter(function(t){
@@ -6597,9 +6622,10 @@ function renderTaxClientList() {
   if(countEl) countEl.textContent = '조회: '+list.length+'곳 / 전체 '+TAX_CLIENTS.length+'곳';
 }
 function terminateTaxClient(seq) {
+  seq = parseInt(seq);
   showConfirm('이 거래처를 해지 처리하시겠습니까?\n(발행이력은 유지됩니다)', function() {
-    var t = TAX_CLIENTS.find(function(x){return x.seq===seq;});
-    if(!t) return;
+    var t = TAX_CLIENTS.find(function(x){return parseInt(x.seq)===seq;});
+    if(!t){ alert('해당 거래처를 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
     t.terminated = true;
     t.terminatedAt = new Date().toISOString().slice(0,10);
     closeModal('confirm-modal');
@@ -6611,9 +6637,10 @@ function terminateTaxClient(seq) {
 }
 
 function restoreTaxClient(seq) {
+  seq = parseInt(seq);
   showConfirm('이 거래처를 복원하시겠습니까?', function() {
-    var t = TAX_CLIENTS.find(function(x){return x.seq===seq;});
-    if(!t) return;
+    var t = TAX_CLIENTS.find(function(x){return parseInt(x.seq)===seq;});
+    if(!t){ alert('해당 거래처를 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
     delete t.terminated;
     delete t.terminatedAt;
     closeModal('confirm-modal');
