@@ -3081,25 +3081,34 @@ var _edgeScanBase = '';        // 스캔 대역 (예 192.168.0)
 var _edgeDevices = [];         // [{name, serial, ip}, ...]
 
 function initEdgePage(){
-  // 거래처 목록 로드 (청구관리와 동일 소스 재사용)
-  if(typeof loadBillContracts === 'function') loadBillContracts();
   // 화면 초기화
   document.getElementById('edge-contract-srch').value='';
-  document.getElementById('edge-contract-result').style.display='none';
   document.getElementById('edge-detail').style.display='none';
-  document.getElementById('edge-empty').style.display='';
+  document.getElementById('edge-empty').style.display='none';
+  // 거래처 목록 로드 후 전체 표시 (모니터링 연동된 거래처가 첫 화면에 다 보이게)
+  if(typeof loadBillContracts === 'function') loadBillContracts();
+  var tries=0;
+  (function waitList(){
+    if(typeof _allBillContracts!=='undefined' && _allBillContracts.length){ edgeSearchContract(); return; }
+    if(tries++>20){ edgeSearchContract(); return; }
+    setTimeout(waitList, 200);
+  })();
 }
 
 function edgeSearchContract(){
   var q=document.getElementById('edge-contract-srch').value.trim().toLowerCase();
   var el=document.getElementById('edge-contract-result');
-  if(!q){ el.style.display='none'; return; }
-  var list=(typeof _allBillContracts!=='undefined'?_allBillContracts:[]).filter(function(c){
-    return ((c.name||'')+(c.no||'')).toLowerCase().includes(q);
-  });
+  var src=(typeof _allBillContracts!=='undefined'?_allBillContracts:[]);
+  // 거래처 연결은 "모니터링 연동" 켠 거래처만 대상 (임대관리 전체 아님)
+  var all=src.filter(function(c){ return (c.monitoring_on!==undefined)? !!c.monitoring_on : true; });
+  // 검색어 없으면 전체 목록(첫 화면에 다 보이게), 있으면 필터
+  var list = q ? all.filter(function(c){ return ((c.name||'')+(c.no||'')).toLowerCase().includes(q); }) : all.slice();
+  if(!all.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">모니터링 연동된 거래처를 불러오는 중… (잠시 후 다시 시도)</div>'; return; }
   if(!list.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">검색 결과 없음</div>'; return; }
-  el.style.display='block'; el.innerHTML='';
-  list.slice(0,15).forEach(function(c){
+  list.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ko'); });
+  el.style.display='block';
+  el.innerHTML='<div style="padding:6px 10px;font-size:12px;color:var(--text3);background:var(--gray-bg);border-bottom:1px solid var(--border)">거래처 '+list.length+'곳'+(q?' (검색결과)':'')+'</div>';
+  list.slice(0, q?30:500).forEach(function(c){
     var div=document.createElement('div');
     div.style.cssText='padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px';
     div.onmouseover=function(){this.style.background='#eff6ff';};
@@ -3214,12 +3223,14 @@ function edgeAddFound(i){
   if(_edgeDevices.some(function(x){ return (x.ip||'')===d.ip || (d.serial && (x.serial||'')===d.serial); })){
     alert('이미 목록에 있는 기기입니다.'); return;
   }
+  // NO(임대번호)는 선택한 거래처 것으로 자동 (수기 불필요)
+  var autoNo = _edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '';
   // 빈 행이 있으면 채우고, 없으면 추가
   var empty=_edgeDevices.find(function(x){ return !(x.serial||'').trim() && !(x.ip||'').trim(); });
-  if(empty){ empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=d.ip||''; }
-  else { _edgeDevices.push({no:'',name:d.model||'',serial:d.serial||'',ip:d.ip||''}); }
+  if(empty){ empty.no=empty.no||autoNo; empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=d.ip||''; }
+  else { _edgeDevices.push({no:autoNo,name:d.model||'',serial:d.serial||'',ip:d.ip||''}); }
   edgeRenderDevices();
-  alert('등록됨: '+(d.model||d.ip)+'\nNO(임대번호)를 입력하고 💾 저장하세요.');
+  alert('등록됨: '+(d.model||d.ip)+' (NO '+autoNo+')\n💾 저장을 눌러 반영하세요.');
 }
 
 function edgeRenderDevices(){
