@@ -6654,8 +6654,35 @@ function restoreTaxClient(seq) {
 // TAX_CLIENTS를 tax_main에 직접 저장
 function saveTaxClientsToFirebase(successMsg){
   saveToLocal();
-  saveToLocal();
-  markUnsaved();
+  // [근본수정] 예전엔 saveToLocal만 하고 Firebase 저장을 안 해서,
+  //   세금계산서 거래처 해지/복원이 로컬에만 반영되고 새로고침하면 되살아났음.
+  //   거래처 추가/수정과 동일하게 tax_main 문서의 TAX_CLIENTS를 실제로 갱신한다.
+  if(window._fbReady && window._db){
+    showSaveStatus('⏳ 저장 중...', '#93c5fd');
+    var taxSlim = TAX_CLIENTS.map(function(t2){
+      var s = Object.assign({}, t2);
+      s.issues = {}; // issues는 별도 청크로 저장되므로 여기선 비움
+      return s;
+    });
+    return window._db.collection('rental').doc('tax_main')
+      .update({TAX_CLIENTS: taxSlim})
+      .then(function(){
+        showSaveStatus(successMsg || '✅ 저장 완료', '#86efac');
+        // 저장 성공 시 이 변경은 이미 서버에 반영됨 → 병합 기준점도 갱신
+        try {
+          if(window._baseSnapshot){ window._baseSnapshot.TAX_CLIENTS = JSON.parse(JSON.stringify(TAX_CLIENTS)); }
+        } catch(e){}
+      })
+      .catch(function(e){
+        console.error('세금거래처 저장 오류:', e);
+        showSaveStatus('⚠ 저장 실패 - 다시 시도해 주세요', '#ef4444');
+        alert('세금계산서 거래처 저장에 실패했습니다.\n인터넷 연결을 확인하고 다시 시도해 주세요.');
+      });
+  } else {
+    // Firebase 미준비 시에는 로컬에만 저장하고 미저장 표시(수동 저장 대비)
+    markUnsaved();
+    showSaveStatus('⚠ 오프라인 - 저장 버튼을 눌러주세요', '#fbbf24');
+  }
 }
 
 
