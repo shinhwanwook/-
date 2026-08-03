@@ -552,7 +552,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="edgeAddRow()">＋ 프린터 추가</button>
-        <button class="btn btn-primary" onclick="edgeSave()" style="margin-left:auto">💾 저장</button>
+        <button class="btn btn-ghost" onclick="edgeDownloadAgent()" style="margin-left:auto">⬇️ 원격 에이전트 다운로드</button>
+        <button class="btn btn-primary" onclick="edgeSave()">💾 저장</button>
       </div>
       <p style="font-size:12px;color:var(--text3);margin-top:10px">
         ※ 스캔을 켜면 거래처 PC가 서버에서 이 목록을 받아 수집합니다. 끄면 수집이 멈춥니다.<br>
@@ -3173,6 +3174,93 @@ function edgeSave(){
   }).catch(function(e){
     alert('저장 실패: '+e.message);
   });
+}
+
+// 이 거래처(NO)를 바라보는 원격 방식 printers.alloy + install.bat 생성·다운로드
+function edgeDownloadAgent(){
+  if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
+  var no = String(_edgeContract.no);
+  var cname = _edgeContract.name||'';
+
+  // 원격 printers.alloy (서버에서 60초마다 목록 받아옴)
+  var alloy = [
+    '// '+cname+' (NO '+no+') - 원격제어 방식 Printer Monitoring Agent',
+    '// 서버에서 수집 목록을 60초마다 받아옴 (대시보드에서 원격 제어)',
+    'local.file "snmp_config" {',
+    '  filename = "C:\\\\alloy\\\\snmp_modules.yml"',
+    '}',
+    'remote.http "targets" {',
+    '  url            = "https://api.ink79.kr/api/edge-targets/'+no+'?token=ink79-edge-2026"',
+    '  poll_frequency = "60s"',
+    '  poll_timeout   = "20s"',
+    '}',
+    'prometheus.exporter.snmp "printers" {',
+    '  config  = local.file.snmp_config.content',
+    '  targets = encoding.from_json(remote.http.targets.content)',
+    '  walk_param "default" { retries = "2" timeout = "3s" }',
+    '}',
+    'discovery.relabel "printers" {',
+    '  targets = prometheus.exporter.snmp.printers.targets',
+    '  rule { source_labels = ["__param_target"] target_label = "ip" }',
+    '  rule { target_label = "pc" replacement = "__PCNAME__" }',
+    '}',
+    'prometheus.scrape "printers" {',
+    '  targets         = discovery.relabel.printers.output',
+    '  forward_to      = [prometheus.remote_write.central.receiver]',
+    '  scrape_interval = "300s"',
+    '  scrape_timeout  = "30s"',
+    '}',
+    'prometheus.remote_write "central" {',
+    '  endpoint { url = "http://161.33.35.210:8428/api/v1/write" }',
+    '}'
+  ].join('\n');
+
+  // install.bat (기존 방식과 동일 구조, 원격 alloy를 설치)
+  var bat = [
+    '@echo off',
+    'chcp 65001 >nul',
+    'net session >nul 2>&1',
+    'if %errorLevel% neq 0 (',
+    '  echo [오류] 관리자 권한이 필요합니다.',
+    '  echo 파일을 우클릭 후 "관리자 권한으로 실행" 하세요.',
+    '  pause & exit /b 1',
+    ')',
+    'set "ALLOY_DIR=C:\\alloy"',
+    'echo [1/4] 설정 폴더 준비: %ALLOY_DIR%',
+    'if not exist "%ALLOY_DIR%" mkdir "%ALLOY_DIR%"',
+    'echo [2/4] 설정 파일 복사',
+    'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\\printers.alloy"   >nul',
+    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\\snmp_modules.yml" >nul',
+    'powershell -NoProfile -Command "(Get-Content \'%ALLOY_DIR%\\printers.alloy\' -Raw) -replace \'__PCNAME__\', $env:COMPUTERNAME | Set-Content -Path \'%ALLOY_DIR%\\printers.alloy\' -Encoding UTF8"',
+    'echo [3/4] Alloy 설치 (잠시 기다려주세요...)',
+    '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
+    'echo [4/4] Alloy 서비스 재시작',
+    'net stop Alloy >nul 2>&1',
+    'net start Alloy >nul 2>&1',
+    'powercfg /change standby-timeout-ac 0',
+    'powercfg /change hibernate-timeout-ac 0',
+    'echo.',
+    'echo ============================================================',
+    'echo  설치 완료! ('+cname+' / NO '+no+')',
+    'echo  이 PC는 서버에서 수집 목록을 받아 동작합니다.',
+    'echo  프린터 등록/스캔은 모니터링 화면의 "거래처 연결"에서 하세요.',
+    'echo ============================================================',
+    'pause'
+  ].join('\r\n');
+
+  // 다운로드
+  function dl(content, fname){
+    var blob=new Blob(['\ufeff'+content],{type:'text/plain;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+  }
+  dl(alloy, 'printers.alloy');
+  setTimeout(function(){ dl(bat, 'install.bat'); }, 400);
+  alert(cname+' (NO '+no+') 원격 에이전트 생성 완료!\n\n'+
+    'printers.alloy + install.bat 다운로드됨.\n\n'+
+    '같은 폴더에 alloy-installer-windows-amd64.exe 와 snmp_modules.yml 도 넣고\n'+
+    'install.bat 을 관리자 권한으로 실행하세요.\n\n'+
+    '※ 이 방식은 프린터 IP를 배치파일에 넣지 않습니다.\n'+
+    '   설치 후 이 화면에서 스캔/등록하면 자동 반영됩니다.');
 }
 
 function initBillingPage(){
