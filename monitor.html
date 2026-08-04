@@ -3100,7 +3100,11 @@ function edgeSearchContract(){
   var el=document.getElementById('edge-contract-result');
   var src=(typeof _allBillContracts!=='undefined'?_allBillContracts:[]);
   // 거래처 연결은 "모니터링 연동" 켠 거래처만 대상 (임대관리 전체 아님)
-  var all=src.filter(function(c){ return (c.monitoring_on!==undefined)? !!c.monitoring_on : true; });
+  // rental.html과 동일 기준: monitoring_on 필드 있으면 그 값, 없으면(기존 거래처) IP 있으면 ON
+  var all=src.filter(function(c){
+    return (c.monitoring_on!==undefined) ? !!c.monitoring_on
+         : !!(c.printer_ip && String(c.printer_ip).trim());
+  });
   // 검색어 없으면 전체 목록(첫 화면에 다 보이게), 있으면 필터
   var list = q ? all.filter(function(c){ return ((c.name||'')+(c.no||'')).toLowerCase().includes(q); }) : all.slice();
   if(!all.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">모니터링 연동된 거래처를 불러오는 중… (잠시 후 다시 시도)</div>'; return; }
