@@ -554,6 +554,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <table class="edge-tbl" style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">
           <thead><tr style="background:var(--gray-bg)">
             <th style="padding:8px;text-align:left;white-space:nowrap">NO(임대번호)</th>
+            <th style="padding:8px;text-align:left;white-space:nowrap">거래처명</th>
             <th style="padding:8px;text-align:left;white-space:nowrap">프린터 이름</th>
             <th style="padding:8px;text-align:left;white-space:nowrap">시리얼 번호 (1차)</th>
             <th style="padding:8px;text-align:left;white-space:nowrap">IP 주소 (2차)</th>
@@ -3272,8 +3273,12 @@ function edgeAddFound(i){
 function edgeRenderDevices(){
   var body=document.getElementById('edge-devices-body');
   body.innerHTML=_edgeDevices.map(function(d,i){
+    // NO(임대번호)로 거래처명 자동 조회
+    var cname='';
+    if(d.no){ var hit=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(d.no); }); if(hit) cname=hit.name||''; }
     return '<tr>'+
-      '<td style="padding:6px"><input value="'+esc(d.no||'')+'" oninput="edgeEdit('+i+',\'no\',this.value)" placeholder="임대번호" style="max-width:110px"></td>'+
+      '<td style="padding:6px"><input value="'+esc(d.no||'')+'" oninput="edgeEdit('+i+',\'no\',this.value)" onchange="edgeRenderDevices()" placeholder="임대번호" style="max-width:110px"></td>'+
+      '<td style="padding:6px;font-size:12px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
       '<td style="padding:6px"><input value="'+esc(d.name||'')+'" oninput="edgeEdit('+i+',\'name\',this.value)" placeholder="예: 리코 3층"></td>'+
       '<td style="padding:6px"><input value="'+esc(d.serial||'')+'" oninput="edgeEdit('+i+',\'serial\',this.value)" placeholder="장비 시리얼"></td>'+
       '<td style="padding:6px"><input value="'+esc(d.ip||'')+'" oninput="edgeEdit('+i+',\'ip\',this.value)" placeholder="예: 192.168.0.50"></td>'+
