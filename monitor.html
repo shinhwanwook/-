@@ -3070,6 +3070,7 @@ function searchGuideContract(){
 var _billData = { vatRate:0.10, devices:[] };
 var _billContract = null;
 var _allBillContracts = [];
+var _edgeConnected = {};  // { NO(문자열): 등록기기수 } — 연결됨/연결필요 표시용
 
 // ═══════════════════════════════════════════
 //  거래처 연결 (원격제어) — edge_targets
@@ -3087,14 +3088,27 @@ function initEdgePage(){
   document.getElementById('edge-empty').style.display='none';
   // 거래처 목록 로드 후 전체 표시 (모니터링 연동된 거래처가 첫 화면에 다 보이게)
   if(typeof loadBillContracts === 'function') loadBillContracts();
+  edgeLoadConnected();  // 연결상태 미리 로드
   var tries=0;
   (function waitList(){
-    if(typeof _allBillContracts!=='undefined' && _allBillContracts.length){ edgeSearchContract(); return; }
+    if(typeof _allBillContracts!=='undefined' && _allBillContracts.length){ edgeLoadConnected(edgeSearchContract); return; }
     if(tries++>20){ edgeSearchContract(); return; }
     setTimeout(waitList, 200);
   })();
 }
 
+function edgeLoadConnected(cb){
+  if(!_fbReady||!db){ if(cb)cb(); return; }
+  db.collection('edge_targets').get().then(function(snap){
+    _edgeConnected={};
+    snap.forEach(function(doc){
+      var d=doc.data()||{};
+      var devs=Array.isArray(d.devices)?d.devices.filter(function(x){return (x.ip||'').trim()||(x.serial||'').trim();}):[];
+      _edgeConnected[String(doc.id)] = devs.length;
+    });
+    if(cb)cb();
+  }).catch(function(){ if(cb)cb(); });
+}
 function edgeSearchContract(){
   var q=document.getElementById('edge-contract-srch').value.trim().toLowerCase();
   var el=document.getElementById('edge-contract-result');
@@ -3118,7 +3132,11 @@ function edgeSearchContract(){
     div.onmouseover=function(){this.style.background='#eff6ff';};
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){ edgeSelectContract(c); };
-    div.innerHTML='<b>'+esc(c.name||'-')+'</b> <span style="color:var(--text3)">(NO: '+esc(String(c.no||'-'))+')</span>';
+    var cnt=_edgeConnected[String(c.no)]||0;
+    var badge = cnt>0
+      ? '<span style="float:right;font-size:11px;color:#15803d;background:#dcfce7;padding:2px 8px;border-radius:10px">연결됨'+(cnt>1?' '+cnt+'대':'')+'</span>'
+      : '<span style="float:right;font-size:11px;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:10px">연결필요</span>';
+    div.innerHTML='<b>'+esc(c.name||'-')+'</b> <span style="color:var(--text3)">(NO: '+esc(String(c.no||'-'))+')</span>'+badge;
     el.appendChild(div);
   });
 }
@@ -3272,6 +3290,7 @@ function edgeSave(){
   }).then(function(){
     alert('저장 완료!\n\n'+(_edgeScanOn?'스캔이 켜져 있어 거래처 PC가 이 목록을 받아 수집합니다.':'스캔이 꺼져 있어 수집은 멈춰 있습니다.'));
     _edgeDevices=clean.length?clean:[{no:'',name:'',serial:'',ip:''}];
+    if(typeof edgeLoadConnected==='function') edgeLoadConnected();  // 연결상태 갱신
     edgeRenderDevices();
   }).catch(function(e){
     alert('저장 실패: '+e.message);
