@@ -3177,13 +3177,21 @@ function edgeLoadTargets(no){
 function edgeRenderScan(){
   var t=document.getElementById('edge-scan-toggle');
   var l=document.getElementById('edge-scan-label');
-  if(_edgeScanOn){ t.classList.add('on'); l.textContent = _edgeScanMode==='scan' ? '스캔 켜짐 (대역 검색 중)' : '수집 켜짐 (운영)'; }
-  else { t.classList.remove('on'); l.textContent='중지됨'; }
+  // 상태 3가지를 색으로 명확히: 스캔중(파랑)/운영중(녹색)/중지(회색)
+  if(_edgeScanOn && _edgeScanMode==='scan'){
+    t.classList.add('on');
+    l.innerHTML='<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:12px;font-weight:600">🔍 스캔 검색 중</span>';
+  } else if(_edgeScanOn){
+    t.classList.add('on');
+    l.innerHTML='<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:12px;font-weight:600">● 수집 켜짐 (운영)</span>';
+  } else {
+    t.classList.remove('on');
+    l.innerHTML='<span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:12px;font-weight:600">■ 중지됨 (수집 안 함)</span>';
+  }
   var b=document.getElementById('edge-scan-base');
   if(b){
     if(_edgeScanBase){ b.value=_edgeScanBase; }
     else if(!b.value){
-      // 기존 등록 프린터 IP에서 대역(앞3자리) 자동 추론
       var ipd=(_edgeDevices||[]).map(function(d){return (d.ip||'').trim();}).filter(Boolean)[0];
       if(ipd){ var mm=ipd.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\./); if(mm) b.value=mm[1]; }
     }
@@ -3206,7 +3214,7 @@ function edgeStartScan(){
 
 // 스캔 중지 = 운영 모드(등록 IP만 수집)
 function edgeStopScan(){
-  _edgeScanMode='operate'; edgeRenderScan();
+  _edgeScanMode='operate'; _edgeScanOn=true; edgeRenderScan();  // 스캔만 끄고 수집은 유지(운영=녹색)
   edgeSave();
   document.getElementById('edge-scan-status').textContent='운영 모드로 전환됨. 등록된 프린터만 수집합니다.';
 }
@@ -3253,8 +3261,10 @@ function edgeAddFound(i){
              : (_edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '');
   // 빈 행이 있으면 채우고, 없으면 추가
   var empty=_edgeDevices.find(function(x){ return !(x.serial||'').trim() && !(x.ip||'').trim(); });
-  if(empty){ empty.no=autoNo; empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=d.ip||''; }
-  else { _edgeDevices.push({no:autoNo,name:d.model||'',serial:d.serial||'',ip:d.ip||''}); }
+  // 발견 IP에 :161(포트)이 붙어오면 떼고 순수 IP만 저장 (:161:161 중복 방지)
+  var pureIp = (d.ip||'').replace(/:\d+$/, '');
+  if(empty){ empty.no=autoNo; empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=pureIp; }
+  else { _edgeDevices.push({no:autoNo,name:d.model||'',serial:d.serial||'',ip:pureIp}); }
   edgeRenderDevices();
   alert('등록됨: '+(d.model||d.ip)+' (NO '+autoNo+')\n💾 저장을 눌러 반영하세요.');
 }
