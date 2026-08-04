@@ -3220,11 +3220,13 @@ function edgeLoadFound(){
     .then(function(r){ return r.json(); })
     .then(function(list){
       if(!Array.isArray(list)||!list.length){ box.innerHTML='<span style="color:var(--text3);font-size:12px">아직 발견된 기기가 없습니다. 스캔 시작 후 1~2분 기다렸다가 다시 조회하세요.</span>'; return; }
-      var html='<div style="font-size:12px;color:var(--text3);margin-bottom:6px">발견된 프린터 '+list.length+'대 — 등록할 것을 선택하세요</div>';
+      var html='<div style="font-size:12px;color:var(--text3);margin-bottom:6px">발견된 프린터 '+list.length+'대 — NO(임대번호) 확인 후 등록하세요. 한 PC에 여러 거래처가 있으면 프린터마다 실제 NO를 넣으면 됩니다.</div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--gray-bg)">'+
-        '<th style="padding:6px;text-align:left">IP</th><th style="padding:6px;text-align:left">모델명</th><th style="padding:6px;text-align:left">시리얼</th><th style="padding:6px"></th></tr></thead><tbody>';
+        '<th style="padding:6px;text-align:left">NO</th><th style="padding:6px;text-align:left">IP</th><th style="padding:6px;text-align:left">모델명</th><th style="padding:6px;text-align:left">시리얼</th><th style="padding:6px"></th></tr></thead><tbody>';
+      var defNo = _edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '';
       list.forEach(function(d,i){
         html+='<tr>'+
+          '<td style="padding:6px"><input id="found-no-'+i+'" value="'+esc(defNo)+'" style="width:80px" placeholder="임대번호"></td>'+
           '<td style="padding:6px">'+esc(d.ip||'')+'</td>'+
           '<td style="padding:6px">'+esc(d.model||'-')+'</td>'+
           '<td style="padding:6px;font-family:monospace">'+esc(d.serial||'-')+'</td>'+
@@ -3245,11 +3247,13 @@ function edgeAddFound(i){
   if(_edgeDevices.some(function(x){ return (x.ip||'')===d.ip || (d.serial && (x.serial||'')===d.serial); })){
     alert('이미 목록에 있는 기기입니다.'); return;
   }
-  // NO(임대번호)는 선택한 거래처 것으로 자동 (수기 불필요)
-  var autoNo = _edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '';
+  // NO(임대번호): 발견목록 각 줄의 입력칸 값 우선, 없으면 선택 거래처 것
+  var noInput = document.getElementById('found-no-'+i);
+  var autoNo = (noInput && noInput.value.trim()) ? noInput.value.trim()
+             : (_edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '');
   // 빈 행이 있으면 채우고, 없으면 추가
   var empty=_edgeDevices.find(function(x){ return !(x.serial||'').trim() && !(x.ip||'').trim(); });
-  if(empty){ empty.no=empty.no||autoNo; empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=d.ip||''; }
+  if(empty){ empty.no=autoNo; empty.name=d.model||''; empty.serial=d.serial||''; empty.ip=d.ip||''; }
   else { _edgeDevices.push({no:autoNo,name:d.model||'',serial:d.serial||'',ip:d.ip||''}); }
   edgeRenderDevices();
   alert('등록됨: '+(d.model||d.ip)+' (NO '+autoNo+')\n💾 저장을 눌러 반영하세요.');
