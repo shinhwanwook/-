@@ -3239,6 +3239,16 @@ function edgeLoadTargets(no){
       _edgeScanOn = !!d.scan_on;
       _edgeScanMode = d.scan_mode || 'operate';
       _edgeScanBase = d.scan_base || '';
+      _edgeScanStartedAt = d.scan_started_at || '';
+      // 스캔 시작 후 20분 지났으면 화면에도 운영으로 표시 (서버가 이미 자동 전환한 상태와 일치)
+      // 시작 시각이 없는 옛 스캔 상태(씨온 등)도 운영으로 표시 — 언제 켰는지 모르니 안전측
+      if(_edgeScanMode==='scan'){
+        if(!_edgeScanStartedAt){ _edgeScanMode='operate'; }
+        else {
+          var t0=new Date(_edgeScanStartedAt).getTime();
+          if(!isNaN(t0) && (Date.now()-t0) > 20*60*1000){ _edgeScanMode='operate'; }
+        }
+      }
       _edgeDevices = Array.isArray(d.devices) ? d.devices.map(function(x){
         return { no:x.no||'', name:x.name||'', serial:x.serial||'', ip:x.ip||'' };
       }) : [];
