@@ -3072,6 +3072,7 @@ var _billData = { vatRate:0.10, devices:[] };
 var _billContract = null;
 var _allBillContracts = [];
 var _edgeConnected = {};  // { NO(문자열): 등록기기수 } — 연결됨/연결필요 표시용
+var _edgeHostOf = {};     // { NO: {id,name} } — 그 NO가 다른 PC(대표거래처) 문서에서 관리될 때
 
 // ═══════════════════════════════════════════
 //  거래처 연결 (원격제어) — edge_targets
@@ -3102,15 +3103,16 @@ function edgeLoadConnected(cb){
   if(!_fbReady||!db){ if(cb)cb(); return; }
   db.collection('edge_targets').get().then(function(snap){
     _edgeConnected={};
+    _edgeHostOf={};  // { NO: {docId, name} } — 이 NO 프린터가 등록된 문서(대표 PC)
     snap.forEach(function(doc){
       var d=doc.data()||{};
       var devs=Array.isArray(d.devices)?d.devices:[];
       devs.forEach(function(x){
         if(!((x.ip||'').trim()||(x.serial||'').trim())) return;
-        // 각 프린터의 실제 NO(no)로 집계 — 한 문서에 여러 거래처 프린터가 섞여 있어도
-        // 각 거래처(NO)별로 연결됨 카운트. no 없으면 문서ID로 폴백.
         var key = String((x.no||'').trim() || doc.id);
         _edgeConnected[key] = (_edgeConnected[key]||0) + 1;
+        // 이 프린터가 자기 NO 문서가 아닌 다른 문서에 있으면(대표 PC) 기록
+        if(String(doc.id)!==key){ _edgeHostOf[key] = {id:doc.id, name:d.contract_name||doc.id}; }
       });
     });
     if(cb)cb();
@@ -3140,8 +3142,10 @@ function edgeSearchContract(){
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){ edgeSelectContract(c); };
     var cnt=_edgeConnected[String(c.no)]||0;
+    var host=_edgeHostOf[String(c.no)];
+    var hostTag = host ? '<span style="float:right;font-size:11px;color:#1e40af;background:#dbeafe;padding:2px 8px;border-radius:10px;margin-right:6px">'+esc(host.name)+'(NO '+esc(String(host.id))+')</span>' : '';
     var badge = cnt>0
-      ? '<span style="float:right;font-size:11px;color:#15803d;background:#dcfce7;padding:2px 8px;border-radius:10px">연결됨'+(cnt>1?' '+cnt+'대':'')+'</span>'
+      ? hostTag+'<span style="float:right;font-size:11px;color:#15803d;background:#dcfce7;padding:2px 8px;border-radius:10px">연결됨'+(cnt>1?' '+cnt+'대':'')+'</span>'
       : '<span style="float:right;font-size:11px;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:10px">연결필요</span>';
     div.innerHTML='<b>'+esc(c.name||'-')+'</b> <span style="color:var(--text3)">(NO: '+esc(String(c.no||'-'))+')</span>'+badge;
     el.appendChild(div);
