@@ -3188,17 +3188,38 @@ function edgeCheckElsewhere(no){
   if(!_fbReady||!db||!no) return;
   var st=document.getElementById('edge-scan-status'); if(!st) return;
   db.collection('edge_targets').get().then(function(snap){
-    var hosts=[];
+    var hosts=[]; var found=[];
     snap.forEach(function(doc){
       if(String(doc.id)===String(no)) return; // 자기 문서는 제외
-      var devs=(doc.data()||{}).devices||[];
-      var cnt=devs.filter(function(x){ return String((x.no||'').trim())===String(no); }).length;
-      if(cnt>0) hosts.push({id:doc.id, cnt:cnt, name:(doc.data()||{}).contract_name||doc.id});
+      var dd=doc.data()||{};
+      var devs=dd.devices||[];
+      var mine=devs.filter(function(x){ return String((x.no||'').trim())===String(no); });
+      if(mine.length){
+        hosts.push({id:doc.id, cnt:mine.length, name:dd.contract_name||doc.id});
+        mine.forEach(function(x){ found.push({host:dd.contract_name||doc.id, hostNo:doc.id, name:x.name||'', serial:x.serial||'', ip:x.ip||''}); });
+      }
     });
+    var box=document.getElementById('edge-found');
     if(hosts.length){
-      var msg='ℹ️ 이 거래처(NO '+no+')의 프린터 '+hosts.reduce(function(a,h){return a+h.cnt;},0)+'대가 '+
-        hosts.map(function(h){return h.name+'(NO '+h.id+')';}).join(', ')+' PC에서 함께 수집되고 있습니다. 그쪽 화면에서 관리하세요.';
+      var msg='ℹ️ 이 거래처(NO '+no+')의 프린터 '+found.length+'대가 '+
+        hosts.map(function(h){return h.name+'(NO '+h.id+')';}).join(', ')+' PC에서 함께 수집되고 있습니다. 편집은 그쪽 화면에서 하세요.';
       st.style.color='#1e40af'; st.textContent=msg;
+      // 그 프린터들을 읽기 전용으로 표시
+      if(box){
+        var html='<div style="font-size:12px;color:#1e40af;margin-bottom:6px">📋 다른 PC에서 관리 중인 이 거래처의 프린터 (읽기 전용)</div>';
+        html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--gray-bg)">'+
+          '<th style="padding:6px;text-align:left">관리 PC</th><th style="padding:6px;text-align:left">프린터</th><th style="padding:6px;text-align:left">시리얼</th><th style="padding:6px;text-align:left">IP</th></tr></thead><tbody>';
+        found.forEach(function(d){
+          html+='<tr>'+
+            '<td style="padding:6px;color:var(--text3)">'+esc(d.host)+' (NO '+esc(String(d.hostNo))+')</td>'+
+            '<td style="padding:6px">'+esc(d.name||'-')+'</td>'+
+            '<td style="padding:6px;font-family:monospace">'+esc(d.serial||'-')+'</td>'+
+            '<td style="padding:6px;font-family:monospace">'+esc((d.ip||'').replace(/:\d+$/,''))+'</td>'+
+          '</tr>';
+        });
+        html+='</tbody></table>';
+        box.innerHTML=html;
+      }
     }
   }).catch(function(){});
 }
