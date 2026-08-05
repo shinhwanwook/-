@@ -593,15 +593,6 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input class="inp inp-search" id="guide-srch" placeholder="거래처명 입력 → 장비 선택 → 목록에 담기..."
             oninput="_monDeb('guide',searchGuideContract)" style="flex:1;min-width:220px">
-          <a href="https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe"
-            class="btn" style="background:#6366f1;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px"
-            target="_blank">
-            ⬇ Alloy 설치파일 (v1.17.0)
-          </a>
-          <button onclick="downloadSnmpModules()"
-            class="btn" style="background:#0891b2;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;border:none">
-            ⬇ snmp_modules.yml
-          </button>
         </div>
         <!-- 검색 결과 드롭다운 -->
         <div id="guide-search-result" style="display:none;margin-top:8px;border:1px solid #93c5fd;border-radius:6px;max-height:200px;overflow-y:auto;background:#fff"></div>
@@ -623,14 +614,18 @@ tbody td{padding:9px 12px;vertical-align:middle}
       </div>
 
       <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법 (5단계)</div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 설치 방법</div>
         <div style="font-size:13px;line-height:2;color:#1e3a5f">
-          <b>1단계.</b> 위에서 거래처 검색 후 선택<br>
-          <b>2단계.</b> "배치파일 다운로드" 클릭 → 파일 2개 자동 다운로드<br>
-          <b>3단계.</b> 고객사 PC 바탕화면에 파일 2개 복사<br>
-          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">프린터모니터링_설치.bat</code> <b>우클릭 → 관리자 권한으로 실행</b> → 한글 팝업에서 <b>[정상]</b> 확인<br>
+          <b>1단계.</b> 위에서 거래처 검색 → 장비 선택 → 목록에 담기<br>
+          <b>2단계.</b> "배치파일 다운로드" 클릭 → <b>파일 2개</b>(install.bat, printers.alloy) 자동 다운로드<br>
+          <b>3단계.</b> 이 <b>2개 파일</b>을 고객사 PC로 복사 (USB·원격 등)<br>
+          <b>4단계.</b> <code style="background:#dbeafe;padding:2px 6px;border-radius:4px">install.bat</code> <b>우클릭 → 관리자 권한으로 실행</b><br>
+          <span style="font-size:12px;color:#475569;padding-left:14px">→ 나머지 파일(Alloy 설치본·snmp_modules.yml)은 <b>실행 시 인터넷에서 자동</b>으로 받아 설치됩니다. 별도로 챙길 파일 없음.</span><br>
           <b>5단계.</b> 설치한 그 PC에서 <a href="http://localhost:12345/" target="_blank" style="background:#1d4ed8;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600">📋 수집 상태 확인 (localhost:12345)</a><br>
-          <span style="font-size:12px;color:#475569;padding-left:14px">→ 열리는 화면에서 <b>4개 항목이 모두 초록색 Healthy</b> 이고, <code style="background:#e2e8f0;padding:1px 4px;border-radius:3px">prometheus.exporter.snmp.printers</code> 의 <b>View</b>를 눌러 <b>프린터가 보이면</b> 정상 수집 중입니다.</span>
+          <span style="font-size:12px;color:#475569;padding-left:14px">→ <b>4개 항목이 모두 초록색 Healthy</b>이고, <code style="background:#e2e8f0;padding:1px 4px;border-radius:3px">prometheus.exporter.snmp.printers</code>의 <b>View</b>에서 <b>프린터가 보이면</b> 정상입니다.</span>
+        </div>
+        <div style="font-size:12px;color:#92400e;background:#fef3c7;border-radius:6px;padding:8px;margin-top:10px">
+          ⚠️ 고객사 PC가 <b>인터넷에 연결</b>되어 있어야 자동 다운로드가 됩니다.
         </div>
       </div>
 
@@ -2241,16 +2236,19 @@ function downloadAgentForContract(){
     'set "ALLOY_DIR=C:\\alloy"',
     'echo [1/5] Prepare config folder: %ALLOY_DIR%',
     'if not exist "%ALLOY_DIR%" mkdir "%ALLOY_DIR%"',
-    'echo [2/5] Copy config files',
+    'echo [2/5] Copy config file',
     'copy /Y "%~dp0printers.alloy"   "%ALLOY_DIR%\\printers.alloy"   >nul',
-    'copy /Y "%~dp0snmp_modules.yml" "%ALLOY_DIR%\\snmp_modules.yml" >nul',
+    'echo [3/5] Download snmp_modules.yml (auto from internet)',
+    'curl -s -o "%ALLOY_DIR%\\snmp_modules.yml" https://raw.githubusercontent.com/shinhwanwook/-/main/snmp_modules.yml',
+    'if not exist "%ALLOY_DIR%\\snmp_modules.yml" ( echo [ERROR] snmp_modules.yml download failed - check internet ^& pause ^& exit /b 1 )',
     'powershell -NoProfile -Command "(Get-Content \'%ALLOY_DIR%\\printers.alloy\' -Raw) -replace \'__PCNAME__\', $env:COMPUTERNAME | Set-Content -Path \'%ALLOY_DIR%\\printers.alloy\' -Encoding UTF8"',
-    'echo [3/5] Install Alloy (please wait...)',
-    '"%~dp0alloy-installer-windows-amd64.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
-    'echo [4/5] Restart Alloy service',
+    'echo [4/5] Download and install Alloy (please wait...)',
+    'curl -s -L -o "%ALLOY_DIR%\\alloy-installer.exe" https://github.com/grafana/alloy/releases/download/v1.17.0/alloy-installer-windows-amd64.exe',
+    'if not exist "%ALLOY_DIR%\\alloy-installer.exe" ( echo [ERROR] Alloy installer download failed - check internet ^& pause ^& exit /b 1 )',
+    '"%ALLOY_DIR%\\alloy-installer.exe" /S /FORCEREGISTRY=yes /CONFIG=\"C:\\alloy\\printers.alloy\"',
+    'echo [5/5] Restart Alloy service',
     'net stop Alloy >nul 2>&1',
     'net start Alloy >nul 2>&1',
-    'echo [5/5] Power settings - prevent sleep (monitoring stays alive)',
     'powercfg /change standby-timeout-ac 0',
     'powercfg /change hibernate-timeout-ac 0',
     'powercfg /change monitor-timeout-ac 10',
@@ -2329,8 +2327,9 @@ function downloadAgentForContract(){
 
   alert(name + ' - ' + _basket.length + '대 장비\n\n' +
     'install.bat + printers.alloy 다운로드 완료!\n\n' +
-    'alloy-installer-windows-amd64.exe + snmp_modules.yml 파일도\n' +
-    '같은 폴더에 넣고 install.bat 를 관리자권한으로 실행하세요!');
+    '이 2개 파일을 고객사 PC에 복사한 뒤\n' +
+    'install.bat 을 관리자 권한으로 실행하세요.\n' +
+    '(나머지 파일은 실행 시 인터넷에서 자동으로 받습니다)');
 }
 
 
