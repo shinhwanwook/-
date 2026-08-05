@@ -961,15 +961,19 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">거래처명 *</label>
-          <input class="inp" id="dm-name" placeholder="홍길동사무소" style="width:100%">
+          <input class="inp" id="dm-name" placeholder="홍길동사무소 / 행사장A" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">NO(임대번호)</label>
+          <input class="inp" id="dm-no" placeholder="단기면 임의 번호" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">IP 주소 *</label>
+          <input class="inp" id="dm-ip" placeholder="192.168.1.100" style="width:100%" onblur="dmLookupByIp()">
         </div>
         <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">기기명</label>
           <input class="inp" id="dm-model" placeholder="RICOH MP C2004ex" style="width:100%">
-        </div>
-        <div class="form-group2">
-          <label style="font-size:12px;font-weight:600;color:var(--text3)">IP 주소 *</label>
-          <input class="inp" id="dm-ip" placeholder="192.168.1.100" style="width:100%">
         </div>
         <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">제조사 *</label>
@@ -999,7 +1003,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">
-        💡 임대관리에서 가져오기 시 약정매수는 자동으로 입력됩니다.
+        💡 IP를 입력하면 임대관리에 등록된 거래처면 거래처명·NO가 자동으로 채워집니다.<br>
+        행사장 등 <b>단기 대여</b>는 임대관리 등록 없이 여기서 바로 추가하면 됩니다 (NO는 임의로 지정 가능).
       </div>
     </div>
     <div class="modal-foot">
@@ -2586,8 +2591,10 @@ function importFromRental(){
 }
 function openAddDevice(){
   _editDeviceNo=null;
+  if((typeof _allBillContracts==='undefined' || !_allBillContracts.length) && typeof loadBillContracts==='function') loadBillContracts();
   document.getElementById('device-modal-title').textContent='기기 추가';
   document.getElementById('dm-name').value='';
+  document.getElementById('dm-no').value=edgeNextShortTermNo();  // 단기 전용 번호 자동(9001~)
   document.getElementById('dm-model').value='';
   document.getElementById('dm-ip').value='';
   document.getElementById('dm-type').value='ricoh';
@@ -2605,6 +2612,7 @@ function editDevice(btn){
   _editDeviceNo=id;
   document.getElementById('device-modal-title').textContent='기기 수정';
   document.getElementById('dm-name').value=d.name||'';
+  document.getElementById('dm-no').value=d.contract_no||'';
   document.getElementById('dm-model').value=d.model||'';
   document.getElementById('dm-ip').value=d.ip||'';
   document.getElementById('dm-type').value=d.printer_type||d.type||'ricoh';
@@ -2617,6 +2625,40 @@ function editDevice(btn){
 
 function closeDeviceModal(){
   document.getElementById('device-modal').classList.remove('open');
+}
+
+// 단기 대여 전용 번호 자동 생성 (9001~). 정식 임대번호(순차)와 안 겹치게 9000번대 사용.
+// 기존 장비(_devices의 contract_no)와 임대관리(_allBillContracts.no)에서 9000번대 최대값+1
+function edgeNextShortTermNo(){
+  var max=9000;
+  (_devices||[]).forEach(function(d){
+    var n=parseInt(d.contract_no||'',10);
+    if(n>=9001 && n<=9999 && n>max) max=n;
+  });
+  (typeof _allBillContracts!=='undefined'?_allBillContracts:[]).forEach(function(c){
+    var n=parseInt(c.no,10);
+    if(n>=9001 && n<=9999 && n>max) max=n;
+  });
+  return String(max+1);
+}
+
+// 기기 추가 모달: IP 입력 시 임대관리에서 거래처명·NO 자동 조회 (있을 때만 채움)
+function dmLookupByIp(){
+  var ip=(document.getElementById('dm-ip').value||'').replace(/:\d+$/,'').trim();
+  if(!ip) return;
+  var hit=(_allBillContracts||[]).find(function(c){
+    return (c.printer_ip||'').replace(/:\d+$/,'').trim()===ip;
+  });
+  if(hit){
+    var nm=document.getElementById('dm-name'), no=document.getElementById('dm-no');
+    if(nm && !nm.value.trim()) nm.value=hit.name||'';
+    // 정식 거래처 IP면 자동 단기번호(9000번대)를 실제 NO로 교체
+    if(no){
+      var cur=(no.value||'').trim();
+      var isAutoShort=/^9\d{3}$/.test(cur);
+      if(!cur || isAutoShort) no.value=String(hit.no||'');
+    }
+  }
 }
 
 function saveDeviceModal(){
@@ -2636,6 +2678,7 @@ function saveDeviceModal(){
 
   var data={
     name:name,
+    contract_no:(document.getElementById('dm-no').value||'').trim(),
     model:document.getElementById('dm-model').value.trim(),
     ip:ip,
     printer_type:document.getElementById('dm-type').value,
