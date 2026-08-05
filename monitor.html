@@ -523,7 +523,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
       <input class="inp" id="edge-contract-srch" placeholder="🔍 거래처명 또는 번호(NO) 검색" oninput="edgeSearchContract()" style="flex:1;min-width:220px">
     </div>
-    <div id="edge-contract-result" style="display:none;margin-bottom:12px;border:1px solid var(--border);border-radius:6px;max-height:220px;overflow-y:auto;background:#fff"></div>
+    <div id="edge-contract-result" style="display:none;margin-bottom:12px;border:1px solid var(--border);border-radius:6px;max-height:60vh;overflow-y:auto;background:#fff"></div>
 
     <div id="edge-detail" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 14px;background:var(--gray-bg);border-radius:8px;margin-bottom:14px">
@@ -3104,8 +3104,14 @@ function edgeLoadConnected(cb){
     _edgeConnected={};
     snap.forEach(function(doc){
       var d=doc.data()||{};
-      var devs=Array.isArray(d.devices)?d.devices.filter(function(x){return (x.ip||'').trim()||(x.serial||'').trim();}):[];
-      _edgeConnected[String(doc.id)] = devs.length;
+      var devs=Array.isArray(d.devices)?d.devices:[];
+      devs.forEach(function(x){
+        if(!((x.ip||'').trim()||(x.serial||'').trim())) return;
+        // 각 프린터의 실제 NO(no)로 집계 — 한 문서에 여러 거래처 프린터가 섞여 있어도
+        // 각 거래처(NO)별로 연결됨 카운트. no 없으면 문서ID로 폴백.
+        var key = String((x.no||'').trim() || doc.id);
+        _edgeConnected[key] = (_edgeConnected[key]||0) + 1;
+      });
     });
     if(cb)cb();
   }).catch(function(){ if(cb)cb(); });
@@ -3170,9 +3176,31 @@ function edgeLoadTargets(no){
     }
     if(!_edgeDevices.length) _edgeDevices=[{no:'',name:'',serial:'',ip:''}];
     edgeRenderScan(); edgeRenderDevices();
+    // 이 거래처(no)의 프린터가 다른 PC 문서에 등록돼 있으면 안내
+    edgeCheckElsewhere(no);
   }).catch(function(e){
     alert('불러오기 실패: '+e.message);
   });
+}
+
+// 이 NO의 프린터가 다른 거래처(대표 PC) 문서에 들어있으면 알려줌
+function edgeCheckElsewhere(no){
+  if(!_fbReady||!db||!no) return;
+  var st=document.getElementById('edge-scan-status'); if(!st) return;
+  db.collection('edge_targets').get().then(function(snap){
+    var hosts=[];
+    snap.forEach(function(doc){
+      if(String(doc.id)===String(no)) return; // 자기 문서는 제외
+      var devs=(doc.data()||{}).devices||[];
+      var cnt=devs.filter(function(x){ return String((x.no||'').trim())===String(no); }).length;
+      if(cnt>0) hosts.push({id:doc.id, cnt:cnt, name:(doc.data()||{}).contract_name||doc.id});
+    });
+    if(hosts.length){
+      var msg='ℹ️ 이 거래처(NO '+no+')의 프린터 '+hosts.reduce(function(a,h){return a+h.cnt;},0)+'대가 '+
+        hosts.map(function(h){return h.name+'(NO '+h.id+')';}).join(', ')+' PC에서 함께 수집되고 있습니다. 그쪽 화면에서 관리하세요.';
+      st.style.color='#1e40af'; st.textContent=msg;
+    }
+  }).catch(function(){});
 }
 
 function edgeRenderScan(){
