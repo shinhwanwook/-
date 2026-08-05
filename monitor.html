@@ -3306,13 +3306,26 @@ function edgeLoadFound(){
     .then(function(r){ return r.json(); })
     .then(function(list){
       if(!Array.isArray(list)||!list.length){ box.innerHTML='<span style="color:var(--text3);font-size:12px">아직 발견된 기기가 없습니다. 스캔 시작 후 1~2분 기다렸다가 다시 조회하세요.</span>'; return; }
-      var html='<div style="font-size:12px;color:var(--text3);margin-bottom:6px">발견된 프린터 '+list.length+'대 — NO(임대번호) 확인 후 등록하세요. 한 PC에 여러 거래처가 있으면 프린터마다 실제 NO를 넣으면 됩니다.</div>';
+      var html='<div style="font-size:12px;color:var(--text3);margin-bottom:6px">발견된 프린터 '+list.length+'대 — NO는 <b>IP로 임대관리에서 자동</b>으로 채워집니다. 확인 후 등록하세요. (자동으로 안 채워진 것만 직접 입력)</div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--gray-bg)">'+
-        '<th style="padding:6px;text-align:left">NO</th><th style="padding:6px;text-align:left">IP</th><th style="padding:6px;text-align:left">모델명</th><th style="padding:6px;text-align:left">시리얼</th><th style="padding:6px"></th></tr></thead><tbody>';
+        '<th style="padding:6px;text-align:left">NO</th><th style="padding:6px;text-align:left">거래처명</th><th style="padding:6px;text-align:left">IP</th><th style="padding:6px;text-align:left">모델명</th><th style="padding:6px;text-align:left">시리얼</th><th style="padding:6px"></th></tr></thead><tbody>';
       var defNo = _edgeContract && _edgeContract.no!=null ? String(_edgeContract.no) : '';
+      // 발견 IP → 임대관리에서 그 IP를 가진 거래처의 실제 NO 찾기 (IP:포트 제거 후 비교)
+      function noByFoundIp(ip){
+        var pure=(ip||'').replace(/:\d+$/,'').trim();
+        if(!pure) return '';
+        var hit=(_allBillContracts||[]).find(function(c){
+          return (c.printer_ip||'').replace(/:\d+$/,'').trim()===pure;
+        });
+        return hit ? String(hit.no) : '';
+      }
       list.forEach(function(d,i){
+        var realNo = noByFoundIp(d.ip) || defNo;  // IP로 실제 NO 자동, 없으면 대표거래처
+        var cname='';
+        if(realNo){ var ch=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(realNo); }); if(ch) cname=ch.name||''; }
         html+='<tr>'+
-          '<td style="padding:6px"><input id="found-no-'+i+'" value="'+esc(defNo)+'" style="width:80px" placeholder="임대번호"></td>'+
+          '<td style="padding:6px"><input id="found-no-'+i+'" value="'+esc(realNo)+'" style="width:70px" placeholder="임대번호"></td>'+
+          '<td style="padding:6px;font-size:11px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
           '<td style="padding:6px">'+esc(d.ip||'')+'</td>'+
           '<td style="padding:6px">'+esc(d.model||'-')+'</td>'+
           '<td style="padding:6px;font-family:monospace">'+esc(d.serial||'-')+'</td>'+
@@ -3369,6 +3382,35 @@ function edgeAddRow(){ _edgeDevices.push({no:'',name:'',serial:'',ip:''}); edgeR
 function edgeDelRow(i){ _edgeDevices.splice(i,1); if(!_edgeDevices.length)_edgeDevices=[{no:'',name:'',serial:'',ip:''}]; edgeRenderDevices(); }
 
 // Firebase edge_targets/<NO> 저장
+// 거래처 연결에서 저장한 프린터 IP를 임대관리(CONTRACTS.printer_ip)에 자동 반영
+// 각 프린터의 no(임대번호)에 해당하는 거래처의 printer_ip 를 그 IP(:포트 제거)로 업데이트
+function edgeSyncRentalIp(devices){
+  if(!_fbReady||!db||!Array.isArray(devices)||!devices.length) return;
+  var ipByNo={};
+  devices.forEach(function(d){
+    var no=(d.no||'').trim(); var ip=(d.ip||'').replace(/:\d+$/,'').trim();
+    if(no && ip) ipByNo[no]=ip;
+  });
+  if(!Object.keys(ipByNo).length) return;
+  db.collection('rental').doc('main').get().then(function(snap){
+    if(!snap.exists) return;
+    var contracts=snap.data().CONTRACTS||[];
+    var changed=0;
+    contracts.forEach(function(c){
+      var no=String(c.no);
+      if(ipByNo[no]!==undefined && (c.printer_ip||'').trim()!==ipByNo[no]){
+        c.printer_ip=ipByNo[no];
+        changed++;
+      }
+    });
+    if(changed>0){
+      db.collection('rental').doc('main').update({CONTRACTS:contracts}).then(function(){
+        if(typeof loadBillContracts==='function') loadBillContracts();
+      }).catch(function(){});
+    }
+  }).catch(function(){});
+}
+
 function edgeSave(){
   if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
   if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도하세요.'); return; }
@@ -3388,6 +3430,7 @@ function edgeSave(){
     alert('저장 완료!\n\n'+(_edgeScanOn?'스캔이 켜져 있어 거래처 PC가 이 목록을 받아 수집합니다.':'스캔이 꺼져 있어 수집은 멈춰 있습니다.'));
     _edgeDevices=clean.length?clean:[{no:'',name:'',serial:'',ip:''}];
     if(typeof edgeLoadConnected==='function') edgeLoadConnected();  // 연결상태 갱신
+    edgeSyncRentalIp(clean);  // 임대관리 printer_ip 자동 동기화
     edgeRenderDevices();
   }).catch(function(e){
     alert('저장 실패: '+e.message);
