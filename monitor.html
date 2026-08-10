@@ -3155,6 +3155,7 @@ function initEdgePage(){
   document.getElementById('edge-empty').style.display='none';
   // 거래처 목록 로드 후 전체 표시 (모니터링 연동된 거래처가 첫 화면에 다 보이게)
   if(typeof loadBillContracts === 'function') loadBillContracts();
+  if(typeof loadAllDevices === 'function' && (typeof _devices==='undefined' || !_devices.length)) loadAllDevices(true);  // 단기(기기관리 직접추가) 거래처도 목록에 나오게
   edgeLoadConnected();  // 연결상태 미리 로드
   var tries=0;
   (function waitList(){
@@ -3192,6 +3193,17 @@ function edgeSearchContract(){
   var all=src.filter(function(c){
     return (c.monitoring_on!==undefined) ? !!c.monitoring_on
          : !!(c.printer_ip && String(c.printer_ip).trim());
+  });
+  // 기기관리에서 직접 추가한 거래처(임대관리에 없는 단기 대여 등)도 목록에 포함
+  var knownNos={}; all.forEach(function(c){ knownNos[String(c.no)]=true; });
+  var seen={};
+  (typeof _devices!=='undefined'?_devices:[]).forEach(function(d){
+    if(d.archived) return;
+    var no=String(d.contract_no||d.device_no||'').trim();
+    var nm=(d.name||'').trim();
+    if(!no || knownNos[no] || seen[no]) return;
+    seen[no]=true;
+    all.push({no:no, name:nm||('거래처 '+no), printer_ip:(d.ip||'').replace(/:\d+$/,''), _shortTerm:true});
   });
   // 검색어 없으면 전체 목록(첫 화면에 다 보이게), 있으면 필터
   var list = q ? all.filter(function(c){ return ((c.name||'')+(c.no||'')).toLowerCase().includes(q); }) : all.slice();
