@@ -85,6 +85,15 @@ thead th.pay-month-active{background:#166534!important;color:#fff!important;font
 /* ── 입금관리: 거래처(2번째) 고정 ── */
 #pay-table thead th:nth-child(2){position:sticky;top:0;left:0;z-index:20;background:#e8eef7}
 #pay-table tbody td:nth-child(2){position:sticky;left:0;z-index:5;background:#fff;box-shadow:2px 0 4px rgba(0,0,0,.06)}
+/* 방문/AS 이력 테이블: 거래처(2번째 칸)까지 왼쪽 고정, 내용 칸 넓게 */
+#svc-table{min-width:760px}
+#svc-table thead th:nth-child(2){position:sticky;top:0;left:0;z-index:20;background:#e8eef7}
+#svc-table tbody td:nth-child(2){position:sticky;left:0;z-index:5;background:#fff;box-shadow:2px 0 4px rgba(0,0,0,.06)}
+#svc-table th:nth-child(1),#svc-table td:nth-child(1){min-width:92px;white-space:nowrap}   /* 날짜 */
+#svc-table th:nth-child(2),#svc-table td:nth-child(2){min-width:120px}                      /* 거래처(고정) */
+#svc-table th:nth-child(3),#svc-table td:nth-child(3){min-width:56px;white-space:nowrap}    /* 유형 */
+#svc-table th:nth-child(4),#svc-table td:nth-child(4){min-width:240px}                      /* 내용(넓게) */
+#svc-table th:nth-child(5),#svc-table td:nth-child(5){min-width:80px}                       /* 담당자 */
 #pay-table tbody tr:hover td:nth-child(2){background:#f0f7ff}
 
 /* ── 세금계산서: 거래처(1번째) 고정 ── */
@@ -92,7 +101,22 @@ thead th.pay-month-active{background:#166534!important;color:#fff!important;font
 #tax-matrix-table tbody td:nth-child(2){position:sticky;left:0;z-index:5;background:#fff;box-shadow:2px 0 4px rgba(0,0,0,.06)}
 #tax-matrix-table tbody tr:hover td:nth-child(2){background:#f0f7ff}
 /* column resize */
-#page-list table{table-layout:fixed;min-width:800px}
+#page-list table{table-layout:fixed;min-width:800px;width:100%}
+/* 저장된 컬럼너비가 없는 PC(외부)에서도 균형있게 펴지도록 기본 너비 지정 */
+#list-thead-row th:nth-child(1){width:46px}    /* NO */
+#list-thead-row th:nth-child(2){width:88px}    /* 등록일 */
+#list-thead-row th:nth-child(3){width:150px}   /* 거래처 */
+#list-thead-row th:nth-child(4){width:70px}    /* 유형 */
+#list-thead-row th:nth-child(5){width:64px}    /* 납부일 */
+#list-thead-row th:nth-child(6){width:84px}    /* 렌탈금 */
+#list-thead-row th:nth-child(7){width:110px}   /* 전화번호 */
+#list-thead-row th:nth-child(8){width:80px}    /* A/S담당 */
+#list-thead-row th:nth-child(9){width:120px}   /* 기기 */
+#list-thead-row th:nth-child(10){width:52px}   /* 수량 */
+#list-thead-row th:nth-child(11){width:96px}   /* 최근 납부일 */
+#list-thead-row th:nth-child(12){width:96px}   /* 최근 방문일 */
+#list-thead-row th:nth-child(13){width:80px}   /* 납부상태 */
+#list-thead-row th:nth-child(14){width:70px}   /* 관리 */
 thead th.resizable{position:relative;user-select:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .col-resizer{position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;z-index:5}
 .col-resizer:hover,.col-resizer.dragging{background:rgba(26,86,160,.35)}
@@ -748,7 +772,7 @@ body.locked { overflow:hidden; }
     </div>
     <div class="info-row" id="svc-info"></div>
     <div class="tbl-wrap">
-      <table>
+      <table id="svc-table">
         <thead><tr><th onclick="sortSvc('date')">날짜</th><th>거래처</th><th>유형</th><th>내용</th><th>담당자</th><th>결과</th><th>관리</th></tr></thead>
         <tbody id="svc-body"></tbody>
       </table>
