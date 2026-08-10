@@ -3016,18 +3016,19 @@ function renderPayment(){
       if(_pf === 'paid' && !hasPay) return false;
       if(_pf === 'unpaid' && hasPay) return false;
     }
-    return !c.terminated;
+    return true;  // 해지 거래처도 표시(흐리게). 해지만/제외는 위 필터로 제어
   });
 
   const yr=toVal.slice(0,4); // 추가사용료 기준연도
   // 합계 카드 렌더링
-  var totalRent = list.reduce(function(s,c){ return s+(c.rent||0); }, 0);
+  var totalRent = list.reduce(function(s,c){ return s+(c.terminated?0:(c.rent||0)); }, 0);
   // ── 상단 요약 카드: '당월' 기준 집계 (표의 기간과 무관하게 이번 달만) ──
   var _now = new Date();
   var curMonth = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');  // "YYYY-MM"
   var totalPaidRent = 0, totalUnpaidRent = 0;
   var totalExtra = 0;
   list.forEach(function(c){
+    if(c.terminated) return;  // 해지 거래처는 합계에서 제외(표엔 흐리게 보이되 금액은 빼기)
     // 당월 완납 여부만 확인
     var paidThisMonth = !!(c.payments && c.payments[curMonth] && /^\d{4}/.test(c.payments[curMonth]));
     if(paidThisMonth) totalPaidRent += (c.rent||0);
