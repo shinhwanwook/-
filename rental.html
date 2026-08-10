@@ -2793,6 +2793,7 @@ function terminateContract(no){
   window._isLoading=false;
   applyFilters();   // filtered 갱신 + 내부에서 renderList()까지 실행
   renderList();     // [근본수정] 확실히 화면 다시 그림 (해지가 목록에서 즉시 사라지도록)
+  if(typeof renderPayment==='function') renderPayment();  // 입금관리도 자동 갱신(해지 흐리게 표시)
   saveToLocal();
   markUnsaved();
 }
@@ -2806,6 +2807,7 @@ function restoreContract(no){
   window._isLoading=false;
   applyFilters();
   renderList();
+  if(typeof renderPayment==='function') renderPayment();  // 입금관리 화면도 갱신
   saveToLocal();
   markUnsaved();
 }
@@ -3077,9 +3079,13 @@ function renderPayment(){
         <span class="badge ${cls}" style="border-radius:4px;font-size:11px">${label}</span>
       </td>`;
     }).join('');
-    return `<tr>
+    const _isTerm=!!c.terminated;
+    const _termStyle=_isTerm?'opacity:.55;background:#f9fafb;':'';
+    const _restoreBtn=(_isTerm && isAdmin)?`<button class="btn btn-xs btn-success" style="margin-left:6px;padding:1px 7px;font-size:10px" onclick="event.stopPropagation();confirmRestore(${c.no})">↩️ 복원</button>`:'';
+    const _termTag=_isTerm?`<span style="margin-left:4px;font-size:10px;color:#b91c1c;background:#fee2e2;padding:1px 5px;border-radius:3px">해지</span>`:'';
+    return `<tr style="${_termStyle}">
       <td style="color:#aaa">${c.no}</td>
-      <td style="font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--blue)" title="${esc(c.name)}${c.pay_memo?'\n📝 '+c.pay_memo:''}" onclick="openPayMemo(${c.no})">${esc(c.name)}${c.pay_memo?'<span style="margin-left:3px;font-size:10px">📝</span>':''}</td>
+      <td style="font-weight:600;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--blue)" title="${esc(c.name)}${c.pay_memo?'\n📝 '+c.pay_memo:''}"><span style="cursor:pointer" onclick="openPayMemo(${c.no})">${esc(c.name)}${c.pay_memo?'<span style="margin-left:3px;font-size:10px">📝</span>':''}</span>${_termTag}${_restoreBtn}</td>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis">${esc(c.manager||'-')}</td>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis" title="${esc(c.phone||'')}">${esc(c.phone||'-')}</td>
       <td style="font-weight:600;white-space:nowrap;${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</td>
