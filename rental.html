@@ -460,8 +460,8 @@ body.locked { overflow:hidden; }
         <option value="mid">3~7만원</option><option value="high">7만원 이상</option>
       </select>
       <select class="inp" id="flt-status">
+        <option value="all" selected>전체 (해지 포함)</option>
         <option value="active">정상 계약</option>
-        <option value="all">전체 (해지 포함)</option>
         <option value="terminated">해지된 계약</option>
       </select>
     </div>
@@ -701,7 +701,7 @@ body.locked { overflow:hidden; }
       <input class="inp" type="month" id="pay-from" style="width:130px">
       <label style="font-size:12px;color:var(--text3);white-space:nowrap">~</label>
       <input class="inp" type="month" id="pay-to" style="width:130px">
-      <select class="inp" id="pay-status"><option value="">전체</option><option value="miss">미납 항목만</option></select>
+      <select class="inp" id="pay-status"><option value="" selected>전체 (해지 포함)</option><option value="miss">미납 항목만</option><option value="terminated">해지 거래처</option></select>
     </div>
     <div class="tbl-wrap">
       <table id="pay-table">
@@ -2973,6 +2973,7 @@ function renderPayment(){
   const fromVal=document.getElementById('pay-from').value; // "YYYY-MM"
   const toVal=document.getElementById('pay-to').value;
   const onlyMiss=document.getElementById('pay-status').value==='miss';
+  const onlyTerminated=document.getElementById('pay-status').value==='terminated';
   const _pm = _paySelectedMonth || '';
   const _pf = _payFilterType || '';
 
@@ -3006,6 +3007,7 @@ function renderPayment(){
       if(!txt.includes(q)) return false;
     }
     if(onlyMiss){const hasMiss=keys.some(k=>!c.payments[k]);if(!hasMiss) return false;}
+    if(onlyTerminated && !c.terminated) return false;  // 해지 거래처만
     // 완납/미납 월별 필터
     if(_pm && _pf && _pf !== 'all'){
       var hasPay = !!(c.payments && c.payments[_pm]);
