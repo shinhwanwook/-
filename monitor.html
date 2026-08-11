@@ -558,6 +558,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th style="padding:8px;text-align:left;white-space:nowrap">프린터 이름</th>
             <th style="padding:8px;text-align:left;white-space:nowrap">시리얼 번호 (1차)</th>
             <th style="padding:8px;text-align:left;white-space:nowrap">IP 주소 (2차)</th>
+            <th style="padding:8px;text-align:center;white-space:nowrap">상태</th>
             <th style="padding:8px;text-align:center;white-space:nowrap">삭제</th>
           </tr></thead>
           <tbody id="edge-devices-body"></tbody>
@@ -3238,6 +3239,14 @@ function edgeSelectContract(c){
   document.getElementById('edge-empty').style.display='none';
   document.getElementById('edge-detail').style.display='';
   edgeLoadTargets(c.no);
+  // 온라인/오프라인 상태용 기기목록 확보 후 상태 칸 갱신
+  if(typeof _devices==='undefined' || !_devices.length){
+    if(typeof loadAllDevices==='function') loadAllDevices(true);
+    var _t=0, _iv=setInterval(function(){
+      _t++;
+      if((typeof _devices!=='undefined' && _devices.length) || _t>15){ clearInterval(_iv); edgeRenderDevices(); }
+    }, 300);
+  }
 }
 
 // Firebase edge_targets/<NO> 읽기
@@ -3492,18 +3501,34 @@ function edgeAddFound(i){
   alert('등록됨: '+(d.model||d.ip)+' (NO '+autoNo+')\n💾 저장을 눌러 반영하세요.');
 }
 
+// 등록 IP의 온라인/오프라인 상태 조회 (기기관리 _devices의 is_online 기준)
+function edgeIpStatus(ip){
+  var pure=(ip||'').replace(/:\d+$/,'').trim(); if(!pure) return null;
+  var dev=(typeof _devices!=='undefined'?_devices:[]).find(function(x){
+    return (x.ip||'').replace(/:\d+$/,'').trim()===pure;
+  });
+  if(!dev) return null;                 // 기기관리에 없음 → 미등록
+  return (typeof isOnline==='function' && isOnline(dev)) ? 'online' : 'offline';
+}
+
 function edgeRenderDevices(){
   var body=document.getElementById('edge-devices-body');
   body.innerHTML=_edgeDevices.map(function(d,i){
     // NO(임대번호)로 거래처명 자동 조회
     var cname='';
     if(d.no){ var hit=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(d.no); }); if(hit) cname=hit.name||''; }
+    // 등록된 IP의 온라인/오프라인 상태 (기기관리 _devices의 is_online 조회)
+    var _st=edgeIpStatus(d.ip);
+    var _stCell = _st==='online' ? '<span style="color:#16a34a;font-weight:600">🟢 온라인</span>'
+                : _st==='offline' ? '<span style="color:#dc2626;font-weight:600">🔴 오프라인</span>'
+                : '<span style="color:#94a3b8">⚪ 미등록</span>';
     return '<tr>'+
       '<td style="padding:6px"><input value="'+esc(d.no||'')+'" oninput="edgeEdit('+i+',\'no\',this.value)" onchange="edgeRenderDevices()" placeholder="임대번호" style="max-width:110px"></td>'+
       '<td style="padding:6px;font-size:12px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
       '<td style="padding:6px"><input value="'+esc(d.name||'')+'" oninput="edgeEdit('+i+',\'name\',this.value)" placeholder="예: 리코 3층"></td>'+
       '<td style="padding:6px"><input value="'+esc(d.serial||'')+'" oninput="edgeEdit('+i+',\'serial\',this.value)" placeholder="장비 시리얼"></td>'+
       '<td style="padding:6px"><input value="'+esc(d.ip||'')+'" oninput="edgeEdit('+i+',\'ip\',this.value)" placeholder="예: 192.168.0.50"></td>'+
+      '<td style="padding:6px;text-align:center;font-size:12px;white-space:nowrap">'+_stCell+'</td>'+
       '<td style="padding:6px;text-align:center"><button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="edgeDelRow('+i+')">🗑️</button></td>'+
     '</tr>';
   }).join('');
