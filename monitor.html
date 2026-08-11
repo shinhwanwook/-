@@ -3384,15 +3384,47 @@ function edgeLoadFound(){
         });
         return hit ? String(hit.no) : '';
       }
+      // IP로 못 찾을 때: 같은 모델명의 이미 등록된 프린터를 찾아 "IP 바뀐 기기" 후보로 제시
+      // (IP는 바뀌어도 모델명은 유지되므로. 같은 모델 여러대면 모두 후보로 안내)
+      function guessByModel(model, foundIp){
+        var m=(model||'').trim(); if(!m) return null;
+        var fip=(foundIp||'').replace(/:\d+$/,'').trim();
+        var cand=(_edgeDevices||[]).filter(function(x){
+          var xip=(x.ip||'').replace(/:\d+$/,'').trim();
+          return (x.name||'').trim()===m && xip!==fip;  // 같은 모델 + IP는 다름(바뀐 것)
+        });
+        return cand.length ? cand : null;
+      }
       list.forEach(function(d,i){
-        var realNo = noByFoundIp(d.ip) || defNo;  // IP로 실제 NO 자동, 없으면 대표거래처
-        var cname='';
-        if(realNo){ var ch=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(realNo); }); if(ch) cname=ch.name||''; }
+        var ipNo = noByFoundIp(d.ip);   // 임대관리 IP로 정확 매칭
+        var realNo, cname='', hintHtml='';
+        if(ipNo){
+          realNo = ipNo;
+          var ch=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(ipNo); });
+          if(ch) cname=ch.name||'';
+        } else {
+          // IP로 못 찾음 → 같은 모델명의 등록기기(IP 바뀐 후보) 확인
+          var cands=guessByModel(d.model, d.ip);
+          if(cands && cands.length===1){
+            // 후보 1대 → IP가 바뀐 것으로 보고 그 NO 자동 채움
+            realNo=String(cands[0].no||'');
+            var ch2=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(realNo); });
+            cname=(ch2?ch2.name:'')||cands[0].name||'';
+            hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ IP 바뀐 기기로 보임 (기존 '+esc(realNo)+(cname?' '+esc(cname):'')+', IP '+esc((cands[0].ip||'').replace(/:\d+$/,''))+'→'+esc((d.ip||'').replace(/:\d+$/,''))+')</div>';
+          } else if(cands && cands.length>1){
+            // 같은 모델 여러 대 → 직원이 고르게 후보 나열, NO는 비움
+            realNo=defNo;
+            hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 같은 모델 여러 대 — IP 바뀐 것일 수 있음. 후보: '+
+              cands.map(function(x){ return 'NO '+esc(String(x.no||''))+'(IP '+esc((x.ip||'').replace(/:\d+$/,''))+')'; }).join(', ')+'</div>';
+          } else {
+            realNo=defNo;  // 후보 없음 → 대표거래처
+          }
+        }
         html+='<tr>'+
           '<td style="padding:6px"><input id="found-no-'+i+'" value="'+esc(realNo)+'" style="width:70px" placeholder="임대번호"></td>'+
           '<td style="padding:6px;font-size:11px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
           '<td style="padding:6px">'+esc(d.ip||'')+'</td>'+
-          '<td style="padding:6px">'+esc(d.model||'-')+'</td>'+
+          '<td style="padding:6px">'+esc(d.model||'-')+hintHtml+'</td>'+
           '<td style="padding:6px;font-family:monospace">'+esc(d.serial||'-')+'</td>'+
           '<td style="padding:6px;text-align:center"><button class="btn btn-primary btn-xs" onclick=\'edgeAddFound('+i+')\'>등록</button></td>'+
         '</tr>';
