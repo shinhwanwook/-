@@ -3507,25 +3507,23 @@ function edgeAddFound(i){
 function edgeIpStatus(ip, no){
   var regIp=(ip||'').replace(/:\d+$/,'').trim();
   var devList=(typeof _devices!=='undefined'?_devices:[]);
-  // 1) 등록 IP와 같은 IP로 실제 수집 중인 기기가 있나?
+  // 1) 등록 IP와 같은 IP로 실제 수집 중인 기기
   var byIp = regIp ? devList.find(function(x){ return (x.ip||'').replace(/:\d+$/,'').trim()===regIp; }) : null;
-  // 2) 이 NO로 실제 수집 중인 기기 (IP는 바뀌었을 수 있음)
-  //    device_status 문서는 NO를 contract_no 에 담음(device_no 아님) → 둘 다 확인
+  // 2) 이 NO로 실제 수집 중인 기기 (device_status는 NO를 contract_no에 담음)
   var byNo = no ? devList.find(function(x){
     var xno = String(x.contract_no||x.device_no||'');
     return xno && xno===String(no);
   }) : null;
   // 등록 IP로 온라인 기기가 잡히면 → 정상 온라인
   if(byIp && typeof isOnline==='function' && isOnline(byIp)) return 'online';
-  // 등록 IP로는 없는데, 같은 NO가 다른 IP로 온라인 수집 중이면 → IP 불일치(바뀜)
-  if(byNo && typeof isOnline==='function' && isOnline(byNo)){
-    var actualIp=(byNo.ip||'').replace(/:\d+$/,'').trim();
-    if(actualIp && actualIp!==regIp) return {status:'mismatch', actualIp:actualIp};
-  }
+  // 등록 IP로는 못 찾아도, 이 NO가 온라인으로 수집 중이면 → 온라인
+  //  (device_status의 ip 필드는 vm-sync가 즉시 갱신 안 해 낡을 수 있으므로,
+  //   등록 IP를 실제값으로 넣었다는 전제에서 NO 온라인이면 온라인으로 판단)
+  if(byNo && typeof isOnline==='function' && isOnline(byNo)) return 'online';
   // 등록 IP로 기기는 있으나 오프라인
   if(byIp) return 'offline';
-  // 등록 IP로도 NO로도 못 찾음
-  if(byNo) return 'offline';   // NO는 있으나 오프라인
+  // NO는 있으나 오프라인
+  if(byNo) return 'offline';
   return null;                 // 미등록
 }
 
