@@ -3365,6 +3365,8 @@ function edgeStopScan(){
 // 서버(VM)에서 이 거래처가 발견한 프린터(시리얼·모델명·IP) 조회
 function edgeLoadFound(){
   if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
+  // 온라인/오프라인 상태 조회용 기기목록 확보 (IP 바뀐 기기 추적에 필요)
+  if(typeof loadAllDevices==='function' && (typeof _devices==='undefined' || !_devices.length)) loadAllDevices(true);
   var box=document.getElementById('edge-found');
   box.innerHTML='<span style="color:var(--text3);font-size:12px">조회 중…</span>';
   fetch('https://api.ink79.kr/api/scan-results/'+encodeURIComponent(_edgeContract.no)+'?token=ink79-edge-2026')
@@ -3396,11 +3398,13 @@ function edgeLoadFound(){
         return isOnline(dev) ? 'online' : 'offline';
       }
       function guessByModel(model, foundIp){
-        var m=(model||'').trim(); if(!m) return null;
+        var m=(model||'').trim().toLowerCase(); if(!m) return null;
         var fip=(foundIp||'').replace(/:\d+$/,'').trim();
         var cand=(_edgeDevices||[]).filter(function(x){
           var xip=(x.ip||'').replace(/:\d+$/,'').trim();
-          return (x.name||'').trim()===m && xip!==fip;  // 같은 모델 + IP는 다름(바뀐 것)
+          var xm=(x.name||'').trim().toLowerCase();
+          if(!xm || xip===fip) return false;           // 자기 자신(같은 IP) 제외
+          return xm===m || xm.indexOf(m)>=0 || m.indexOf(xm)>=0;  // 모델명 유연 매칭
         }).map(function(x){
           x._online=ipOnlineStatus(x.ip);  // 'online'|'offline'|null
           return x;
@@ -3447,10 +3451,14 @@ function edgeLoadFound(){
             realNo=defNo;  // 후보 없음 → 대표거래처
           }
         }
+        var _ipSt=ipOnlineStatus(d.ip);  // 발견된 IP 자체의 온/오프 상태
+        var _ipStBadge = _ipSt==='online' ? '<span style="color:#16a34a;font-size:11px;margin-left:4px">🟢온라인</span>'
+                       : _ipSt==='offline' ? '<span style="color:#dc2626;font-size:11px;margin-left:4px">🔴오프라인</span>'
+                       : '<span style="color:#94a3b8;font-size:11px;margin-left:4px">⚪미등록</span>';
         html+='<tr>'+
           '<td style="padding:6px"><input id="found-no-'+i+'" value="'+esc(realNo)+'" style="width:70px" placeholder="임대번호"></td>'+
           '<td style="padding:6px;font-size:11px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
-          '<td style="padding:6px">'+esc(d.ip||'')+'</td>'+
+          '<td style="padding:6px">'+esc(d.ip||'')+_ipStBadge+'</td>'+
           '<td style="padding:6px">'+esc(d.model||'-')+hintHtml+'</td>'+
           '<td style="padding:6px;font-family:monospace">'+esc(d.serial||'-')+'</td>'+
           '<td style="padding:6px;text-align:center"><button class="btn btn-primary btn-xs" onclick=\'edgeAddFound('+i+')\'>등록</button></td>'+
