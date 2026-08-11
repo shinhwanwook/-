@@ -3386,12 +3386,29 @@ function edgeLoadFound(){
       }
       // IP로 못 찾을 때: 같은 모델명의 이미 등록된 프린터를 찾아 "IP 바뀐 기기" 후보로 제시
       // (IP는 바뀌어도 모델명은 유지되므로. 같은 모델 여러대면 모두 후보로 안내)
+      // 등록기기 IP로 기기관리(_devices)에서 온라인 여부 조회 (IP 바뀌면 옛IP는 오프라인)
+      function ipOnlineStatus(ip){
+        var pure=(ip||'').replace(/:\d+$/,'').trim(); if(!pure) return null;
+        var dev=(typeof _devices!=='undefined'?_devices:[]).find(function(x){
+          return (x.ip||'').replace(/:\d+$/,'').trim()===pure;
+        });
+        if(!dev) return null;               // 기기관리에 없음 → 상태 모름
+        return isOnline(dev) ? 'online' : 'offline';
+      }
       function guessByModel(model, foundIp){
         var m=(model||'').trim(); if(!m) return null;
         var fip=(foundIp||'').replace(/:\d+$/,'').trim();
         var cand=(_edgeDevices||[]).filter(function(x){
           var xip=(x.ip||'').replace(/:\d+$/,'').trim();
           return (x.name||'').trim()===m && xip!==fip;  // 같은 모델 + IP는 다름(바뀐 것)
+        }).map(function(x){
+          x._online=ipOnlineStatus(x.ip);  // 'online'|'offline'|null
+          return x;
+        });
+        // IP 바뀐 기기는 옛 IP가 오프라인 → 오프라인 후보를 앞으로 정렬(우선 제시)
+        cand.sort(function(a,b){
+          var ao=(a._online==='offline')?0:1, bo=(b._online==='offline')?0:1;
+          return ao-bo;
         });
         return cand.length ? cand : null;
       }
@@ -3410,12 +3427,22 @@ function edgeLoadFound(){
             realNo=String(cands[0].no||'');
             var ch2=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(realNo); });
             cname=(ch2?ch2.name:'')||cands[0].name||'';
-            hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ IP 바뀐 기기로 보임 (기존 '+esc(realNo)+(cname?' '+esc(cname):'')+', IP '+esc((cands[0].ip||'').replace(/:\d+$/,''))+'→'+esc((d.ip||'').replace(/:\d+$/,''))+')</div>';
+            var st1=cands[0]._online;
+            var stTxt1 = st1==='offline' ? ' <b style="color:#dc2626">[기존 오프라인]</b>' : (st1==='online'?' <span style="color:#16a34a">[기존 온라인]</span>':'');
+            hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ IP 바뀐 기기로 보임 (기존 '+esc(realNo)+(cname?' '+esc(cname):'')+', IP '+esc((cands[0].ip||'').replace(/:\d+$/,''))+'→'+esc((d.ip||'').replace(/:\d+$/,''))+')'+stTxt1+'</div>';
           } else if(cands && cands.length>1){
-            // 같은 모델 여러 대 → 직원이 고르게 후보 나열, NO는 비움
-            realNo=defNo;
-            hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 같은 모델 여러 대 — IP 바뀐 것일 수 있음. 후보: '+
-              cands.map(function(x){ return 'NO '+esc(String(x.no||''))+'(IP '+esc((x.ip||'').replace(/:\d+$/,''))+')'; }).join(', ')+'</div>';
+            // 같은 모델 여러 대 → 오프라인(=IP 바뀐 유력) 우선 안내. 오프라인 1대뿐이면 그 NO 자동채움
+            var offs=cands.filter(function(x){ return x._online==='offline'; });
+            if(offs.length===1){
+              realNo=String(offs[0].no||'');
+              var ch3=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(realNo); });
+              cname=(ch3?ch3.name:'')||offs[0].name||'';
+              hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ IP 바뀐 기기로 보임 (오프라인인 기존 '+esc(realNo)+(cname?' '+esc(cname):'')+', IP '+esc((offs[0].ip||'').replace(/:\d+$/,''))+'→'+esc((d.ip||'').replace(/:\d+$/,''))+')</div>';
+            } else {
+              realNo=defNo;
+              hintHtml='<div style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 같은 모델 여러 대 — 후보: '+
+                cands.map(function(x){ var s=x._online==='offline'?'🔴':(x._online==='online'?'🟢':'⚪'); return s+'NO '+esc(String(x.no||''))+'(IP '+esc((x.ip||'').replace(/:\d+$/,''))+')'; }).join(', ')+' — 🔴오프라인이 IP 바뀐 기기일 가능성 높음</div>';
+            }
           } else {
             realNo=defNo;  // 후보 없음 → 대표거래처
           }
