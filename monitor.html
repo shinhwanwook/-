@@ -3509,8 +3509,12 @@ function edgeIpStatus(ip, no){
   var devList=(typeof _devices!=='undefined'?_devices:[]);
   // 1) 등록 IP와 같은 IP로 실제 수집 중인 기기가 있나?
   var byIp = regIp ? devList.find(function(x){ return (x.ip||'').replace(/:\d+$/,'').trim()===regIp; }) : null;
-  // 2) 이 NO(device_no)로 실제 수집 중인 기기 (IP는 바뀌었을 수 있음)
-  var byNo = no ? devList.find(function(x){ return String(x.device_no||'')===String(no); }) : null;
+  // 2) 이 NO로 실제 수집 중인 기기 (IP는 바뀌었을 수 있음)
+  //    device_status 문서는 NO를 contract_no 에 담음(device_no 아님) → 둘 다 확인
+  var byNo = no ? devList.find(function(x){
+    var xno = String(x.contract_no||x.device_no||'');
+    return xno && xno===String(no);
+  }) : null;
   // 등록 IP로 온라인 기기가 잡히면 → 정상 온라인
   if(byIp && typeof isOnline==='function' && isOnline(byIp)) return 'online';
   // 등록 IP로는 없는데, 같은 NO가 다른 IP로 온라인 수집 중이면 → IP 불일치(바뀜)
