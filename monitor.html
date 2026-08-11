@@ -3501,14 +3501,28 @@ function edgeAddFound(i){
   alert('등록됨: '+(d.model||d.ip)+' (NO '+autoNo+')\n💾 저장을 눌러 반영하세요.');
 }
 
-// 등록 IP의 온라인/오프라인 상태 조회 (기기관리 _devices의 is_online 기준)
-function edgeIpStatus(ip){
-  var pure=(ip||'').replace(/:\d+$/,'').trim(); if(!pure) return null;
-  var dev=(typeof _devices!=='undefined'?_devices:[]).find(function(x){
-    return (x.ip||'').replace(/:\d+$/,'').trim()===pure;
-  });
-  if(!dev) return null;                 // 기기관리에 없음 → 미등록
-  return (typeof isOnline==='function' && isOnline(dev)) ? 'online' : 'offline';
+// 등록 IP의 온라인/오프라인 상태 조회 + 실제 수집 IP와 불일치 감지
+// 반환: 'online' | 'offline' | 'mismatch' | null(미등록)
+// mismatch = 등록된 IP와 실제 수집 중인 IP가 다름 (IP가 바뀐 상태)
+function edgeIpStatus(ip, no){
+  var regIp=(ip||'').replace(/:\d+$/,'').trim();
+  var devList=(typeof _devices!=='undefined'?_devices:[]);
+  // 1) 등록 IP와 같은 IP로 실제 수집 중인 기기가 있나?
+  var byIp = regIp ? devList.find(function(x){ return (x.ip||'').replace(/:\d+$/,'').trim()===regIp; }) : null;
+  // 2) 이 NO(device_no)로 실제 수집 중인 기기 (IP는 바뀌었을 수 있음)
+  var byNo = no ? devList.find(function(x){ return String(x.device_no||'')===String(no); }) : null;
+  // 등록 IP로 온라인 기기가 잡히면 → 정상 온라인
+  if(byIp && typeof isOnline==='function' && isOnline(byIp)) return 'online';
+  // 등록 IP로는 없는데, 같은 NO가 다른 IP로 온라인 수집 중이면 → IP 불일치(바뀜)
+  if(byNo && typeof isOnline==='function' && isOnline(byNo)){
+    var actualIp=(byNo.ip||'').replace(/:\d+$/,'').trim();
+    if(actualIp && actualIp!==regIp) return {status:'mismatch', actualIp:actualIp};
+  }
+  // 등록 IP로 기기는 있으나 오프라인
+  if(byIp) return 'offline';
+  // 등록 IP로도 NO로도 못 찾음
+  if(byNo) return 'offline';   // NO는 있으나 오프라인
+  return null;                 // 미등록
 }
 
 function edgeRenderDevices(){
@@ -3517,11 +3531,18 @@ function edgeRenderDevices(){
     // NO(임대번호)로 거래처명 자동 조회
     var cname='';
     if(d.no){ var hit=(_allBillContracts||[]).find(function(c){ return String(c.no)===String(d.no); }); if(hit) cname=hit.name||''; }
-    // 등록된 IP의 온라인/오프라인 상태 (기기관리 _devices의 is_online 조회)
-    var _st=edgeIpStatus(d.ip);
-    var _stCell = _st==='online' ? '<span style="color:#16a34a;font-weight:600">🟢 온라인</span>'
-                : _st==='offline' ? '<span style="color:#dc2626;font-weight:600">🔴 오프라인</span>'
-                : '<span style="color:#94a3b8">⚪ 미등록</span>';
+    // 등록된 IP의 온라인/오프라인 상태 + 실제 수집 IP 불일치 감지
+    var _st=edgeIpStatus(d.ip, d.no);
+    var _stCell;
+    if(_st && _st.status==='mismatch'){
+      _stCell='<span style="color:#b45309;font-weight:600" title="등록된 IP와 실제 수집 IP가 다릅니다. IP 칸을 실제값으로 수정하세요.">⚠️ IP 바뀜<br><span style="font-size:11px;font-weight:400">실제: '+esc(_st.actualIp)+'</span></span>';
+    } else if(_st==='online'){
+      _stCell='<span style="color:#16a34a;font-weight:600">🟢 온라인</span>';
+    } else if(_st==='offline'){
+      _stCell='<span style="color:#dc2626;font-weight:600">🔴 오프라인</span>';
+    } else {
+      _stCell='<span style="color:#94a3b8">⚪ 미등록</span>';
+    }
     return '<tr>'+
       '<td style="padding:6px"><input value="'+esc(d.no||'')+'" oninput="edgeEdit('+i+',\'no\',this.value)" onchange="edgeRenderDevices()" placeholder="임대번호" style="max-width:110px"></td>'+
       '<td style="padding:6px;font-size:12px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
