@@ -94,6 +94,9 @@ thead th.pay-month-active{background:#166534!important;color:#fff!important;font
 #svc-table th:nth-child(3),#svc-table td:nth-child(3){min-width:56px;white-space:nowrap}    /* 유형 */
 #svc-table th:nth-child(4),#svc-table td:nth-child(4){min-width:240px}                      /* 내용(넓게) */
 #svc-table th:nth-child(5),#svc-table td:nth-child(5){min-width:80px}                       /* 담당자 */
+/* 거래처별 이력 모달 테이블: 내용 칸 넓게, 가로 스크롤 */
+#svc-detail-table{min-width:660px}
+#svc-detail-table td:nth-child(3){min-width:240px;white-space:normal;word-break:break-word}
 #pay-table tbody tr:hover td:nth-child(2){background:#f0f7ff}
 
 /* ── 세금계산서: 거래처(1번째) 고정 ── */
@@ -997,12 +1000,12 @@ body.locked { overflow:hidden; }
         <button class="btn btn-primary btn-sm" id="svc-detail-add-btn" onclick="svcDetailAdd()">＋ 이력 등록</button>
       </div>
       <div class="tbl-wrap" style="max-height:420px">
-        <table>
+        <table id="svc-detail-table">
           <thead>
             <tr>
               <th style="min-width:90px">날짜</th>
               <th style="min-width:60px">유형</th>
-              <th>내용</th>
+              <th style="min-width:240px">내용</th>
               <th style="min-width:70px">담당자</th>
               <th style="min-width:80px">처리결과</th>
               <th style="min-width:80px">관리</th>
