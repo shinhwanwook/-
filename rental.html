@@ -583,12 +583,15 @@ body.locked { overflow:hidden; }
                 <option value="">선택안함</option>
                 <option value="ricoh">리코 (RICOH)</option>
                 <option value="kyocera">교세라 (Kyocera)</option>
-                <option value="hp">HP</option>
+                <option value="hp">HP (휴렛팩커드)</option>
                 <option value="samsung">삼성 (Samsung)</option>
                 <option value="canon">캐논 (Canon)</option>
+                <option value="epson">엡손 (EPSON)</option>
+                <option value="brother">브라더 (brother)</option>
+                <option value="oki">오키 (OKI)</option>
                 <option value="__custom__">✏️ 직접입력</option>
               </select>
-              <input class="inp" id="f-printer-type-custom" placeholder="제조사 직접 입력 (예: 브라더, 신도리코)" style="display:none;margin-top:6px">
+              <input class="inp" id="f-printer-type-custom" placeholder="제조사 직접 입력 후 Enter (비우고 Enter=목록으로)" style="display:none" onkeydown="if(event.key==='Escape'){printerTypeBackToList();} else if(event.key==='Enter' && !this.value.trim()){printerTypeBackToList();}">
             </div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:13px;color:#166534;font-weight:600">
@@ -603,22 +606,8 @@ body.locked { overflow:hidden; }
 
         <!-- 약정매수 / 추가장당 단가 -->
         <div class="form-group form-full" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px">
-          <label style="font-size:13px;font-weight:700;color:#1a56a0;margin-bottom:10px;display:block">🖨️ 약정매수 &amp; 추가장당 단가</label>
+          <label style="font-size:13px;font-weight:700;color:#1a56a0;margin-bottom:10px;display:block">🖨️ 시작매수 · 약정매수 &amp; 추가장당 단가</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group" style="margin:0">
-              <label>약정매수 — 흑백 (매)</label>
-              <div style="display:flex;align-items:center;gap:4px">
-                <input class="inp" id="f-quota-bw" type="text" value="0" placeholder="" oninput="fmtNum(this)" style="text-align:right">
-                <span style="white-space:nowrap;font-weight:600;color:var(--text2)">장</span>
-              </div>
-            </div>
-            <div class="form-group" style="margin:0">
-              <label>약정매수 — 컬러 (매)</label>
-              <div style="display:flex;align-items:center;gap:4px">
-                <input class="inp" id="f-quota-color" type="text" value="0" placeholder="" oninput="fmtNum(this)" style="text-align:right">
-                <span style="white-space:nowrap;font-weight:600;color:var(--text2)">장</span>
-              </div>
-            </div>
             <div class="form-group" style="margin:0">
               <label>시작매수 — 흑백 (매)</label>
               <div style="display:flex;align-items:center;gap:4px">
@@ -630,6 +619,20 @@ body.locked { overflow:hidden; }
               <label>시작매수 — 컬러 (매)</label>
               <div style="display:flex;align-items:center;gap:4px">
                 <input class="inp" id="f-start-color" type="text" value="0" placeholder="" oninput="fmtNum(this)" style="text-align:right">
+                <span style="white-space:nowrap;font-weight:600;color:var(--text2)">장</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>약정매수 — 흑백 (매)</label>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input class="inp" id="f-quota-bw" type="text" value="0" placeholder="" oninput="fmtNum(this)" style="text-align:right">
+                <span style="white-space:nowrap;font-weight:600;color:var(--text2)">장</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>약정매수 — 컬러 (매)</label>
+              <div style="display:flex;align-items:center;gap:4px">
+                <input class="inp" id="f-quota-color" type="text" value="0" placeholder="" oninput="fmtNum(this)" style="text-align:right">
                 <span style="white-space:nowrap;font-weight:600;color:var(--text2)">장</span>
               </div>
             </div>
@@ -1992,8 +1995,20 @@ function onPrinterTypeChange(){
   var sel = document.getElementById('f-printer-type');
   var box = document.getElementById('f-printer-type-custom');
   if(!sel || !box) return;
-  if(sel.value === '__custom__'){ box.style.display=''; box.focus(); }
-  else { box.style.display='none'; box.value=''; }
+  if(sel.value === '__custom__'){
+    sel.style.display='none';          // 셀렉트 숨기고
+    box.style.display='';              // 같은 자리에 입력칸 표시
+    box.style.marginTop='0';
+    box.focus();
+  } else { box.style.display='none'; box.value=''; }
+}
+// 직접입력 칸에서 제조사 목록으로 되돌리기 (셀렉트 다시 보이게)
+function printerTypeBackToList(){
+  var sel = document.getElementById('f-printer-type');
+  var box = document.getElementById('f-printer-type-custom');
+  if(!sel||!box) return;
+  box.style.display='none'; box.value='';
+  sel.style.display=''; sel.value=''; sel.focus();
 }
 // 저장용: 실제 제조사 값 (직접입력이면 그 텍스트, 아니면 셀렉트 값)
 function getPrinterTypeValue(){
@@ -2008,13 +2023,15 @@ function setPrinterTypeValue(val){
   var box = document.getElementById('f-printer-type-custom');
   if(!sel) return;
   val = val || '';
-  var known = ['','ricoh','kyocera','hp','samsung','canon'];
+  var known = ['','ricoh','kyocera','hp','samsung','canon','epson','brother','oki'];
   if(val !== '' && known.indexOf(val) === -1){
     // 목록에 없는 값 = 직접입력했던 제조사
     sel.value = '__custom__';
-    if(box){ box.value = val; box.style.display=''; }
+    sel.style.display='none';
+    if(box){ box.value = val; box.style.display=''; box.style.marginTop='0'; }
   } else {
     sel.value = val;
+    sel.style.display='';
     if(box){ box.value=''; box.style.display='none'; }
   }
 }
