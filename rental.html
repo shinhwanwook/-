@@ -503,6 +503,22 @@ body.locked { overflow:hidden; }
 </div>
 
 <!-- ══ MODAL: 세금계산서 메모 ══ -->
+<!-- ══ 자동 로그아웃 경고 모달 ══ -->
+<div class="modal-bg" id="autologout-modal" style="z-index:99999">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="padding:24px 20px">
+      <div style="font-size:40px;margin-bottom:8px">⏰</div>
+      <h3 style="margin:0 0 8px;font-size:18px">자동 로그아웃 안내</h3>
+      <p style="margin:0 0 4px;color:var(--text2);font-size:14px">활동이 없어 곧 로그아웃됩니다.</p>
+      <p style="margin:0 0 18px;font-size:22px;font-weight:700;color:#dc2626"><span id="autologout-count">60</span>초 후 로그아웃</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" style="flex:1;padding:11px" onclick="autoLogoutExtend()">🔄 연장하기</button>
+        <button class="btn btn-ghost" style="flex:1;padding:11px" onclick="autoLogoutNow()">🚪 로그아웃</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="tax-memo-modal">
   <div class="modal" style="max-width:420px">
     <div class="modal-head">
@@ -2662,27 +2678,61 @@ function adminLogout(){
 var _autoLogoutTimer = null;
 var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
 
+var _autoLogoutWarnTimer = null;   // 경고창 띄우는 타이머
+var _autoLogoutCountTimer = null;  // 1분 카운트다운
+var _AUTO_WARN_MS = _AUTO_LOGOUT_MS - 60*1000;  // 로그아웃 1분 전 경고
+
 function resetAutoLogout(){
+  // 경고창이 떠 있는 동안엔 리셋 안 함(사용자가 선택해야 함)
+  var wm=document.getElementById('autologout-modal');
+  if(wm && wm.classList.contains('open')) return;
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
-  _autoLogoutTimer = setTimeout(function(){
+  if(_autoLogoutWarnTimer) clearTimeout(_autoLogoutWarnTimer);
+  // 9분 후 경고창 표시
+  _autoLogoutWarnTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
-      // [수정] 미저장 변경사항이 있으면 먼저 클라우드에 저장하고 로그아웃
-      //   기존에는 경고 없이 로그아웃 -> 재로그인시 Firebase에서 로드 -> 입력 내용 소실
-      if(_hasUnsaved && window._fbReady && window._fbSave){
-        showSaveStatus('⏳ 자동 로그아웃 전 저장 중...', '#93c5fd');
-        saveToApi(function(ok){
-          _hasUnsaved = !ok;
-          alert(ok
-            ? '10분 동안 활동이 없어 자동 로그아웃 됩니다.\n(변경사항은 저장되었습니다)'
-            : '10분 동안 활동이 없어 자동 로그아웃 됩니다.\n⚠ 저장에 실패했습니다. 다시 로그인 후 확인해 주세요.');
-          adminLogout();
-        });
-        return;
-      }
-      alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
-      adminLogout();
+      showAutoLogoutWarning();
     }
-  }, _AUTO_LOGOUT_MS);
+  }, _AUTO_WARN_MS);
+}
+
+// 경고창 표시 + 60초 카운트다운
+function showAutoLogoutWarning(){
+  var wm=document.getElementById('autologout-modal');
+  var cd=document.getElementById('autologout-count');
+  if(!wm||!cd) { doAutoLogout(); return; }
+  var left=60; cd.textContent=left;
+  wm.classList.add('open');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  _autoLogoutCountTimer=setInterval(function(){
+    left--; cd.textContent=left;
+    if(left<=0){ clearInterval(_autoLogoutCountTimer); autoLogoutNow(); }
+  }, 1000);
+}
+
+// 연장하기: 경고 닫고 타이머 재시작
+function autoLogoutExtend(){
+  var wm=document.getElementById('autologout-modal');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  if(wm) wm.classList.remove('open');
+  resetAutoLogout();
+}
+// 지금 로그아웃(버튼 or 카운트다운 종료)
+function autoLogoutNow(){
+  var wm=document.getElementById('autologout-modal');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  if(wm) wm.classList.remove('open');
+  doAutoLogout();
+}
+// 실제 로그아웃(미저장 있으면 저장 후)
+function doAutoLogout(){
+  if(document.getElementById('app-wrapper').style.display === 'none') return;
+  if(_hasUnsaved && window._fbReady && window._fbSave){
+    showSaveStatus('⏳ 자동 로그아웃 전 저장 중...', '#93c5fd');
+    saveToApi(function(ok){ _hasUnsaved = !ok; adminLogout(); });
+    return;
+  }
+  adminLogout();
 }
 
 // 마우스/키보드/터치 이벤트 시 타이머 리셋
