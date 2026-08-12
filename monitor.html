@@ -307,6 +307,21 @@ tbody td{padding:9px 12px;vertical-align:middle}
 </style>
 </head>
 <body>
+<!-- ══ 자동 로그아웃 경고 모달 ══ -->
+<div class="modal-bg" id="autologout-modal" style="z-index:99999">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="padding:24px 20px">
+      <div style="font-size:40px;margin-bottom:8px">⏰</div>
+      <h3 style="margin:0 0 8px;font-size:18px">자동 로그아웃 안내</h3>
+      <p style="margin:0 0 4px;color:#64748b;font-size:14px">활동이 없어 곧 로그아웃됩니다.</p>
+      <p style="margin:0 0 18px;font-size:22px;font-weight:700;color:#dc2626"><span id="autologout-count">60</span>초 후 로그아웃</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" style="flex:1;padding:11px" onclick="autoLogoutExtend()">🔄 연장하기</button>
+        <button class="btn btn-ghost" style="flex:1;padding:11px" onclick="autoLogoutNow()">🚪 로그아웃</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
@@ -1269,14 +1284,45 @@ function doLogout(){
 var _autoLogoutTimer = null;
 var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
 
+var _autoLogoutWarnTimer = null;
+var _autoLogoutCountTimer = null;
+var _AUTO_WARN_MS = _AUTO_LOGOUT_MS - 60*1000;  // 로그아웃 1분 전 경고
+
 function resetAutoLogout(){
+  var wm=document.getElementById('autologout-modal');
+  if(wm && wm.classList.contains('open')) return;  // 경고창 떠있으면 리셋 안함
   if(_autoLogoutTimer) clearTimeout(_autoLogoutTimer);
-  _autoLogoutTimer = setTimeout(function(){
+  if(_autoLogoutWarnTimer) clearTimeout(_autoLogoutWarnTimer);
+  _autoLogoutWarnTimer = setTimeout(function(){
     if(document.getElementById('app-wrapper').style.display !== 'none'){
-      alert('10분 동안 활동이 없어 자동 로그아웃 됩니다.');
-      doLogout();
+      showAutoLogoutWarning();
     }
-  }, _AUTO_LOGOUT_MS);
+  }, _AUTO_WARN_MS);
+}
+
+function showAutoLogoutWarning(){
+  var wm=document.getElementById('autologout-modal');
+  var cd=document.getElementById('autologout-count');
+  if(!wm||!cd){ doLogout(); return; }
+  var left=60; cd.textContent=left;
+  wm.classList.add('open');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  _autoLogoutCountTimer=setInterval(function(){
+    left--; cd.textContent=left;
+    if(left<=0){ clearInterval(_autoLogoutCountTimer); autoLogoutNow(); }
+  }, 1000);
+}
+function autoLogoutExtend(){
+  var wm=document.getElementById('autologout-modal');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  if(wm) wm.classList.remove('open');
+  resetAutoLogout();
+}
+function autoLogoutNow(){
+  var wm=document.getElementById('autologout-modal');
+  if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
+  if(wm) wm.classList.remove('open');
+  if(document.getElementById('app-wrapper').style.display !== 'none') doLogout();
 }
 
 // 자동로그아웃은 로그인 성공 후 startAutoLogout() 호출로 시작
