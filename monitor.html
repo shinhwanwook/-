@@ -1002,20 +1002,20 @@ tbody td{padding:9px 12px;vertical-align:middle}
           </select>
         </div>
         <div class="form-group2">
-          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 흑백 (매/월)</label>
-          <input class="inp" id="dm-quota-bw" type="number" value="0" min="0" style="width:100%">
-        </div>
-        <div class="form-group2">
-          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 컬러 (매/월)</label>
-          <input class="inp" id="dm-quota-color" type="number" value="0" min="0" style="width:100%">
-        </div>
-        <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">시작매수 흑백</label>
           <input class="inp" id="dm-start-bw" type="number" value="0" min="0" style="width:100%">
         </div>
         <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 흑백 (매/월)</label>
+          <input class="inp" id="dm-quota-bw" type="number" value="0" min="0" style="width:100%">
+        </div>
+        <div class="form-group2">
           <label style="font-size:12px;font-weight:600;color:var(--text3)">시작매수 컬러</label>
           <input class="inp" id="dm-start-color" type="number" value="0" min="0" style="width:100%">
+        </div>
+        <div class="form-group2">
+          <label style="font-size:12px;font-weight:600;color:var(--text3)">약정매수 컬러 (매/월)</label>
+          <input class="inp" id="dm-quota-color" type="number" value="0" min="0" style="width:100%">
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1d4ed8">
@@ -2741,10 +2741,36 @@ function saveDeviceModal(){
   }
 
   db.collection('device_status').doc(docId).set(data,{merge:true}).then(function(){
+    syncRentalCounts(data);  // 시작매수·약정매수를 임대관리에도 반영
     closeDeviceModal();
     loadAllDevices(true);
     renderDeviceManager();
   });
+}
+
+// 모니터링 기기수정의 시작매수·약정매수를 임대관리(CONTRACTS)에 자동 반영
+// contract_no(임대번호)로 거래처를 찾아 quota/start 값이 다를 때만 업데이트
+function syncRentalCounts(data){
+  if(!_fbReady||!db) return;
+  var no=(data.contract_no||'').trim();
+  if(!no || !/^\d+$/.test(no)) return;  // 유효한 임대번호만 (단기 9000번대 등도 숫자면 OK)
+  db.collection('rental').doc('main').get().then(function(snap){
+    if(!snap.exists) return;
+    var contracts=snap.data().CONTRACTS||[];
+    var changed=false;
+    contracts.forEach(function(c){
+      if(String(c.no)!==no) return;
+      var qb=parseInt(data.quota_bw)||0, qc=parseInt(data.quota_color)||0;
+      var sb=parseInt(data.start_bw)||0, sc=parseInt(data.start_color)||0;
+      if((parseInt(c.quota_bw)||0)!==qb){ c.quota_bw=qb; changed=true; }
+      if((parseInt(c.quota_color)||0)!==qc){ c.quota_color=qc; changed=true; }
+      if((parseInt(c.start_bw)||0)!==sb){ c.start_bw=sb; changed=true; }
+      if((parseInt(c.start_color)||0)!==sc){ c.start_color=sc; changed=true; }
+    });
+    if(changed){
+      db.collection('rental').doc('main').update({CONTRACTS:contracts}).catch(function(){});
+    }
+  }).catch(function(){});
 }
 
 // 거래처 해지 (데이터 보존 — 수집만 중단, archived 표시)
