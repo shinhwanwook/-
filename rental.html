@@ -510,7 +510,7 @@ body.locked { overflow:hidden; }
       <div style="font-size:40px;margin-bottom:8px">⏰</div>
       <h3 style="margin:0 0 8px;font-size:18px">자동 로그아웃 안내</h3>
       <p style="margin:0 0 4px;color:var(--text2);font-size:14px">활동이 없어 곧 로그아웃됩니다.</p>
-      <p style="margin:0 0 18px;font-size:22px;font-weight:700;color:#dc2626"><span id="autologout-count">60</span>초 후 로그아웃</p>
+      <p style="margin:0 0 18px;font-size:22px;font-weight:700;color:#dc2626"><span id="autologout-count">120</span>초 후 로그아웃</p>
       <div style="display:flex;gap:10px;justify-content:center">
         <button class="btn btn-primary" style="flex:1;padding:11px" onclick="autoLogoutExtend()">🔄 연장하기</button>
         <button class="btn btn-ghost" style="flex:1;padding:11px" onclick="autoLogoutNow()">🚪 로그아웃</button>
@@ -2683,7 +2683,7 @@ var _AUTO_LOGOUT_MS  = 10 * 60 * 1000; // 10분
 
 var _autoLogoutWarnTimer = null;   // 경고창 띄우는 타이머
 var _autoLogoutCountTimer = null;  // 1분 카운트다운
-var _AUTO_WARN_MS = _AUTO_LOGOUT_MS - 60*1000;  // 로그아웃 1분 전 경고
+var _AUTO_WARN_MS = _AUTO_LOGOUT_MS - 120*1000;  // 로그아웃 2분 전 경고
 
 function resetAutoLogout(){
   // 경고창이 떠 있는 동안엔 리셋 안 함(사용자가 선택해야 함)
@@ -2699,12 +2699,12 @@ function resetAutoLogout(){
   }, _AUTO_WARN_MS);
 }
 
-// 경고창 표시 + 60초 카운트다운
+// 경고창 표시 + 120초(2분) 카운트다운
 function showAutoLogoutWarning(){
   var wm=document.getElementById('autologout-modal');
   var cd=document.getElementById('autologout-count');
   if(!wm||!cd) { doAutoLogout(); return; }
-  var left=60; cd.textContent=left;
+  var left=120; cd.textContent=left;
   wm.classList.add('open');
   if(_autoLogoutCountTimer) clearInterval(_autoLogoutCountTimer);
   _autoLogoutCountTimer=setInterval(function(){
