@@ -586,6 +586,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="edgeAddRow()">＋ 프린터 추가</button>
         <button class="btn btn-ghost" onclick="edgeDownloadAgent()" style="margin-left:auto">⬇️ 원격 에이전트 다운로드</button>
+        <button class="btn btn-success" onclick="edgeSyncNow(this)">⚡ 지금 수집</button>
         <button class="btn btn-primary" onclick="edgeSave()">💾 저장</button>
       </div>
       <p style="font-size:12px;color:var(--text3);margin-top:10px">
@@ -3738,6 +3739,27 @@ function edgeSave(){
 }
 
 // 이 거래처(NO)를 바라보는 원격 방식 printers.alloy + install.bat 생성·다운로드
+// 지금 수집: 서버 vm-sync를 즉시 실행 → 온라인 상태 바로 갱신 (설치 후 15분 안 기다리게)
+function edgeSyncNow(btn){
+  var orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳ 수집 중...'; }
+  fetch('https://api.ink79.kr/api/sync-now?token=ink79-edge-2026')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(btn){ btn.textContent='✅ 수집 완료'; }
+      // 기기 목록·상태 새로고침
+      if(typeof loadAllDevices==='function') loadAllDevices(true);
+      setTimeout(function(){
+        if(typeof edgeRenderDevices==='function') edgeRenderDevices();
+        if(btn){ btn.disabled=false; btn.textContent=orig; }
+      }, 1500);
+    })
+    .catch(function(e){
+      if(btn){ btn.textContent='⚠️ 실패'; setTimeout(function(){ btn.disabled=false; btn.textContent=orig; },1500); }
+      alert('지금 수집 실행 중 오류가 났습니다. 잠시 후 다시 시도하거나, 최대 15분 뒤 자동 갱신됩니다.');
+    });
+}
+
 function edgeDownloadAgent(){
   if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
   var no = String(_edgeContract.no);
