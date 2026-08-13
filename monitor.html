@@ -478,6 +478,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="hp">HP</option>
         <option value="samsung">삼성</option>
         <option value="canon">캐논</option>
+        <option value="epson">엡손</option>
+        <option value="brother">브라더</option>
+        <option value="oki">오키</option>
       </select>
       <select class="inp" id="hist-period" onchange="renderHistory()" style="min-width:90px">
         <option value="daily">일별</option>
@@ -722,6 +725,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="hp">HP</option>
         <option value="samsung">삼성</option>
         <option value="canon">캐논</option>
+        <option value="epson">엡손</option>
+        <option value="brother">브라더</option>
+        <option value="oki">오키</option>
       </select>
       <select class="inp" id="device-mgr-status" onchange="renderDeviceManager()" style="min-width:110px">
         <option value="">전체(해지 제외)</option>
@@ -761,6 +767,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
         <option value="hp">HP</option>
         <option value="samsung">삼성</option>
         <option value="canon">캐논</option>
+        <option value="epson">엡손</option>
+        <option value="brother">브라더</option>
+        <option value="oki">오키</option>
       </select>
       <select class="inp" id="usage-filter" onchange="filterUsageTable()" style="min-width:110px">
         <option value="">전체</option>
@@ -996,9 +1005,12 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <select class="inp" id="dm-type" style="width:100%">
             <option value="ricoh">리코 (RICOH)</option>
             <option value="kyocera">교세라 (Kyocera)</option>
-            <option value="hp">HP</option>
+            <option value="hp">HP (휴렛팩커드)</option>
             <option value="samsung">삼성 (Samsung)</option>
             <option value="canon">캐논 (Canon)</option>
+            <option value="epson">엡손 (EPSON)</option>
+            <option value="brother">브라더 (brother)</option>
+            <option value="oki">오키 (OKI)</option>
           </select>
         </div>
         <div class="form-group2">
@@ -1631,7 +1643,7 @@ function updateSummary(){
   var warns   = actives.filter(hasTonerWarn).length;
 
   // 제조사별 기기 수 집계 (printer_type 기준)
-  var MAKER_KO = { ricoh:'리코', kyocera:'교세라', hp:'HP', samsung:'삼성', canon:'캐논', brother:'브라더', epson:'엡손', xerox:'제록스', sindoh:'신도리코' };
+  var MAKER_KO = { ricoh:'리코', kyocera:'교세라', hp:'HP', samsung:'삼성', canon:'캐논', brother:'브라더', epson:'엡손', oki:'오키', xerox:'제록스', sindoh:'신도리코' };
   var makerCnt = {};
   actives.forEach(function(d){
     var t = (d.printer_type || d.type || '').toLowerCase().trim();
