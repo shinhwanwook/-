@@ -4461,13 +4461,15 @@ function checkAutoBackup(){
   try{
     var today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
     var lastBackup = localStorage.getItem('rental_last_backup');
-    if(lastBackup === today) return; // 오늘 이미 백업함
-    // 오늘 첫 접속 → 자동 백업
+    if(lastBackup === today) return; // 오늘 이미 물어봄/백업함
+    // 오늘 첫 접속 → 백업 여부 확인 (확인/취소). 취소해도 오늘은 다시 안 물음.
     setTimeout(function(){
-      backupData();
-      localStorage.setItem('rental_last_backup', today);
-      showSaveStatus('💾 자동 백업 완료', '#86efac');
-    }, 2000); // 2초 후 실행 (화면 로딩 완료 후)
+      localStorage.setItem('rental_last_backup', today);  // 오늘은 한 번만 묻기
+      showConfirm('오늘 첫 접속입니다.\n데이터를 백업 파일로 저장할까요?', function(){
+        backupData();
+        showSaveStatus('💾 자동 백업 완료', '#86efac');
+      }, '백업', true);
+    }, 2000); // 2초 후 (화면 로딩 완료 후)
   }catch(e){}
 }
 
