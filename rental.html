@@ -244,7 +244,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
 
 /* EXTRA PAYMENT */
 .extra-list{display:flex;flex-direction:column;gap:6px}
-.extra-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius2);background:var(--white)}
+.extra-item{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius2);background:var(--white)}
 .extra-item:hover{background:var(--blue-light)}
 
 /* INFO ROW */
@@ -967,6 +967,7 @@ body.locked { overflow:hidden; }
       <div class="form-grid">
         <div class="form-group"><label class="required">거래처</label><select class="inp" id="em-no"></select></div>
         <div class="form-group"><label class="required">날짜</label><input class="inp" id="em-date" type="date"></div>
+        <div class="form-group"><label>입금일자</label><input class="inp" id="em-paydate" type="date"></div>
         <div class="form-group"><label class="required">항목명</label><input class="inp" id="em-item" placeholder=""></div>
         <div class="form-group"><label class="required">금액 (원)</label><input class="inp" id="em-amount" type="number" placeholder=""></div>
         <div class="form-group form-full"><label>메모</label><input class="inp" id="em-memo" placeholder="추가 설명..."></div>
@@ -1831,9 +1832,10 @@ function renderDetailExtras(no){
   if(!list.length){el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:6px">추가사용료 내역 없음</div>`;return;}
   el.innerHTML=list.map(e=>`
     <div class="extra-item">
-      <span style="font-size:11px;color:var(--text3);white-space:nowrap">${e.date}</span>
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:78px;flex-shrink:0">${e.date}</span>
       <span style="flex:1;font-size:13px;font-weight:500">${esc(e.item)}</span>
-      <span style="font-weight:700;color:var(--blue)">${e.amount.toLocaleString()}원</span>
+      <span style="font-weight:700;color:var(--blue);white-space:nowrap">${e.amount.toLocaleString()}원</span>
+      ${e.paydate?`<span style="font-size:11px;color:#15803d;white-space:nowrap;flex-shrink:0">입금 ${e.paydate}</span>`:'<span style="font-size:11px;color:#dc2626;white-space:nowrap;flex-shrink:0">미입금</span>'}
       ${e.memo?`<span style="font-size:11px;color:var(--text3)">${esc(e.memo)}</span>`:''}
       <button class="btn btn-xs btn-ghost" onclick="editExtraPay(${e.id});event.stopPropagation()">수정</button>
       ${isAdmin?`<button class="btn btn-xs btn-danger" onclick="confirmDeleteExtra(${e.id});event.stopPropagation()">삭제</button>`:''}
@@ -2985,6 +2987,7 @@ function openExtraPayAdd(no){
   editingExtraId=null;
   document.getElementById('em-title').textContent='추가사용료 등록';
   document.getElementById('em-date').value=today();
+  document.getElementById('em-paydate').value='';
   document.getElementById('em-item').value='';
   document.getElementById('em-amount').value='';
   document.getElementById('em-memo').value='';
@@ -2999,6 +3002,7 @@ function editExtraPay(id){
   editingExtraId=id;
   document.getElementById('em-title').textContent='추가사용료 수정';
   document.getElementById('em-date').value=e.date;
+  document.getElementById('em-paydate').value=e.paydate||'';
   document.getElementById('em-item').value=e.item;
   document.getElementById('em-amount').value=e.amount;
   document.getElementById('em-memo').value=e.memo||'';
@@ -3010,14 +3014,15 @@ function editExtraPay(id){
 function saveExtraPay(){
   const no=parseInt(document.getElementById('em-no').value);
   const date=document.getElementById('em-date').value;
+  const paydate=document.getElementById('em-paydate').value;
   const item=document.getElementById('em-item').value.trim();
   const amount=parseInt(document.getElementById('em-amount').value)||0;
   if(!date||!item||!amount){alert('날짜, 항목명, 금액을 입력하세요.');return;}
   if(editingExtraId){
     const e=EXTRA_PAYS.find(x=>x.id===editingExtraId);
-    Object.assign(e,{no,date,item,amount,memo:document.getElementById('em-memo').value.trim()});
+    Object.assign(e,{no,date,paydate,item,amount,memo:document.getElementById('em-memo').value.trim()});
   } else {
-    EXTRA_PAYS.push({id:nextExtraId++,no,date,item,amount,memo:document.getElementById('em-memo').value.trim()});
+    EXTRA_PAYS.push({id:nextExtraId++,no,date,paydate,item,amount,memo:document.getElementById('em-memo').value.trim()});
   }
   closeModal('extra-modal');
   if(document.getElementById('detail-modal').classList.contains('open')) renderDetailExtras(currentNo);
