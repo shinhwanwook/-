@@ -3481,7 +3481,7 @@ function edgeStartScan(){
   _edgeScanOn=true; _edgeScanMode='scan';
   _edgeScanStartedAt = new Date().toISOString();  // 20분 후 서버가 자동 중지
   edgeRenderScan();
-  edgeSave();
+  edgeSave(true);  // keepScan=true: 스캔 시작 저장은 운영전환 안 함
   document.getElementById('edge-scan-status').textContent='스캔 시작됨 (20분 후 자동으로 운영 모드 전환). 거래처 PC가 '+base+'.1~254를 훑는 중… 1~2분 뒤 [발견된 기기 조회]를 눌러주세요.';
 }
 
@@ -3712,11 +3712,11 @@ function edgeSyncRentalIp(devices){
   }).catch(function(){});
 }
 
-function edgeSave(){
+function edgeSave(keepScan){
   if(!_edgeContract||!_edgeContract.no){ alert('거래처를 먼저 선택하세요.'); return; }
   if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도하세요.'); return; }
-  // [저장 시 자동 운영 전환] 스캔 중이었으면 끄고 운영모드로 저장 → device_no가 붙어 올바른 NO로 수집
-  if(_edgeScanMode==='scan'){
+  // [저장 시 자동 운영 전환] 사용자가 직접 저장할 때만. 스캔 시작이 부른 저장(keepScan)은 제외.
+  if(!keepScan && _edgeScanMode==='scan'){
     _edgeScanMode='operate';
     _edgeScanStartedAt='';
     if(typeof edgeRenderScan==='function') edgeRenderScan();
