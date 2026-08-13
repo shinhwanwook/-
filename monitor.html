@@ -3596,7 +3596,7 @@ function edgeRenderDevices(){
       '<td style="padding:6px;font-size:12px;color:'+(cname?'#15803d':'#94a3b8')+'">'+esc(cname||'—')+'</td>'+
       '<td style="padding:6px"><input value="'+esc(d.name||'')+'" oninput="edgeEdit('+i+',\'name\',this.value)" placeholder="예: 리코 3층"></td>'+
       '<td style="padding:6px"><input value="'+esc(d.serial||'')+'" oninput="edgeEdit('+i+',\'serial\',this.value)" placeholder="장비 시리얼"></td>'+
-      '<td style="padding:6px"><input value="'+esc(d.ip||'')+'" oninput="edgeEdit('+i+',\'ip\',this.value)" placeholder="예: 192.168.0.50"></td>'+
+      '<td style="padding:6px"><input value="'+esc((d.ip||'').replace(/:\d+$/,''))+'" oninput="edgeEdit('+i+',\'ip\',this.value)" placeholder="예: 192.168.0.50"></td>'+
       '<td style="padding:6px;text-align:center;font-size:12px;white-space:nowrap">'+_stCell+'</td>'+
       '<td style="padding:6px;text-align:center"><button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="edgeDelRow('+i+')">🗑️</button></td>'+
     '</tr>';
@@ -3642,7 +3642,7 @@ function edgeSave(){
   if(!_fbReady||!db){ alert('Firebase 연결 중입니다. 잠시 후 다시 시도하세요.'); return; }
   // 빈 줄(시리얼·IP 둘 다 없음) 제거
   var clean=_edgeDevices.filter(function(d){ return (d.serial||'').trim() || (d.ip||'').trim(); })
-    .map(function(d){ return { no:(d.no||'').trim(), name:(d.name||'').trim(), serial:(d.serial||'').trim(), ip:(d.ip||'').trim() }; });
+    .map(function(d){ return { no:(d.no||'').trim(), name:(d.name||'').trim(), serial:(d.serial||'').trim(), ip:(d.ip||'').replace(/:\d+$/,'').trim() }; });
   var base=(document.getElementById('edge-scan-base')||{}).value;
   db.collection('edge_targets').doc(String(_edgeContract.no)).set({
     scan_on: _edgeScanOn,
