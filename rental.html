@@ -949,6 +949,7 @@ body.locked { overflow:hidden; }
             <option value="cash">🟡 입금</option>
           </select>
         </div>
+        <div class="form-group"><label>입금금액 (원)</label><input class="inp" id="pm-amount" type="text" inputmode="numeric" placeholder="약정 렌탈료 자동표시" oninput="fmtNum(this)" style="text-align:right"></div>
         <div class="form-group form-full"><label>메모</label><input class="inp" id="pm-memo" placeholder=""></div>
       </div>
     </div>
@@ -2915,6 +2916,13 @@ function openPayEdit(){
   document.getElementById('pm-type').value='';
   document.getElementById('pm-memo').value='';
   document.getElementById('pm-del-btn').style.display='none';
+  // 입금금액: 약정 렌탈료 자동표시
+  var _c=CONTRACTS.find(x=>x.no===currentNo);
+  var amtEl=document.getElementById('pm-amount');
+  if(amtEl){
+    var initAmt=parseInt(_c&&_c.rent)||0;
+    amtEl.value=initAmt.toLocaleString(); amtEl.dataset.raw=String(initAmt);
+  }
   const now=new Date();
   document.getElementById('pm-year').value=now.getFullYear();
   document.getElementById('pm-month').value=now.getMonth()+1;
@@ -2943,6 +2951,14 @@ function openPayEditFor(no,key){
   // 유형 복원
   var savedType = (c.payments[key+'_type'])||'';
   document.getElementById('pm-type').value=savedType;
+  // 입금금액: 저장된 금액이 있으면 그 값, 없으면 약정 렌탈료 자동표시
+  var savedAmt = c.payments[key+'_amount'];
+  var amtEl=document.getElementById('pm-amount');
+  if(amtEl){
+    var initAmt = (savedAmt!==undefined && savedAmt!==null && savedAmt!=='') ? parseInt(savedAmt) : (parseInt(c.rent)||0);
+    amtEl.value = initAmt.toLocaleString();
+    amtEl.dataset.raw = String(initAmt);
+  }
   document.getElementById('pm-del-btn').style.display=val?'':'none';
   // 권한 체크 - 저장/삭제 버튼 숨김
   var canWrite = isAdmin || hasPerm('paymentWrite');
@@ -2958,11 +2974,16 @@ function savePayment(){
   const dt=document.getElementById('pm-date').value;
   const memo=document.getElementById('pm-memo').value.trim();
   const payType=document.getElementById('pm-type').value;
+  var amtEl=document.getElementById('pm-amount');
+  var payAmount = amtEl ? (parseInt(amtEl.dataset.raw||String(amtEl.value).replace(/[^\d]/g,''))||0) : 0;
   const c=CONTRACTS.find(x=>x.no===payEditNo);
   c.payments[key]=dt||memo||'납부';
   // 유형 저장 (key_type으로)
   if(payType) c.payments[key+'_type']=payType;
   else delete c.payments[key+'_type'];
+  // 입금금액 저장: 약정 렌탈료와 다를 때만 별도 저장(같으면 굳이 저장 안 함)
+  if(payAmount && payAmount!==(parseInt(c.rent)||0)) c.payments[key+'_amount']=payAmount;
+  else delete c.payments[key+'_amount'];
   if(memo) c.payments[key+'_memo']=memo;
   else delete c.payments[key+'_memo'];
   closeModal('pay-modal');
