@@ -3119,19 +3119,25 @@ function renderPayment(){
   const yr=toVal.slice(0,4); // 추가사용료 기준연도
   // 합계 카드 렌더링
   var totalRent = list.reduce(function(s,c){ return s+(c.terminated?0:(c.rent||0)); }, 0);
-  // ── 상단 요약 카드: '당월' 기준 집계 (표의 기간과 무관하게 이번 달만) ──
-  var _now = new Date();
-  var curMonth = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');  // "YYYY-MM"
+  // ── 상단 요약 카드: 조회 기간(keys) + 현재 필터(list) 기준으로 집계 ──
+  //    전체조회면 전체기간, 거래처지정이면 그 거래처만, 한달조회면 그 달만 — 화면 필터와 동일
   var totalPaidRent = 0, totalUnpaidRent = 0;
   var totalExtra = 0;
   list.forEach(function(c){
     if(c.terminated) return;  // 해지 거래처는 합계에서 제외(표엔 흐리게 보이되 금액은 빼기)
-    // 당월 완납 여부만 확인
-    var paidThisMonth = !!(c.payments && c.payments[curMonth] && /^\d{4}/.test(c.payments[curMonth]));
-    if(paidThisMonth) totalPaidRent += (c.rent||0);
-    else              totalUnpaidRent += (c.rent||0);
-    // 당월 추가사용료만 합산
-    totalExtra += EXTRA_PAYS.filter(function(e){ return e.no===c.no && e.date.slice(0,7)===curMonth; }).reduce(function(s,e){ return s+e.amount; }, 0);
+    // 조회 기간의 각 월마다 완납/미납 판정 (렌탈금 × 완납월수 / 미납월수)
+    keys.forEach(function(k){
+      var paidThisMonth = !!(c.payments && c.payments[k] && /^\d{4}/.test(c.payments[k]));
+      // 실제 입금액이 따로 저장돼 있으면 그 값, 아니면 약정 렌탈료
+      var amt = (c.payments && c.payments[k+'_amount']!==undefined && c.payments[k+'_amount']!==null && c.payments[k+'_amount']!=='')
+                ? (parseInt(c.payments[k+'_amount'])||0) : (c.rent||0);
+      if(paidThisMonth) totalPaidRent += amt;
+      else              totalUnpaidRent += (c.rent||0);
+    });
+    // 조회 기간 내 추가사용료 합산
+    totalExtra += EXTRA_PAYS.filter(function(e){
+      return e.no===c.no && keys.indexOf(e.date.slice(0,7))>=0;
+    }).reduce(function(s,e){ return s+e.amount; }, 0);
   });
   var summaryEl = document.getElementById('pay-summary-cards');
   if(summaryEl) summaryEl.style.display = window.isAdmin ? 'flex' : 'none';
@@ -3143,19 +3149,19 @@ function renderPayment(){
         '<div style="font-size:11px;color:#6b7280">'+list.length+'개 거래처</div>'+
       '</div>'+
       '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
-        '<div style="font-size:11px;color:#166534;font-weight:600">✅ 완납 합계 (당월)</div>'+
+        '<div style="font-size:11px;color:#166534;font-weight:600">✅ 완납 합계 (조회기간)</div>'+
         '<div style="font-size:16px;font-weight:900;color:#166534">'+totalPaidRent.toLocaleString()+'원</div>'+
       '</div>'+
       '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
-        '<div style="font-size:11px;color:#991b1b;font-weight:600">⚠️ 미납 합계 (당월)</div>'+
+        '<div style="font-size:11px;color:#991b1b;font-weight:600">⚠️ 미납 합계 (조회기간)</div>'+
         '<div style="font-size:16px;font-weight:900;color:#991b1b">'+totalUnpaidRent.toLocaleString()+'원</div>'+
       '</div>'+
       '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
-        '<div style="font-size:11px;color:#6d28d9;font-weight:600">➕ 추가사용료 (당월)</div>'+
+        '<div style="font-size:11px;color:#6d28d9;font-weight:600">➕ 추가사용료 (조회기간)</div>'+
         '<div style="font-size:16px;font-weight:900;color:#6d28d9">'+totalExtra.toLocaleString()+'원</div>'+
       '</div>'+
       '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;flex:1;min-width:130px">'+
-        '<div style="font-size:11px;color:#c2410c;font-weight:600">📊 총 합계 (당월)</div>'+
+        '<div style="font-size:11px;color:#c2410c;font-weight:600">📊 총 합계 (조회기간)</div>'+
         '<div style="font-size:16px;font-weight:900;color:#c2410c">'+(totalPaidRent+totalExtra).toLocaleString()+'원</div>'+
       '</div>';
   }
