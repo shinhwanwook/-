@@ -2764,6 +2764,16 @@ function saveDeviceModal(){
 
   var docId=_editDeviceNo;
   if(!docId){
+    // [중복 방지] 같은 contract_no(임대번호)의 기존 문서가 있으면 재사용 → IP 바뀌어도 문서 안 갈라짐
+    var cno=(document.getElementById('dm-no').value||'').trim();
+    if(cno){
+      var exist=(_devices||[]).find(function(d){
+        return String(d.contract_no||'')===cno && (d._id||'').indexOf('device_')===0;
+      });
+      if(exist && exist._id) docId=exist._id;
+    }
+  }
+  if(!docId){
     var maxNo=0;
     (_devices||[]).forEach(function(d){
       var n=parseInt((d._id||'').replace('device_',''))||0;
