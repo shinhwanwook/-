@@ -49,6 +49,7 @@ select.inp{cursor:pointer}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius2);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s;white-space:nowrap}
 .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1547a0}
 .btn-success{background:#15803d;color:#fff}.btn-success:hover{background:#166534}
+.btn-danger{background:#dc2626;color:#fff}.btn-danger:hover{background:#b91c1c}
 .btn-ghost{background:var(--white);color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--gray-bg)}
 .btn-sm{padding:5px 11px;font-size:12px}
 .btn-xs{padding:3px 8px;font-size:11px;border-radius:4px}
@@ -561,7 +562,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
           <span style="color:var(--text3)">대역</span>
           <input class="inp" id="edge-scan-base" placeholder="예: 192.168.0" style="width:150px">
           <span style="color:var(--text3)">.1~254 검색</span>
-          <button class="btn btn-primary btn-sm" onclick="edgeStartScan()">스캔 시작</button>
+          <button id="edge-scan-start-btn" class="btn btn-primary btn-sm" onclick="edgeStartScan()">스캔 시작</button>
           <button class="btn btn-ghost btn-sm" onclick="edgeStopScan()">스캔 중지(운영)</button>
           <button class="btn btn-ghost btn-sm" onclick="edgeLoadFound()" style="margin-left:auto">🔄 발견된 기기 조회</button>
         </div>
@@ -3465,10 +3466,21 @@ function edgeCheckElsewhere(no){
 function edgeRenderScan(){
   var t=document.getElementById('edge-scan-toggle');
   var l=document.getElementById('edge-scan-label');
+  // 스캔 시작 버튼 색: 스캔 중이면 빨강, 아니면 파랑(기본)
+  var sb=document.getElementById('edge-scan-start-btn');
+  if(sb){
+    if(_edgeScanOn && _edgeScanMode==='scan'){
+      sb.classList.remove('btn-primary'); sb.classList.add('btn-danger');
+      sb.textContent='🔍 스캔 중...';
+    } else {
+      sb.classList.remove('btn-danger'); sb.classList.add('btn-primary');
+      sb.textContent='스캔 시작';
+    }
+  }
   // 상태 3가지를 색으로 명확히: 스캔중(파랑)/운영중(녹색)/중지(회색)
   if(_edgeScanOn && _edgeScanMode==='scan'){
     t.classList.add('on');
-    l.innerHTML='<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:12px;font-weight:600">🔍 스캔 검색 중</span>';
+    l.innerHTML='<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:12px;font-weight:600">🔍 스캔 검색 중</span>';
   } else if(_edgeScanOn){
     t.classList.add('on');
     l.innerHTML='<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:12px;font-weight:600">● 수집 켜짐 (운영)</span>';
