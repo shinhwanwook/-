@@ -4759,13 +4759,24 @@ function renderPayStats(){
   var paidAmts = new Array(12).fill(0);
   var unpaidAmts = new Array(12).fill(0);
 
-  activeContracts.forEach(function(c){
+  // 입금(완납) 실적: 해지 거래처도 포함 — 그 달에 실제 입금받은 기록이 있으면 집계
+  CONTRACTS.forEach(function(c){
     months.forEach(function(ym, i){
-      var hasPay = !!(c.payments && c.payments[ym]);
+      var hasPay = !!(c.payments && c.payments[ym] && /^\d{4}/.test(c.payments[ym]));
       if(hasPay){
         paidCounts[i]++;
-        paidAmts[i] += c.rent||0;
-      } else {
+        // 실제 입금액이 저장돼 있으면 그 값, 아니면 렌탈료
+        var amt = (c.payments[ym+'_amount']!==undefined && c.payments[ym+'_amount']!==null && c.payments[ym+'_amount']!=='')
+                  ? (parseInt(c.payments[ym+'_amount'])||0) : (c.rent||0);
+        paidAmts[i] += amt;
+      }
+    });
+  });
+  // 미납: 정상(해지 안 된) 거래처만 — 해지된 건 미납으로 잡지 않음
+  activeContracts.forEach(function(c){
+    months.forEach(function(ym, i){
+      var hasPay = !!(c.payments && c.payments[ym] && /^\d{4}/.test(c.payments[ym]));
+      if(!hasPay){
         unpaidCounts[i]++;
         unpaidAmts[i] += c.rent||0;
       }
