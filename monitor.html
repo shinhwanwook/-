@@ -2601,11 +2601,14 @@ function importFromRental(){
       .where(_FP.documentId(), '<', 'device`')
       .get().then(function(devSnap){
       var existingByIp={};
+      var existingByNo={};   // contract_no → 문서ID (IP 바뀌어도 같은 NO 문서 찾기)
       var maxNo=0;
       devSnap.forEach(function(d){
         if(!d.id.startsWith('hist_')){
           var dd=d.data();
           if(dd.ip) existingByIp[dd.ip]=d.id;
+          if(dd.contract_no!==undefined && dd.contract_no!==null && String(dd.contract_no)!=='')
+            existingByNo[String(dd.contract_no)]=d.id;
           var n=parseInt(d.id.replace('device_',''))||0;
           if(n>maxNo) maxNo=n;
         }
@@ -2616,8 +2619,12 @@ function importFromRental(){
 
       contracts.forEach(function(c){
         var ip=c.printer_ip.trim();
-        var isNew=!existingByIp[ip];
-        var docId=existingByIp[ip]||('device_'+(++maxNo));
+        // [중복 방지] 같은 임대번호(NO) 문서 우선 재사용 → IP 바뀌어도 안 갈라짐. NO 없으면 IP로.
+        var existId = (c.no!==undefined && c.no!==null && String(c.no)!=='')
+          ? existingByNo[String(c.no)] : null;
+        if(!existId) existId = existingByIp[ip];
+        var isNew=!existId;
+        var docId=existId||('device_'+(++maxNo));
         var deviceData={
           name:c.name||'', model:c.etc||'', ip:ip,
           printer_type:c.printer_type||'ricoh',
