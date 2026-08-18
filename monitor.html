@@ -206,9 +206,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-provider b{font-size:15px;color:var(--text);letter-spacing:1px}
 .bill-doc-no{font-size:11px;color:var(--text3);text-align:right;margin:8px 0 22px}
 .bill-party{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin-bottom:22px}
-.bill-field{display:flex;border-bottom:1px solid var(--border);padding:7px 2px;font-size:13px;align-items:baseline}
-.bill-field .bill-lbl{width:78px;color:var(--text3);flex-shrink:0;font-size:12px}
-.bill-field .bill-val{font-weight:600;flex:1}
+.bill-field{display:flex;border-bottom:1px solid var(--border);padding:7px 2px;font-size:12.5px;align-items:baseline}
+.bill-field .bill-lbl{width:78px;color:var(--text3);flex-shrink:0;font-size:12.5px}
+.bill-field .bill-val{font-weight:600;flex:1;font-size:12.5px}
 .bill-party-full{grid-column:1/3}
 .bill-sec-row{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px}
 .bill-sec-title{font-size:13px;font-weight:700;color:var(--blue);padding-left:9px;border-left:3px solid var(--blue)}
@@ -295,11 +295,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .bill-doc-no{margin:4px 0 11px}
   .bill-party{margin-bottom:11px}
   .bill-provider{line-height:1.5}
-  /* 상호·대표자·주소·사업자번호·청구기간 글자 화면과 비슷하게 (작게 안 나오게) */
-  .bill-party{font-size:13px}
-  .bill-party b, .bill-party strong{font-size:13.5px}
+  /* 상호·대표자·주소·사업자번호·청구기간 글자 계약조건과 동일하게 */
+  .bill-party{font-size:12px}
+  .bill-field, .bill-field .bill-lbl, .bill-field .bill-val{font-size:12px}
   .bill-provider{font-size:12px}
-  .bill-provider b{font-size:14.5px}
+  .bill-provider b{font-size:13px}
   .bill-terms{padding:7px 11px;line-height:1.55;font-size:12px}
   .bill-sec-row{margin:11px 0 5px}
   /* 사용량·초과분 등 표 숫자를 다른 숫자와 같은 크기로 */
@@ -810,11 +810,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th style="text-align:right">흑백(시작)</th>
             <th style="text-align:right">흑백(현재)</th>
             <th style="text-align:right">흑백약정</th>
-            <th style="text-align:right;background:#fef3c7;color:#92400e">흑백사용량</th>
+            <th style="text-align:right;background:#fffbe6">흑백사용량</th>
             <th style="text-align:right">컬러(시작)</th>
             <th style="text-align:right">컬러(현재)</th>
             <th style="text-align:right">컬러약정</th>
-            <th style="text-align:right;background:#e0f2fe;color:#0369a1">컬러사용량</th>
+            <th style="text-align:right;background:#fffbe6">컬러사용량</th>
             <th style="text-align:center">상태</th>
             <th style="text-align:center">상세</th>
           </tr>
@@ -3195,13 +3195,11 @@ function filterUsageTable(){
     var overColor  = quotaColor>0 ? realUseColor - quotaColor : 0;
     var isOver     = overBw>0 || overColor>0;
 
-    // 사용량 셀 (kind: 'bw'=흑백(앰버 강조) / 'color'=컬러(파랑 강조), 초과는 빨강 우선)
+    // 사용량 셀 (흑백·컬러 둘 다 연노랑 강조, 초과는 빨강 글씨, 크기는 옆 숫자와 동일·진하게만)
     function useCell(use, quota, over, kind){
-      var bg = kind==='color' ? '#e0f2fe' : '#fef3c7';   // 컬러=연파랑, 흑백=연노랑
-      var fg = kind==='color' ? '#0369a1' : '#92400e';
-      if(over>0)   return '<td style="text-align:right;font-weight:800;font-size:15px;color:#dc2626;background:#ffe4e4;border-left:3px solid #dc2626">'+use.toLocaleString()+'<br><small style="font-size:11px;font-weight:700">(+'+over.toLocaleString()+')</small></td>';
-      if(quota<=0) return '<td style="text-align:right;font-weight:800;font-size:15px;color:'+fg+';background:'+bg+'">'+use.toLocaleString()+'</td>';
-      return '<td style="text-align:right;font-weight:800;font-size:15px;color:'+fg+';background:'+bg+'">'+use.toLocaleString()+'</td>';
+      var bg = '#fffbe6';   // 흑백·컬러 공통 연노랑(연하게)
+      if(over>0)   return '<td style="text-align:right;font-weight:700;color:#dc2626;background:'+bg+'">'+use.toLocaleString()+'<br><small style="font-size:10px;font-weight:700">(+'+over.toLocaleString()+')</small></td>';
+      return '<td style="text-align:right;font-weight:700;background:'+bg+'">'+use.toLocaleString()+'</td>';
     }
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
