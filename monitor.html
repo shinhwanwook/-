@@ -207,8 +207,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-doc-no{font-size:11px;color:var(--text3);text-align:right;margin:8px 0 22px}
 .bill-party{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin-bottom:22px}
 .bill-field{display:flex;border-bottom:1px solid var(--border);padding:7px 2px;font-size:12.5px;align-items:baseline}
-.bill-field .bill-lbl{width:78px;color:var(--text3);flex-shrink:0;font-size:12.5px}
-.bill-field .bill-val{font-weight:600;flex:1;font-size:12.5px}
+.bill-field .bill-lbl{width:78px;color:var(--text3);flex-shrink:0;font-size:12.5px;white-space:nowrap}
+.bill-field .bill-val{font-weight:normal;flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bill-party-full{grid-column:1/3}
 .bill-sec-row{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px}
 .bill-sec-title{font-size:13px;font-weight:700;color:var(--blue);padding-left:9px;border-left:3px solid var(--blue)}
@@ -298,9 +298,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
   /* 상호·대표자·주소·사업자번호·청구기간 글자 계약조건과 동일하게 (인쇄) */
   #bill-sheet .bill-party{font-size:12.5px !important}
   #bill-sheet .bill-field{font-size:12.5px !important}
-  #bill-sheet .bill-field .bill-lbl{font-size:12.5px !important}
-  #bill-sheet .bill-field .bill-val{font-size:12.5px !important}
-  #bill-sheet .bill-edit{font-size:12.5px !important}
+  #bill-sheet .bill-field .bill-lbl{font-size:12.5px !important;white-space:nowrap !important}
+  #bill-sheet .bill-field .bill-val{font-size:12.5px !important;font-weight:normal !important;white-space:nowrap !important}
+  #bill-sheet .bill-edit{font-size:12.5px !important;font-weight:normal !important}
   #bill-sheet .bill-provider{font-size:12px !important}
   #bill-sheet .bill-provider b{font-size:13px !important}
   .bill-terms{padding:7px 11px;line-height:1.55;font-size:12px}
