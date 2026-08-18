@@ -545,30 +545,14 @@ body.locked { overflow:hidden; }
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="required">거래처명</label><input class="inp" id="f-name" placeholder=""></div>
+        <div class="form-group"><label>등록일</label><input class="inp" id="f-regdate" type="date"></div>
         <div class="form-group"><label class="required">유형</label><select class="inp" id="f-cms"><option value="CMS">CMS 자동이체</option><option value="입금">입금</option><option value="카드">카드</option></select></div>
+        <div class="form-group"><label class="required">거래처명</label><input class="inp" id="f-name" placeholder=""></div>
+        <div class="form-group"><label>사업자번호</label><input class="inp" id="f-bizno" placeholder="122-07-72711"></div>
         <div class="form-group"><label>담당자</label><input class="inp" id="f-manager" placeholder=""></div>
         <div class="form-group"><label>전화번호</label><input class="inp" id="f-phone" placeholder=""></div>
-        <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder=""></div>
         <div class="form-group"><label class="required">렌탈금 (원)</label><input class="inp" id="f-rent" type="number" placeholder=""></div>
-        <div class="form-group"><label>납부일</label><input class="inp" id="f-payday" placeholder=""></div>
-        <div class="form-group"><label>납부방식</label>
-          <select class="inp" id="f-paytype">
-            <option value="prepaid">선불</option>
-            <option value="postpaid">후불</option>
-          </select>
-        </div>
-        <div class="form-group"><label>기기명</label><input class="inp" id="f-etc" placeholder=""></div>
-        <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
         <div class="form-group"><label>보증금 (원)</label><input class="inp" id="f-deposit" type="number" value="0"></div>
-        <div class="form-group"><label>등록일</label><input class="inp" id="f-regdate" type="date"></div>
-        <div class="form-group form-full">
-          <label>📎 계약서 (구글 드라이브 링크)</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="inp" id="f-gdrive" type="url" placeholder="https://drive.google.com/..." style="flex:1">
-            <button type="button" class="btn btn-sm btn-ghost" onclick="openGdriveLink()" title="링크 열기">🔗 열기</button>
-          </div>
-        </div>
         <div class="form-group"><label>약정기간</label>
           <select class="inp" id="f-contract-period" onchange="toggleCustomPeriod()">
             <option value="">선택</option>
@@ -583,42 +567,16 @@ body.locked { overflow:hidden; }
           <input class="inp" id="f-contract-period-custom" type="text" placeholder="예) 6개월, 3개월..." style="display:none;margin-top:4px">
         </div>
         <div class="form-group"><label>세금계산서</label><select class="inp" id="f-tax"><option value="무">무</option><option value="유">유</option></select></div>
-        <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder=""></div>
-
-        <!-- 프린터 모니터링 -->
-        <div class="form-group form-full" style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px">
-          <label style="font-size:13px;font-weight:700;color:#166534;margin-bottom:10px;display:block">🖨️ 프린터 모니터링</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group" style="margin:0">
-              <label>프린터 IP 주소</label>
-              <input class="inp" id="f-printer-ip" type="text" placeholder="예) 192.168.1.100">
-            </div>
-            <div class="form-group" style="margin:0">
-              <label>제조사</label>
-              <select class="inp" id="f-printer-type" onchange="onPrinterTypeChange()">
-                <option value="">선택안함</option>
-                <option value="ricoh">리코 (RICOH)</option>
-                <option value="kyocera">교세라 (Kyocera)</option>
-                <option value="hp">HP (휴렛팩커드)</option>
-                <option value="samsung">삼성 (Samsung)</option>
-                <option value="canon">캐논 (Canon)</option>
-                <option value="epson">엡손 (EPSON)</option>
-                <option value="brother">브라더 (brother)</option>
-                <option value="oki">오키 (OKI)</option>
-                <option value="__custom__">✏️ 직접입력</option>
-              </select>
-              <input class="inp" id="f-printer-type-custom" placeholder="제조사 직접 입력 후 Enter (비우고 Enter=목록으로)" style="display:none" onkeydown="if(event.key==='Escape'){printerTypeBackToList();} else if(event.key==='Enter' && !this.value.trim()){printerTypeBackToList();}">
-            </div>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:13px;color:#166534;font-weight:600">
-            <input type="checkbox" id="f-monitoring-on" style="width:17px;height:17px;cursor:pointer">
-            ✅ 모니터링 연동 사용 (체크하면 프린터 모니터링 목록에 표시됩니다)
-          </label>
-          <div id="f-replace-area" style="margin-top:12px;display:none">
-            <button type="button" onclick="openDeviceReplace()" style="background:#fff7ed;border:1px solid #fdba74;color:#c2410c;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🔄 장비 교체 (IP 변경 / 기기 교체)</button>
-            <div id="f-replace-info" style="font-size:11.5px;color:#9a6a3a;margin-top:6px"></div>
-          </div>
+        <div class="form-group"><label>납부일</label><input class="inp" id="f-payday" placeholder=""></div>
+        <div class="form-group"><label>납부방식</label>
+          <select class="inp" id="f-paytype">
+            <option value="prepaid">선불</option>
+            <option value="postpaid">후불</option>
+          </select>
         </div>
+        <div class="form-group"><label>기기명</label><input class="inp" id="f-etc" placeholder=""></div>
+        <div class="form-group"><label>수량</label><input class="inp" id="f-qty" type="number" value="1" min="1"></div>
+        <div class="form-group form-full"><label>주소</label><input class="inp" id="f-address" placeholder=""></div>
 
         <!-- 약정매수 / 추가장당 단가 -->
         <div class="form-group form-full" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px">
@@ -682,6 +640,43 @@ body.locked { overflow:hidden; }
           </div>
         </div>
 
+        <!-- 프린터 모니터링 -->
+        <div class="form-group form-full" style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px">
+          <label style="font-size:13px;font-weight:700;color:#166534;margin-bottom:10px;display:block">🖨️ 프린터 모니터링</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group" style="margin:0">
+              <label>프린터 IP 주소</label>
+              <input class="inp" id="f-printer-ip" type="text" placeholder="예) 192.168.1.100">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>제조사</label>
+              <select class="inp" id="f-printer-type" onchange="onPrinterTypeChange()">
+                <option value="">선택안함</option>
+                <option value="ricoh">리코 (RICOH)</option>
+                <option value="kyocera">교세라 (Kyocera)</option>
+                <option value="hp">HP (휴렛팩커드)</option>
+                <option value="samsung">삼성 (Samsung)</option>
+                <option value="canon">캐논 (Canon)</option>
+                <option value="epson">엡손 (EPSON)</option>
+                <option value="brother">브라더 (brother)</option>
+                <option value="oki">오키 (OKI)</option>
+                <option value="__custom__">✏️ 직접입력</option>
+              </select>
+              <input class="inp" id="f-printer-type-custom" placeholder="제조사 직접 입력 후 Enter (비우고 Enter=목록으로)" style="display:none" onkeydown="if(event.key==='Escape'){printerTypeBackToList();} else if(event.key==='Enter' && !this.value.trim()){printerTypeBackToList();}">
+            </div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:13px;color:#166534;font-weight:600">
+            <input type="checkbox" id="f-monitoring-on" style="width:17px;height:17px;cursor:pointer">
+            ✅ 모니터링 연동 사용 (체크하면 프린터 모니터링 목록에 표시됩니다)
+          </label>
+          <div id="f-replace-area" style="margin-top:12px;display:none">
+            <button type="button" onclick="openDeviceReplace()" style="background:#fff7ed;border:1px solid #fdba74;color:#c2410c;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🔄 장비 교체 (IP 변경 / 기기 교체)</button>
+            <div id="f-replace-info" style="font-size:11.5px;color:#9a6a3a;margin-top:6px"></div>
+          </div>
+        </div>
+
+        <div class="form-group"><label>이메일</label><input class="inp" id="f-email" type="email" placeholder=""></div>
+
         <!-- 계약파일 첨부 -->
         <div class="form-group form-full">
           <label>계약파일 첨부 <span style="font-weight:400;color:#9ca3af">(Excel, HWP, JPG, PDF 등)</span></label>
@@ -692,6 +687,14 @@ body.locked { overflow:hidden; }
           </div>
           <input type="file" id="file-input" multiple style="display:none" onchange="handleFiles(this.files)">
           <div class="file-list" id="file-list"></div>
+        </div>
+
+        <div class="form-group form-full">
+          <label>📎 계약서 (구글 드라이브 링크)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="inp" id="f-gdrive" type="url" placeholder="https://drive.google.com/..." style="flex:1">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="openGdriveLink()" title="링크 열기">🔗 열기</button>
+          </div>
         </div>
 
         <div class="form-group form-full"><label>비고 / 특약사항</label><textarea class="inp" id="f-memo" placeholder="특이사항 또는 특약사항 입력..."></textarea></div>
@@ -2056,7 +2059,7 @@ function setPrinterTypeValue(val){
   }
 }
 function clearForm(){
-  ['f-name','f-manager','f-phone','f-email','f-payday','f-etc','f-address','f-memo'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-bizno','f-manager','f-phone','f-email','f-payday','f-etc','f-address','f-memo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-printer-ip').value='';
   document.getElementById('f-printer-type').value=''; var _ptc=document.getElementById('f-printer-type-custom'); if(_ptc){ _ptc.value=''; _ptc.style.display='none'; }
   document.getElementById('f-monitoring-on').checked=false;
@@ -2141,6 +2144,7 @@ function editContract(no){
   editingNo=no;
   closeModal('detail-modal');
   document.getElementById('f-name').value=c.name;
+  document.getElementById('f-bizno').value=c.biz_no||'';
   document.getElementById('f-cms').value=c.cms;
   document.getElementById('f-manager').value=c.manager;
   document.getElementById('f-phone').value=c.phone;
@@ -2216,6 +2220,7 @@ function saveContract(){
   if(editingNo){
     const c=CONTRACTS.find(x=>x.no===editingNo);
     c.name=name; c.cms=document.getElementById('f-cms').value;
+    c.biz_no=document.getElementById('f-bizno').value.trim();
     c.manager=document.getElementById('f-manager').value.trim();
     c.phone=document.getElementById('f-phone').value.trim();
     c.email=document.getElementById('f-email').value.trim();
@@ -2250,6 +2255,7 @@ function saveContract(){
     CONTRACTS.push({
       no:nextNo++,reg_date:document.getElementById('f-regdate').value,
       name,cms:document.getElementById('f-cms').value,
+      biz_no:document.getElementById('f-bizno').value.trim(),
       manager:document.getElementById('f-manager').value.trim(),
       phone:document.getElementById('f-phone').value.trim(),
       email:document.getElementById('f-email').value.trim(),
