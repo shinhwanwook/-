@@ -295,11 +295,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .bill-doc-no{margin:4px 0 11px}
   .bill-party{margin-bottom:11px}
   .bill-provider{line-height:1.5}
-  /* 상호·대표자·주소·사업자번호·청구기간 글자 계약조건과 동일하게 */
-  .bill-party{font-size:12px}
-  .bill-field, .bill-field .bill-lbl, .bill-field .bill-val{font-size:12px}
-  .bill-provider{font-size:12px}
-  .bill-provider b{font-size:13px}
+  /* 상호·대표자·주소·사업자번호·청구기간 글자 계약조건과 동일하게 (인쇄) */
+  #bill-sheet .bill-party{font-size:12.5px !important}
+  #bill-sheet .bill-field{font-size:12.5px !important}
+  #bill-sheet .bill-field .bill-lbl{font-size:12.5px !important}
+  #bill-sheet .bill-field .bill-val{font-size:12.5px !important}
+  #bill-sheet .bill-edit{font-size:12.5px !important}
+  #bill-sheet .bill-provider{font-size:12px !important}
+  #bill-sheet .bill-provider b{font-size:13px !important}
   .bill-terms{padding:7px 11px;line-height:1.55;font-size:12px}
   .bill-sec-row{margin:11px 0 5px}
   /* 사용량·초과분 등 표 숫자를 다른 숫자와 같은 크기로 */
