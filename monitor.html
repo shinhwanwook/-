@@ -305,12 +305,13 @@ tbody td{padding:9px 12px;vertical-align:middle}
   #bill-sheet .bill-provider b{font-size:13px !important}
   .bill-terms{padding:7px 11px;line-height:1.55;font-size:12px}
   .bill-sec-row{margin:11px 0 5px}
-  /* 사용량·초과분 등 표 숫자를 다른 숫자와 같은 크기로 */
-  .bill-table{font-size:12.5px}
-  .bill-table thead th{padding:5px 4px;font-size:12px}
-  .bill-table tbody td{padding:5px 4px;font-size:12.5px}
-  .bill-table td.bill-num{font-size:12.5px}
-  .bill-table td.bill-excess{font-size:12.5px}
+  /* 사용량·초과분 등 표 숫자를 다른 숫자와 같은 크기로 (인쇄, 우선적용) */
+  #bill-sheet .bill-table{font-size:12.5px !important}
+  #bill-sheet .bill-table thead th{padding:5px 4px;font-size:12px !important}
+  #bill-sheet .bill-table tbody td{padding:5px 4px;font-size:12.5px !important}
+  #bill-sheet .bill-table td.bill-num{font-size:12.5px !important}
+  #bill-sheet .bill-table td.bill-excess{font-size:12.5px !important}
+  #bill-sheet .bill-uinput,#bill-sheet .bill-minput{font-size:12.5px !important}
   .bill-total-row{margin-top:9px;padding-top:9px}
   .bill-memo{margin-top:11px;padding-top:8px;min-height:0}
   .bill-sign-date{margin-bottom:11px}
