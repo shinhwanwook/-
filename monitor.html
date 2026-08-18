@@ -219,12 +219,12 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .bill-table thead th{background:#f5f5f0;border-top:1.5px solid var(--text);border-bottom:1px solid var(--border2);padding:8px 5px;font-weight:700;text-align:center;white-space:nowrap}
 .bill-table tbody td{border-bottom:1px solid var(--border);padding:8px 5px;text-align:center}
 .bill-table td.bill-dev{text-align:left;font-weight:600}
-.bill-table td.bill-num{text-align:right;font-variant-numeric:tabular-nums}
+.bill-table td.bill-num{text-align:center;font-variant-numeric:tabular-nums}
 .bill-table tr.bill-over{background:#fbeeed}
 .bill-table tr.bill-over td.bill-excess{color:#a3352d;font-weight:700}
-.bill-uinput{width:54px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:right;font-size:12px;font-family:inherit}
+.bill-uinput{width:54px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:center;font-size:12px;font-family:inherit}
 .bill-uinput:focus{outline:none;border-color:var(--blue);background:#fafcff}
-.bill-minput{width:76px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:right;font-size:12px;font-family:inherit;font-variant-numeric:tabular-nums}
+.bill-minput{width:76px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;text-align:center;font-size:12px;font-family:inherit;font-variant-numeric:tabular-nums}
 .bill-minput:focus{outline:none;border-color:var(--blue);background:#fafcff}
 .bill-modelinput{width:120px;min-height:30px;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;resize:none;overflow:hidden;line-height:1.3;white-space:pre-wrap;word-break:break-all}
 .bill-modelinput:hover{border-color:var(--border)}
@@ -295,11 +295,19 @@ tbody td{padding:9px 12px;vertical-align:middle}
   .bill-doc-no{margin:4px 0 11px}
   .bill-party{margin-bottom:11px}
   .bill-provider{line-height:1.5}
-  .bill-terms{padding:7px 11px;line-height:1.55;font-size:11px}
+  /* 상호·대표자·주소·사업자번호·청구기간 글자 화면과 비슷하게 (작게 안 나오게) */
+  .bill-party{font-size:13px}
+  .bill-party b, .bill-party strong{font-size:13.5px}
+  .bill-provider{font-size:12px}
+  .bill-provider b{font-size:14.5px}
+  .bill-terms{padding:7px 11px;line-height:1.55;font-size:12px}
   .bill-sec-row{margin:11px 0 5px}
-  .bill-table{font-size:11px}
-  .bill-table thead th{padding:5px 4px}
-  .bill-table tbody td{padding:5px 4px}
+  /* 사용량·초과분 등 표 숫자를 다른 숫자와 같은 크기로 */
+  .bill-table{font-size:12.5px}
+  .bill-table thead th{padding:5px 4px;font-size:12px}
+  .bill-table tbody td{padding:5px 4px;font-size:12.5px}
+  .bill-table td.bill-num{font-size:12.5px}
+  .bill-table td.bill-excess{font-size:12.5px}
   .bill-total-row{margin-top:9px;padding-top:9px}
   .bill-memo{margin-top:11px;padding-top:8px;min-height:0}
   .bill-sign-date{margin-bottom:11px}
@@ -508,8 +516,8 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th id="hist-date-th" onclick="toggleHistSort()" style="cursor:pointer;user-select:none" title="클릭하여 정렬">날짜 <span id="hist-sort-icon">▼</span></th>
             <th>시간</th>
             <th style="text-align:center">NO</th>
-            <th>기기명</th>
             <th id="hist-name-th" style="display:none">거래처명</th>
+            <th>기기명</th>
             <th style="text-align:right">흑백카운터</th>
             <th style="text-align:right">컬러카운터</th>
             <th style="text-align:right">일출력(흑백)</th>
@@ -802,11 +810,11 @@ tbody td{padding:9px 12px;vertical-align:middle}
             <th style="text-align:right">흑백(시작)</th>
             <th style="text-align:right">흑백(현재)</th>
             <th style="text-align:right">흑백약정</th>
-            <th style="text-align:right">흑백사용량</th>
+            <th style="text-align:right;background:#fef3c7;color:#92400e">흑백사용량</th>
             <th style="text-align:right">컬러(시작)</th>
             <th style="text-align:right">컬러(현재)</th>
             <th style="text-align:right">컬러약정</th>
-            <th style="text-align:right">컬러사용량</th>
+            <th style="text-align:right;background:#e0f2fe;color:#0369a1">컬러사용량</th>
             <th style="text-align:center">상태</th>
             <th style="text-align:center">상세</th>
           </tr>
@@ -825,7 +833,7 @@ tbody td{padding:9px 12px;vertical-align:middle}
       <span class="card-title">💰 청구서 작성</span>
     </div>
     <div class="controls">
-      <input class="inp inp-search" id="bill-srch" placeholder="🔍 거래처명 검색 후 선택..." oninput="searchBillContract()" style="flex:1;min-width:200px">
+      <input class="inp inp-search" id="bill-srch" placeholder="🔍 거래처명 또는 NO 검색 후 선택..." oninput="searchBillContract()" style="flex:1;min-width:200px">
       <div class="bill-meter-dates" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap">
         <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
           <label style="font-size:12px;font-weight:600;color:var(--text3);white-space:nowrap">이전검침일</label>
@@ -2031,8 +2039,8 @@ function renderHistory(){
         '<td style="white-space:nowrap;font-size:12px">'+esc(r.date||'-')+'</td>'+
         '<td style="font-size:12px;color:var(--text3);white-space:nowrap">'+esc(r.time||'-')+'</td>'+
         '<td style="text-align:center;font-size:12px;color:var(--text3)">'+esc(r._devDispNo||'-')+'</td>'+
-        '<td class="col-name" style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
         (multiDev?'<td class="col-name" style="font-size:12px;font-weight:600">'+esc(r._devName)+'</td>':'')+
+        '<td class="col-name" style="font-size:12px;font-weight:600;color:var(--blue)">'+esc(r._devModel||r.model||'-')+'</td>'+
         '<td style="text-align:right;font-weight:600">'+bw.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:var(--blue)">'+color.toLocaleString()+'</td>'+
         '<td style="text-align:right;color:#7c3aed">'+(dBw!==null?dBw.toLocaleString():'-')+'</td>'+
@@ -3187,11 +3195,13 @@ function filterUsageTable(){
     var overColor  = quotaColor>0 ? realUseColor - quotaColor : 0;
     var isOver     = overBw>0 || overColor>0;
 
-    // 사용량 셀
-    function useCell(use, quota, over){
-      if(quota<=0) return '<td style="text-align:right;font-weight:600">'+use.toLocaleString()+'</td>';
-      if(over>0)   return '<td style="text-align:right;font-weight:700;color:#dc2626;background:#fff0f0">'+use.toLocaleString()+'<br><small style=\"font-size:10px\">(+'+over.toLocaleString()+')</small></td>';
-      return '<td style="text-align:right;font-weight:600;color:#166534">'+use.toLocaleString()+'</td>';
+    // 사용량 셀 (kind: 'bw'=흑백(앰버 강조) / 'color'=컬러(파랑 강조), 초과는 빨강 우선)
+    function useCell(use, quota, over, kind){
+      var bg = kind==='color' ? '#e0f2fe' : '#fef3c7';   // 컬러=연파랑, 흑백=연노랑
+      var fg = kind==='color' ? '#0369a1' : '#92400e';
+      if(over>0)   return '<td style="text-align:right;font-weight:800;font-size:15px;color:#dc2626;background:#ffe4e4;border-left:3px solid #dc2626">'+use.toLocaleString()+'<br><small style="font-size:11px;font-weight:700">(+'+over.toLocaleString()+')</small></td>';
+      if(quota<=0) return '<td style="text-align:right;font-weight:800;font-size:15px;color:'+fg+';background:'+bg+'">'+use.toLocaleString()+'</td>';
+      return '<td style="text-align:right;font-weight:800;font-size:15px;color:'+fg+';background:'+bg+'">'+use.toLocaleString()+'</td>';
     }
 
     return '<tr style="background:'+(isOver?'#fff5f5':'')+'">' +
@@ -3202,12 +3212,12 @@ function filterUsageTable(){
       '<td style="text-align:right;color:var(--text3)">'+startBw.toLocaleString()+'</td>'+
       '<td style="text-align:right;font-weight:600">'+endBw.toLocaleString()+'</td>'+
       '<td style="text-align:right;color:var(--text3)">'+(quotaBw>0?quotaBw.toLocaleString():'-')+'</td>'+
-      useCell(realUseBw, quotaBw, overBw)+
+      useCell(realUseBw, quotaBw, overBw, 'bw')+
       // 컬러
       '<td style="text-align:right;color:var(--text3)">'+startColor.toLocaleString()+'</td>'+
       '<td style="text-align:right;font-weight:600;color:var(--blue)">'+endColor.toLocaleString()+'</td>'+
       '<td style="text-align:right;color:var(--text3)">'+(quotaColor>0?quotaColor.toLocaleString():'-')+'</td>'+
-      useCell(realUseColor, quotaColor, overColor)+
+      useCell(realUseColor, quotaColor, overColor, 'color')+
       // 상태
       '<td style="text-align:center">'+(isOver?
         '<span class="badge b-late">🔴 초과</span>':
@@ -3943,7 +3953,12 @@ function searchBillContract(){
   var q=document.getElementById('bill-srch').value.trim().toLowerCase();
   var el=document.getElementById('bill-search-result');
   if(!q){ el.style.display='none'; return; }
-  var filtered=_allBillContracts.filter(function(c){ return (c.name||'').toLowerCase().includes(q); });
+  // 거래처명 또는 NO(임대번호)로 검색
+  var filtered=_allBillContracts.filter(function(c){
+    var nameMatch=(c.name||'').toLowerCase().includes(q);
+    var noMatch=String(c.no||'').toLowerCase().includes(q);
+    return nameMatch||noMatch;
+  });
   if(!filtered.length){ el.style.display='block'; el.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">검색 결과 없음</div>'; return; }
   el.style.display='block'; el.innerHTML='';
   filtered.slice(0,10).forEach(function(c){
@@ -3952,7 +3967,7 @@ function searchBillContract(){
     div.onmouseover=function(){this.style.background='#eff6ff';};
     div.onmouseout=function(){this.style.background='';};
     div.onclick=function(){ selectBillContract(c); };
-    div.innerHTML='<strong>'+esc(c.name||'-')+'</strong>'+
+    div.innerHTML='<strong>'+(c.no?'<span style="color:var(--blue);margin-right:6px">'+esc(String(c.no))+'</span>':'')+esc(c.name||'-')+'</strong>'+
       '<span style="color:var(--text3);margin-left:8px;font-size:12px">'+esc(c.address||'')+'</span>';
     el.appendChild(div);
   });
