@@ -1761,20 +1761,21 @@ function openDetail(no){
   document.getElementById('dm-title').textContent=`No.${c.no}  ${c.name}${termBadge}`;
   const staffNames=(c.staff_ids||[]).map(id=>{const s=STAFF_LIST.find(x=>x.id===id);return s?s.name+(s.phone?' ('+s.phone+')':''):'';}).filter(Boolean).join('<br>');
   document.getElementById('dm-info').innerHTML=[
-    ['거래처',c.name],['유형',`<span class="badge ${c.cms==='CMS'?'b-cms':c.cms==='카드'?'b-purple':'b-cash'}">${c.cms}</span>`],
+    ['등록일',c.reg_date],['유형',`<span class="badge ${c.cms==='CMS'?'b-cms':c.cms==='카드'?'b-purple':'b-cash'}">${c.cms}</span>`],
+    ['거래처',c.name],['사업자번호',c.biz_no||'−'],
     ['담당자',c.manager],['전화번호',c.phone],
-    ['이메일',c.email?`<a href="mailto:${esc(c.email)}" style="color:var(--blue)">${esc(c.email)}</a>`:'−'],
-    ['렌탈금',`<strong style="${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</strong>`],['납부일',c.payment_day||'-'],
+    ['주소',c.address,'full'],
     ['기기',c.etc.toUpperCase()],['수량',(c.qty||1)+'대'],
-    ['보증금',c.deposit?c.deposit.toLocaleString()+'원':'없음'],['세금계산서',c.tax==='유'?'<span class="badge" style="background:#fee2e2;color:#dc2626;font-weight:700">유 ✓</span>':'<span class="badge b-gray">무</span>'],
-    ['등록일',c.reg_date],
-    ['계약서',c.gdrive?`<a href="${c.gdrive}" target="_blank" style="color:var(--blue);font-weight:600;text-decoration:underline">📎 계약서 열기</a>`:'−'],
-    ['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
+    ['렌탈금',`<strong style="${c.tax==='유'?'color:#dc2626':''}">${c.rent.toLocaleString()}원</strong>`],['보증금',c.deposit?c.deposit.toLocaleString()+'원':'없음'],
+    ['약정기간',c.contract_period||'-'],['세금계산서',c.tax==='유'?'<span class="badge" style="background:#fee2e2;color:#dc2626;font-weight:700">유 ✓</span>':'<span class="badge b-gray">무</span>'],
+    ['납부일',c.payment_day||'-'],['이메일',c.email?`<a href="mailto:${esc(c.email)}" style="color:var(--blue)">${esc(c.email)}</a>`:'−'],
     ['약정매수 (흑백/컬러)',`흑백 <strong>${(c.quota_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.quota_color||0).toLocaleString()}</strong>매`],
     ['시작매수 (흑백/컬러)',`흑백 <strong>${(c.start_bw||0).toLocaleString()}</strong>매 &nbsp;/&nbsp; 컬러 <strong>${(c.start_color||0).toLocaleString()}</strong>매`],
     ['초과 추가단가',`흑백 <strong>${(c.extra_bw||0).toLocaleString()}</strong>원/매 &nbsp;/&nbsp; 컬러 <strong>${(c.extra_color||0).toLocaleString()}</strong>원/매`],
     ['A/S 담당자',staffNames||'-'],
-    ['주소',c.address,'full'],['비고',c.memo||'-','full']
+    ['계약서',c.gdrive?`<a href="${c.gdrive}" target="_blank" style="color:var(--blue);font-weight:600;text-decoration:underline">📎 계약서 열기</a>`:'−'],
+    ['납부상태',c.terminated?`<span class="badge b-gray">해지 ${c.terminate_date||''}</span>`:`<span class="badge ${payStatus(c).cls}">${payStatus(c).label}</span>`],
+    ['비고',c.memo||'-','full']
   ].map(([l,v,f])=>`<div class="detail-item${f?' detail-full':''}"><label style="font-size:11px;color:var(--text3);font-weight:600">${l}</label><p style="font-size:13px;margin-top:2px">${v||'-'}</p></div>`).join('');
   // 해지/복원 버튼 동적 변경 (관리자만)
   const termBtn=document.getElementById('dm-terminate-btn');
