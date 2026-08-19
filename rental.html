@@ -4495,12 +4495,14 @@ function applyRestoredData(data) {
 // ── JSON 백업 다운로드 ──
 function checkAutoBackup(){
   try{
+    if(window._backupPromptShown) return;  // 이번 세션에 이미 띄웠으면 재호출 방지
     var today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
     var lastBackup = localStorage.getItem('rental_last_backup');
     if(lastBackup === today) return; // 오늘 이미 물어봄/백업함
     // 오늘 첫 접속 → 백업 여부 확인 (확인/취소). 취소해도 오늘은 다시 안 물음.
+    window._backupPromptShown = true;              // 즉시 플래그 (중복 방지)
+    localStorage.setItem('rental_last_backup', today);  // 즉시 기록 (2초 사이 재호출 차단)
     setTimeout(function(){
-      localStorage.setItem('rental_last_backup', today);  // 오늘은 한 번만 묻기
       showConfirm('오늘 첫 접속입니다.\n데이터를 백업 파일로 저장할까요?', function(){
         backupData();
         showSaveStatus('💾 자동 백업 완료', '#86efac');
